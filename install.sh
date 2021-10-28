@@ -19,5 +19,4 @@ git clone -b noetic https://github.com/Drojas251/interbotix_ros_manipulators.git
 git clone https://github.com/Drojas251/interbotix_ros_toolboxes.git
 git clone -b noetic https://github.com/Drojas251/image_pipeline.git
 
-cd $catkin_ws
-catkin_make
+
