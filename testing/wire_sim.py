@@ -22,8 +22,12 @@ class DualRobotConfig:
         self.r2 = right_robot_location # robot 2 is the robot on the right ( if you are standing behind them) 3x1 vector
         self.robot_reach = robot_reach # the maximum safe reach of the robot- 1x1 scalar
         self.distance_apart = distance_apart # lateral distance between the two robots ( assume then are next to eachother)- 1x1 scalar
+        self.max_arm_thickness = 0.1 # thickness of the arm or gripper in meters
 
     def workspace_volume(self):
+        # get the workspace volume for the two robots
+        # depends on where they are in the world, where they are with respect to eachother 
+        # and their max reach
         workspace_volume = np.zeros((3,8))
 
         scale_on_x = 0.75
@@ -45,8 +49,31 @@ class DualRobotConfig:
         return workspace_volume 
 
     def mid_point_of_reference(self):
-        mid_point = np.array([self.r1[0], (self.r1[1] + self.r2[1])/2, 0.6*self.robot_reach])
+        # point of reference that is inbetween both robots
+        mid_point = np.array([[self.r1[0][0]], [(self.r1[1][0] + self.r2[1][0])/2], [0.6*self.robot_reach]])
         return mid_point
+
+    def robot_grasp_volume(self):
+        # this volume represents the volume taken up by the robot arm near the grasp object
+        # the volume around the robot_grasp_volume in its local frame
+        # forward is in its +x axis 
+        dx = 2*self.max_arm_thickness
+        dy = self.max_arm_thickness/2
+        dz = self.max_arm_thickness/2
+
+        robot_grasp_volume = np.zeros((3,8))
+
+        robot_grasp_volume[:,[0]] = np.array([[dx], [dy], [dz]]) # top right forward 
+        robot_grasp_volume[:,[1]] = np.array([[dx], [-dy], [dz]]) # top left forward 
+        robot_grasp_volume[:,[2]] = np.array([[dx], [dy], [-dz]]) # bottom right forward 
+        robot_grasp_volume[:,[3]] = np.array([[dx], [-dy], [-dz]]) # bottom left forward 
+
+        robot_grasp_volume[:,[4]] = np.array([[0], [dy], [dz]]) # top right back 
+        robot_grasp_volume[:,[5]] = np.array([[0], [-dy], [dz]]) # top left back 
+        robot_grasp_volume[:,[6]] = np.array([[0], [dy], [-dz]]) # bottom right back 
+        robot_grasp_volume[:,[7]] = np.array([[0], [-dy], [-dz]]) # bottom left back 
+
+        return robot_grasp_volume
 
 
 class GraspObject:
@@ -58,7 +85,7 @@ class GraspObject:
         self.rz = rz
         self.normal_axis = np.array([[1],[0],[0]]) # normal axis of the object is always in the +x axis of the object frame 
 
-    def rotation_matix(self):
+    def rotation_matrix(self):
       rotation_x = np.array([[1,0,0],[0, math.cos(self.rx), -1*math.sin(self.rx)],[0,math.sin(self.rx),math.cos(self.rx)]])
       rotation_y = np.array([[math.cos(self.ry), 0 , math.sin(self.ry)], [0 , 1, 0], [-1*math.sin(self.ry), 0 , math.cos(self.ry)]])
       rotation_z = np.array([[math.cos(self.rz), -1*math.sin(self.rz), 0], [math.sin(self.rz), math.cos(self.rz), 0], [0, 0, 1]])
@@ -66,7 +93,8 @@ class GraspObject:
       return ROT
 
     def grasp_volume_in_local_frame(self):
-        # forward is in the +x axis 
+        # the volume around the grasp object in its local frame
+        # forward is in its +x axis 
         dx = self.god[0]/2
         dy = self.god[1]/2
         dz = self.god[2]/2
@@ -86,9 +114,9 @@ class GraspObject:
         return grasp_volume_in_local_frame
     
     def grasp_volume_in_global_frame(self):
-        # grasp volume in the global frame
+        # the volume around the grasp object in the global frame
         grasp_volume_in_local_frame = self.grasp_volume_in_local_frame()
-        ROT = self.rotation_matix()
+        ROT = self.rotation_matrix()
         grasp_volume_in_global_frame = np.zeros((3,8))
 
         for i in range(8):
@@ -105,9 +133,6 @@ class WireModel:
         self.Kd = Kd # damping
 
         
-
-    
-
 class WireSim:
   def __init__(self,N,wire_model, grasp_object,robot):
     self.N = N # number of nodes that represents the wire
@@ -124,7 +149,6 @@ class WireSim:
     F_s = np.zeros((3,self.N)) # structural spring force vectors
 
     for i in range(self.N):
-
         # Forces at ends are equal to zero (Do this to fix the two ends. Revise this and figure out how to not make these zero without breaking wire)
         if i == 0 or i == (self.N - 1):
             F_s[:,[i]] = np.zeros((3,1))
@@ -354,14 +378,14 @@ class WireSim:
           #ax.view_init(60, 35)
           #fig  
           
-      self.projections(wire_set)
+      
       return wire_set
 
   def dot_product(self,u,v):
       dp = sum([x*y for (x, *x2), y in zip(u,v)])
       return dp
   
-  def rotation_matix(self,rx,ry,rz):
+  def rotation_matrix(self,rx,ry,rz):
       rotation_x = np.array([[1,0,0],[0, math.cos(rx), -1*math.sin(rx)],[0,math.sin(rx),math.cos(rx)]])
       rotation_y = np.array([[math.cos(ry), 0 , math.sin(ry)], [0 , 1, 0], [-1*math.sin(ry), 0 , math.cos(ry)]])
       rotation_z = np.array([[math.cos(rz), -1*math.sin(rz), 0], [math.sin(rz), math.cos(rz), 0], [0, 0, 1]])
@@ -381,11 +405,63 @@ class WireSim:
   def homo_to_vector(self,homo):
       vector = np.array([[homo[0][0]], [homo[1][0]], [homo[2][0]] ])
       return vector
+ 
+  def find_optimal_action(self,wire_set):
+      workspace_volume = self.robot.workspace_volume()
+      object_volume_local = self.grasp_object.grasp_volume_in_local_frame()
+      object_volume_global = self.grasp_object.grasp_volume_in_global_frame()
+      point_of_reference = self.robot.mid_point_of_reference()
+      ROT = self.grasp_object.rotation_matrix()
+
+      # First volume constraint is the object_volume 
+      # Second volume constraint is the robot arm grasp volume 
+      #     -this volume represents the space the arm will need to take up when grasping the object 
+      #     -it does not represent the full volume, but more a subset a the volume closest to the grasp object 
+      #     -Represented by a box hinged at a point +10cm in the grasp object x axis, and points towards the point_of_reference 
+      # Third Volume constraint is the workspace volume
+
+      # point of reference in the grasp object frame
+      offset = object_volume_local[0][0] + 0.05 # the joint of the first and second volume constraints will be offset in +x of grasp object frame
+      POR_in_grasp_object_frame = self.homo_to_vector(la.inv(self.homo_trans_matrix(self.grasp_object.gop,ROT))@self.vector_to_homo(point_of_reference))
+      POR_in_grasp_object_frame[0][0] = POR_in_grasp_object_frame[0][0] - offset
+
+      rz = math.atan2(POR_in_grasp_object_frame[1][0], POR_in_grasp_object_frame[0][0])
+      ry = -math.atan2(POR_in_grasp_object_frame[2][0], POR_in_grasp_object_frame[0][0])
+      rx = 0
+
+      if (POR_in_grasp_object_frame[0][0] <0 and POR_in_grasp_object_frame[1][0] <0):
+          rz = rz + math.pi
+      if (POR_in_grasp_object_frame[0][0] <0 and POR_in_grasp_object_frame[1][0] >= 0):
+          rz = rz + math.pi
+    
+      # translation and rotation of the robot_volume contraint frame WRT the grasp object frame
+      ROT2 = self.rotation_matrix(rx,ry,rz)
+      translation = np.array([[offset],[0],[0]])
+      robot_grasp_volume = self.robot.robot_grasp_volume()
+
+      # transform the wires to the grasp object frame and the robot arm grasp volume frame
+
+      wire_in_gof = np.zeros((self.actions,3,self.N)) # wires in grasp object frame
+      wire_in_rgf = np.zeros((self.actions,3,self.N)) # wires in robot grasp volume frame
+
+      for i in range(self.actions):
+          for j in range(self.N):
+               # This is a mess. break up for clarity
+               # There is a lot of transposeing. wire_in_gof[[i],:,[j]] accepts a 1x3 aparently 
+               wire_in_gof[[i],:,[j]] = np.transpose(self.homo_to_vector(la.inv(self.homo_trans_matrix(self.grasp_object.gop,ROT))@self.vector_to_homo(np.transpose(wire_set[[i],:,[j]]))))
+               wire_in_rgf[[i],:,[j]] = np.transpose(self.homo_to_vector(la.inv(self.homo_trans_matrix(translation,ROT2))@self.vector_to_homo(np.transpose(wire_in_gof[[i],:,[j]]))))
+               
+      #for i in range(self.actions):
+      #    for j in range(self.N):
+
+
+
+
 
   #def projections(self,wire_set):
   #    # Exlude for now
   #    projections = np.zeros((self.actions,3,self.N))
-  #    ROT = self.rotation_matix(self.grasp_object.rx, self.grasp_object.ry, self.grasp_object.rz)
+  #    ROT = self.rotation_matrix(self.grasp_object.rx, self.grasp_object.ry, self.grasp_object.rz)
   #    grasp_axis = ROT@self.grasp_object.normal_axis
   #
   #    ## getting an error with matrix multiplication
@@ -397,12 +473,8 @@ class WireSim:
 
 
 
-
-
-
-
-          
-
+  
+# insert wire info here 
 L = 1
 M = 0.028
 Ks = 13.1579
@@ -418,9 +490,7 @@ god = np.array([[0.075],[0.05],[0.05]]) # dimensions of grasp object -> model th
 rx = 0 # rot about x
 ry = 0 # rot about y
 rz = 1.5707 # rot about z
-
 grasp_object = GraspObject(gop,god,rx,ry,rz)
-ROT = grasp_object.rotation_matix()
 
 
 # dual robot configuration
@@ -428,26 +498,18 @@ left_robot_location = np.array([[0],[0.1],[0]])
 right_robot_location = np.array([[0],[-0.1],[0]])
 robot_reach = 0.5
 distance_apart = 0.3
-R1 = DualRobotConfig(left_robot_location, right_robot_location,robot_reach,distance_apart)
-
+robots = DualRobotConfig(left_robot_location, right_robot_location,robot_reach,distance_apart)
 
 # wire sim set up
 N = 20
-L = 1
-M = 0.028
-wire_sim_ = WireSim(N,wire_model,grasp_object, R1 )
+wire_sim_ = WireSim(N,wire_model,grasp_object, robots )
 
-
-
+# this will be produced from point cloud data
 wire = np.zeros((3,N))
 wire[0] = np.ones((1,N))
 wire[1] = np.linspace(0,1,N)
 wire[2] = 2*np.ones((1,N))
 
-#normal_vectors = p1.get_normal_vectors(test,10)
-#sim_result = wire_sim_.simulate(wire)
+sim_result = wire_sim_.simulate(wire)
+wire_sim_.find_optimal_action(sim_result)
 
-# TO DO
-# port the following functions from MATLAB in the following order
-#
-# find_optimal_vector.m
