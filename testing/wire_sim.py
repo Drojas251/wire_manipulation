@@ -30,6 +30,7 @@ class WireSim:
     self.ry = ry
     self.rz = rz
     self.actions = 8
+    self.normal_axis = np.array([[1],[0],[0]]) # normal axis of the object is always in the +x axis of the object frame 
     
 
   def __force_for_struct_springs(self,wire,V):
@@ -266,8 +267,8 @@ class WireSim:
 
           #ax.view_init(60, 35)
           #fig  
-          self.projections(wire_set)
-
+          
+      self.projections(wire_set)
       return wire_set
 
   def dot_product(self,u,v):
@@ -285,10 +286,15 @@ class WireSim:
 
       projections = np.zeros((self.actions,3,self.N))
       ROT = self.rotation_matix(self.rx, self.ry, self.rz)
-      
+      grasp_axis = ROT@self.normal_axis
 
-      #for i in range(8):
-      #    for j in range(self.N):
+      ## getting an error with matrix multiplication
+
+      for i in range(8):
+          for j in range(self.N):
+              projections[[i],:,[j]] = wire_set[[i],:,[j]] - self.dot_product((np.transpose(wire_set[[1],:,[2]]) - self.gop),grasp_axis)*grasp_axis
+    
+      print(projections)
 
 
 
