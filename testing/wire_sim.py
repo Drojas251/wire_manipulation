@@ -22,7 +22,7 @@ class DualRobotConfig:
         self.r2 = right_robot_location # robot 2 is the robot on the right ( if you are standing behind them) 3x1 vector
         self.robot_reach = robot_reach # the maximum safe reach of the robot- 1x1 scalar
         self.distance_apart = distance_apart # lateral distance between the two robots ( assume then are next to eachother)- 1x1 scalar
-        self.max_arm_thickness = 0.1 # thickness of the arm or gripper in meters
+        self.max_arm_thickness = 0.15 # thickness of the arm or gripper in meters
 
     def workspace_volume(self):
         # get the workspace volume for the two robots
@@ -349,34 +349,43 @@ class WireSim:
           wire_set[[i],:,:] = wire_sim
           
 
-          # plotting
-          ax = plt.axes(projection='3d')
-          for j in range(8):
+      # plotting
+      ax = plt.axes(projection='3d')
+      for j in range(8):
 
-            # Data for a three-dimensional line
-            zline = wire_set[[j],[2],:].flatten()
-            xline = wire_set[[j],[1],:].flatten()
-            yline = wire_set[[j],[0],:].flatten()
+        # Data for a three-dimensional line
+        zline = wire_set[[j],[2],:].flatten()
+        xline = wire_set[[j],[1],:].flatten()
+        yline = wire_set[[j],[0],:].flatten()
 
-            ax.scatter3D(xline, yline, zline, 'gray')
+        ax.scatter3D(xline, yline, zline, 'gray')
 
-          zline = wire[[2],:]
-          xline = wire[[1],:]
-          yline = wire[[0],:]
-          ax.scatter3D(xline, yline, zline, 'gray')
+      zline = wire[[2],:]
+      xline = wire[[1],:]
+      yline = wire[[0],:]
+      ax.scatter3D(xline, yline, zline, 'gray')
 
-          for i in range(8):
-            vec = np.zeros((3,2))
-            vec[:,[0]] = wire[:,[grasp_index]]
-            vec[:,[1]] = wire[:,[grasp_index]] + F_vect[:,[i]]
-            # Data for a three-dimensional line
-            zline = vec[[2],:].flatten()
-            xline = vec[[1],:].flatten()
-            yline = vec[[0],:].flatten()
-            ax.plot3D(xline, yline, zline, 'gray')  
+      for i in range(8):
+        vec = np.zeros((3,2))
+        vec[:,[0]] = wire[:,[grasp_index]]
+        vec[:,[1]] = wire[:,[grasp_index]] + F_vect[:,[i]]
+        # Data for a three-dimensional line
+        zline = vec[[2],:].flatten()
+        xline = vec[[1],:].flatten()
+        yline = vec[[0],:].flatten()
+        ax.plot3D(xline, yline, zline, 'gray')  
 
-          #ax.view_init(60, 35)
-          #fig  
+        
+
+      oo = self.find_optimal_action(wire_set)
+      zline = oo[[2],:]
+      xline = oo[[1],:]
+      yline = oo[[0],:]
+
+      ax.scatter3D(xline, yline, zline, 'gray')
+
+      ax.view_init(60, 35)
+
           
       
       return wire_set
@@ -433,16 +442,25 @@ class WireSim:
           rz = rz + math.pi
       if (POR_in_grasp_object_frame[0][0] <0 and POR_in_grasp_object_frame[1][0] >= 0):
           rz = rz + math.pi
-    
+      
       # translation and rotation of the robot_volume contraint frame WRT the grasp object frame
       ROT2 = self.rotation_matrix(rx,ry,rz)
       translation = np.array([[offset],[0],[0]])
       robot_grasp_volume = self.robot.robot_grasp_volume()
 
+      rgv_global_frame = np.zeros((3,8))
+
+      # robot grasp volume in global_frame
+      for i in range(8):
+        temp = self.homo_to_vector(self.homo_trans_matrix(translation,ROT2)@self.vector_to_homo(robot_grasp_volume[:,[i]]))
+        rgv_global_frame[:,[i]] = self.grasp_object.gop + ROT@temp
+        
+
       # transform the wires to the grasp object frame and the robot arm grasp volume frame
 
       wire_in_gof = np.zeros((self.actions,3,self.N)) # wires in grasp object frame
       wire_in_rgf = np.zeros((self.actions,3,self.N)) # wires in robot grasp volume frame
+
 
       for i in range(self.actions):
           for j in range(self.N):
@@ -451,10 +469,79 @@ class WireSim:
                wire_in_gof[[i],:,[j]] = np.transpose(self.homo_to_vector(la.inv(self.homo_trans_matrix(self.grasp_object.gop,ROT))@self.vector_to_homo(np.transpose(wire_set[[i],:,[j]]))))
                wire_in_rgf[[i],:,[j]] = np.transpose(self.homo_to_vector(la.inv(self.homo_trans_matrix(translation,ROT2))@self.vector_to_homo(np.transpose(wire_in_gof[[i],:,[j]]))))
                
-      #for i in range(self.actions):
-      #    for j in range(self.N):
+
+      # object dimensions 
+      dx = self.grasp_object.god[0]/2
+      dy = self.grasp_object.god[1]/2
+      dz = self.grasp_object.god[2]/2
+
+      jj = 0
+      conflict = 0
+      count = 0
+
+      for i in range(self.actions):
+          print("WIRE" + str(jj))
+          #print(wire_in_gof)
+          for j in range(self.N):
+              if( -dx <= wire_in_gof[[jj],[0],[j]] and wire_in_gof[[jj],[0],[j]] <= dx
+                and -dy <= wire_in_gof[[jj],[1],[j]] and wire_in_gof[[jj],[1],[j]] <= dy
+                and -dz <= wire_in_gof[[jj],[2],[j]] and wire_in_gof[[jj],[2],[j]] <= dz):
+                conflict = 1
+
+              if (robot_grasp_volume[0][4] <= wire_in_rgf[[jj],[0],[j]] and wire_in_rgf[[jj],[0],[j]] <= robot_grasp_volume[0][0]
+                and robot_grasp_volume[1][1] <= wire_in_rgf[[jj],[1],[j]] and wire_in_rgf[[jj],[1],[j]] <= robot_grasp_volume[1][0]
+                and robot_grasp_volume[2][2] <= wire_in_rgf[[jj],[2],[j]] and wire_in_rgf[[jj],[2],[j]] <= robot_grasp_volume[2][1]):
+                conflict = 1
+
+          if(conflict ==1):
+            print("wire" + str(jj) + " violated grasp")
+            wire_in_gof = np.delete(wire_in_gof,jj,0) 
+            wire_set = np.delete(wire_set,jj,0) 
+            conflict = 0    
+            count = count + 1
+          else:
+            jj = jj +1 
+              
 
 
+      # plotting
+      
+      ax1 = plt.axes(projection='3d')
+      num = 8 - count
+      for j in range(num):
+
+        # Data for a three-dimensional line
+        zline = wire_set[[j],[2],:].flatten()
+        xline = wire_set[[j],[1],:].flatten()
+        yline = wire_set[[j],[0],:].flatten()
+
+        ax1.scatter3D(xline, yline, zline, 'gray')  
+
+        
+
+      oo = object_volume_global
+      zline = oo[[2],:]
+      xline = oo[[1],:]
+      yline = oo[[0],:]
+
+      ax1.scatter3D(xline, yline, zline, 'gray')
+
+
+      oo = rgv_global_frame
+      zline = oo[[2],:]
+      xline = oo[[1],:]
+      yline = oo[[0],:]
+
+      ax1.scatter3D(xline, yline, zline, 'gray')
+
+      
+
+      ax1.view_init(10, 10)
+      
+
+
+              
+      return object_volume_global
 
 
 
@@ -469,11 +556,9 @@ class WireSim:
   #    #    for j in range(self.N):
   #    #        projections[[i],:,[j]] = wire_set[[i],:,[j]] - self.dot_product((np.transpose(wire_set[[1],:,[2]]) - self.gop),grasp_axis)*grasp_axis
     
-     
 
 
 
-  
 # insert wire info here 
 L = 1
 M = 0.028
@@ -484,20 +569,20 @@ wire_model = WireModel(L,M,Ks,Kb,Kd)
 
 
 # grasp Object Info -> use a custom ros message to pack this information
-gop = np.array([[1],[0.25],[0.6]]) # position of grasp object
-god = np.array([[0.075],[0.05],[0.05]]) # dimensions of grasp object -> model the grasp object as a box
+gop = np.array([[1.5],[0.75],[0.6]]) # position of grasp object
+god = np.array([[0.35],[0.2],[0.2]]) # dimensions of grasp object -> model the grasp object as a box
 # orientation of grasp object wrt to world in order (xyz)
 rx = 0 # rot about x
 ry = 0 # rot about y
-rz = 1.5707 # rot about z
+rz = 3.14 # rot about z
 grasp_object = GraspObject(gop,god,rx,ry,rz)
 
 
 # dual robot configuration
-left_robot_location = np.array([[0],[0.1],[0]])
-right_robot_location = np.array([[0],[-0.1],[0]])
-robot_reach = 0.5
-distance_apart = 0.3
+left_robot_location = np.array([[0],[0.25],[0]])
+right_robot_location = np.array([[0],[0.75],[0]])
+robot_reach = 0.75
+distance_apart = 0.5
 robots = DualRobotConfig(left_robot_location, right_robot_location,robot_reach,distance_apart)
 
 # wire sim set up
@@ -508,8 +593,7 @@ wire_sim_ = WireSim(N,wire_model,grasp_object, robots )
 wire = np.zeros((3,N))
 wire[0] = np.ones((1,N))
 wire[1] = np.linspace(0,1,N)
-wire[2] = 2*np.ones((1,N))
+wire[2] = 0.75*np.ones((1,N))
 
 sim_result = wire_sim_.simulate(wire)
-wire_sim_.find_optimal_action(sim_result)
-
+#wire_sim_.find_optimal_action(sim_result)
