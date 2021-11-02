@@ -13,6 +13,7 @@ from visualization_msgs.msg import MarkerArray
 from geometry_msgs.msg import PoseArray
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Pose
+from sklearn.cluster import KMeans
 
 def get_pc_data():
     point_cloud_topic = "/rscamera/depth/points"
@@ -31,18 +32,16 @@ def get_pc_data():
                 points[count] = [points2[0],points2[1],points2[2]]   
                 count = count + 1    
 
+    print(points.shape)
+    return points
 
-    #pose_1.position.x = points[num1,0]
-    #pose_1.position.y = points[num1,1]
-    #pose_1.position.z = points[num1,2]
-
-    
-
+#def get_nodes_from_pc(points):
+    # k means clustering 
 
     
 
 
 
 rospy.init_node('listener', anonymous=True)
-get_pc_data()
+points = get_pc_data()
 rospy.spin()
