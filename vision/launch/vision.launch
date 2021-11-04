@@ -11,4 +11,6 @@
     <remap from="image_rect" to="/seg_depth/image_raw"/>
     <remap from="points" to="/rscamera/depth/points"/>
   </node>
+
+  <node pkg="vision" type="rgb_segmentation.py" name="rgb_segmentation" output="screen" />
 </launch>

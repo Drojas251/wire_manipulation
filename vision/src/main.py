@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 from numpy.core.fromnumeric import shape, size
 import rospy
 #import pcl
@@ -15,14 +16,14 @@ from geometry_msgs.msg import Point
 from geometry_msgs.msg import Pose
 from sklearn.cluster import KMeans
 
-def get_pc_data():
-    point_cloud_topic = "/rscamera/depth/points"
+def get_pc_data(topic):
+    point_cloud_topic = topic
     data = rospy.wait_for_message(point_cloud_topic, PointCloud2)
 
 
     # Get point cloud into a [N,3] vector
     pc = ros_numpy.numpify(data) 
-    points=np.zeros((len(pc)*len(pc[0]),3))
+    """points=np.zeros((len(pc)*len(pc[0]),3))
     count = 0
     for x in range(len(pc)):
         for y in range(len(pc[0])):
@@ -31,9 +32,12 @@ def get_pc_data():
             if not math.isnan(points2[1]):
                 points[count] = [points2[0],points2[1],points2[2]]   
                 count = count + 1    
+    """
+    print(len(pc))
+    print(pc[0])
+    print(pc[1])
 
-    print(points.shape)
-    return points
+    return pc
 
 #def get_nodes_from_pc(points):
     # k means clustering 
@@ -43,5 +47,6 @@ def get_pc_data():
 
 
 rospy.init_node('listener', anonymous=True)
-points = get_pc_data()
+topic = "/camera/depth/color/points"
+points = get_pc_data(topic)
 rospy.spin()
