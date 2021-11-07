@@ -1,0 +1,60 @@
+<launch>
+
+  <arg name="robot_model"                       default=""/>
+  <arg name="robot_name"                        default="$(arg robot_model)"/>
+  <arg name="world_name"                        default="$(find dual_robot_gazebo)/worlds/empty.world"/>
+  <arg name="gui"                               default="true"/>
+  <arg name="debug"                             default="false"/>
+  <arg name="paused"                            default="true"/>
+  <arg name="recording"                         default="false"/>
+  <arg name="use_sim_time"                      default="true"/>
+  <arg name="dof"                               default="6"/>
+
+  <env name="GAZEBO_RESOURCE_PATH"              value="$(find dual_robot_gazebo)"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name"                        value="$(arg world_name)"/>
+    <arg name="gui"                               value="$(arg gui)" />
+    <arg name="debug"                             value="$(arg debug)" />
+    <arg name="paused"                            value="$(arg paused)"/>
+    <arg name="recording"                         value="$(arg recording)"/>
+    <arg name="use_sim_time"                      value="$(arg use_sim_time)"/>
+  </include>
+
+  <!-- load URDF to the parameter server-->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find dual_robot_description)/urdf/dual_robot.urdf.xacro" />
+
+  <!--Spawn Robot-->
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"  args="-urdf -model dual_viper -param robot_description" />
+
+  <!--Launch Robot State Publisher (The node wich publishes joint informations)
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="50.0" />
+  </node>-->
+
+  <node
+    name="robot_state_publisher"
+    pkg="robot_state_publisher"
+    type="robot_state_publisher">
+  </node>
+
+
+    <!--<rosparam file="$(find dual_robot_gazebo)/config/dual_robot_trajectory_controllers.yaml" command="load" ns="$(arg robot_name)"/>-->
+
+    <rosparam file="$(find dual_robot_gazebo)/config/dual_robot_trajectory_controllers.yaml" command="load"/>
+
+
+
+    <node
+      name="controller_spawner"
+      pkg="controller_manager"
+      type="controller_manager"
+      respawn="false"
+      output="screen"
+      args="spawn robot_a_controller robot_b_controller joint_state_controller"/>
+
+
+
+
+
+</launch>

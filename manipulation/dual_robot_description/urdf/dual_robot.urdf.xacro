@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro"
+       name="dual_viper" >
+
+  <!-- Robot -->
+  <xacro:include filename="$(find dual_robot_description)/urdf/left_robot.urdf.xacro" />
+
+  <!-- arm -->
+  <xacro:vx300s prefix="robot_a_"/>
+  <xacro:vx300s prefix="robot_b_"/>
+
+  <link name="world"/>
+
+    <joint name="robot_a_to_world" type="fixed">
+      <parent link="world"/>
+      <child link="robot_a_base_link"/>
+      <origin xyz="0 0.15 0" />
+    </joint>
+
+    <joint name="robot_b_to_world" type="fixed">
+      <parent link="world"/>
+      <child link="robot_b_base_link"/>
+      <origin xyz="0 -0.15 0" />
+    </joint>
+
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+      <legacyModeNS>true</legacyModeNS>
+    </plugin>
+  </gazebo>
+
+</robot>

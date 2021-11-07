@@ -1,0 +1,24 @@
+controller_list:
+  - name: fake_robot_a_controller
+    type: $(arg execution_type)
+    joints:
+      - robot_a_waist
+      - robot_a_shoulder
+      - robot_a_elbow
+      - robot_a_forearm_roll
+      - robot_a_wrist_angle
+      - robot_a_wrist_rotate
+  - name: fake_robot_b_controller
+    type: $(arg execution_type)
+    joints:
+      - robot_b_waist
+      - robot_b_shoulder
+      - robot_b_elbow
+      - robot_b_forearm_roll
+      - robot_b_wrist_angle
+      - robot_b_wrist_rotate
+initial:  # Define initial robot poses.
+  - group: robot_a
+    pose: robot_a_ready
+  - group: robot_b
+    pose: robot_b_home

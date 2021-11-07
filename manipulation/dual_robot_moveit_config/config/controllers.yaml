@@ -1,0 +1,14 @@
+controller_list:
+  - name: "robot_a_controller"
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    joints: [robot_a_waist, robot_a_shoulder, robot_a_elbow, robot_a_forearm_roll, robot_a_wrist_angle, robot_a_wrist_rotate]
+  - name: "robot_b_controller"
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    joints: [robot_b_waist, robot_b_shoulder, robot_b_elbow, robot_b_forearm_roll, robot_b_wrist_angle, robot_b_wrist_rotate]
+
+  #- name: "gripper_controller"
+  #  action_ns: follow_joint_trajectory
+  #  type: FollowJointTrajectory
+  #  joints: [left_finger, right_finger]
