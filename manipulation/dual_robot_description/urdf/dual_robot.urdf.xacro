@@ -14,21 +14,21 @@
     <joint name="robot_a_to_world" type="fixed">
       <parent link="world"/>
       <child link="robot_a_base_link"/>
-      <origin xyz="0 0.15 0" />
+      <origin xyz="0 -0.15 0" />
     </joint>
 
     <joint name="robot_b_to_world" type="fixed">
       <parent link="world"/>
       <child link="robot_b_base_link"/>
-      <origin xyz="0 -0.15 0" />
+      <origin xyz="0 0.15 0" />
     </joint>
 
-  <gazebo>
+  <!--<gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
       <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
       <legacyModeNS>true</legacyModeNS>
     </plugin>
-  </gazebo>
+  </gazebo>-->
 
 
 

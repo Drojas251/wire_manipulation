@@ -3,8 +3,6 @@
 
 <xacro:macro name="vx300s" params="prefix ">
 
-  <xacro:arg name="robot_name" default = "vx300s"/>
-  <xacro:arg name="base_link_frame" default="base_link"/>
   <xacro:arg name="show_gripper_bar" default="true"/>
   <xacro:arg name="show_gripper_fingers" default="true"/>
   <xacro:arg name="load_gazebo_configs" default="false"/>

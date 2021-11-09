@@ -42,6 +42,24 @@
         <joint name="robot_b_wrist_angle" value="0.9877"/>
         <joint name="robot_b_wrist_rotate" value="0"/>
     </group_state>
+
+    <group_state name="robot_a_Sleep" group="robot_a">
+        <joint name="robot_a_elbow" value="1.55" />
+        <joint name="robot_a_forearm_roll" value="0" />
+        <joint name="robot_a_shoulder" value="-1.76" />
+        <joint name="robot_a_waist" value="0" />
+        <joint name="robot_a_wrist_angle" value="0.8" />
+        <joint name="robot_a_wrist_rotate" value="0" />
+    </group_state>
+
+    <group_state name="robot_b_Sleep" group="robot_b">
+        <joint name="robot_b_elbow" value="1.55" />
+        <joint name="robot_b_forearm_roll" value="0" />
+        <joint name="robot_b_shoulder" value="-1.76" />
+        <joint name="robot_b_waist" value="0" />
+        <joint name="robot_b_wrist_angle" value="0.8" />
+        <joint name="robot_b_wrist_rotate" value="0" />
+    </group_state>
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
     <virtual_joint name="FixedFrame" type="fixed" parent_frame="world" child_link="world"/>
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->

@@ -1,0 +1,17 @@
+arm_controller:
+  type: position_controllers/JointTrajectoryController
+  joints:
+    - robot_a_waist
+    - robot_a_shoulder
+    - robot_a_elbow
+    - robot_a_forearm_roll
+    - robot_a_wrist_angle
+    - robot_a_wrist_rotate
+  constraints:
+    goal_time: 1
+    stopped_velocity_tolerance: 0.02
+
+#gripper_controller:
+#  type: position_controllers/JointTrajectoryController
+#  joints:
+#    - robot_a_left_finger
