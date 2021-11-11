@@ -43,6 +43,7 @@ class RGBSegmentation(object):
 
         new_img = cv2.erode(filtered_wire, kernel, iterations=1)
 
+        depth_limit = 900
 
 
         depth = self.depth_data
@@ -56,6 +57,8 @@ class RGBSegmentation(object):
                     
                 else:
                     new_img[r,c] = 1
+                    if depth_copy[r,c] > depth_limit:
+                        depth_copy[r,c] = 0
 
         #segmented_img = self.bridge_object.cv2_to_imgmsg(new_img,"bgr8")
         segmented_img = self.bridge_object.cv2_to_imgmsg(new_img,"passthrough")
@@ -102,6 +105,7 @@ class RGBSegmentation(object):
 
 def main():
     rospy.init_node("seg_node",anonymous=True)
+    rospy.sleep(10)
     seg_object = RGBSegmentation()
     try:
         rospy.spin()

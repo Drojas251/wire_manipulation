@@ -20,10 +20,9 @@ def get_pc_data(topic):
     point_cloud_topic = topic
     data = rospy.wait_for_message(point_cloud_topic, PointCloud2)
 
-
     # Get point cloud into a [N,3] vector
     pc = ros_numpy.numpify(data) 
-    """points=np.zeros((len(pc)*len(pc[0]),3))
+    points=np.zeros((len(pc)*len(pc[0]),3))
     count = 0
     for x in range(len(pc)):
         for y in range(len(pc[0])):
@@ -32,12 +31,24 @@ def get_pc_data(topic):
             if not math.isnan(points2[1]):
                 points[count] = [points2[0],points2[1],points2[2]]   
                 count = count + 1    
-    """
-    print(len(pc))
-    print(pc[0])
-    print(pc[1])
 
-    return pc
+    points_ = points[0:(count-1), :]
+
+    kmeans = KMeans(n_clusters=20)
+    kmeans.fit(points_)
+    C = kmeans.cluster_centers_
+    print(kmeans.cluster_centers_)
+    print(kmeans.labels_[0])
+    print(kmeans.labels_[200])
+    print(kmeans.labels_[600])
+    print(kmeans.labels_[1000])
+    print(kmeans.labels_[2000])
+
+
+
+
+
+    return C
 
 #def get_nodes_from_pc(points):
     # k means clustering 
@@ -47,6 +58,6 @@ def get_pc_data(topic):
 
 
 rospy.init_node('listener', anonymous=True)
-topic = "/camera/depth/color/points"
+topic = "/rscamera/depth/points"
 points = get_pc_data(topic)
 rospy.spin()
