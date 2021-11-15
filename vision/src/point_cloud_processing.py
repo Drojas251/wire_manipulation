@@ -14,6 +14,7 @@ from geometry_msgs.msg import PoseArray
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Pose
 from sklearn.cluster import KMeans
+from wire_modeling.Bezier import Bezier
 
 
 def sort_points(points,end_point):
@@ -39,6 +40,18 @@ def sort_points(points,end_point):
         elements.append(element)
     return sorted_points
 
+def get_final_node_set(sorted_points,N):
+    # N = number of nodes
+    t_points = np.arange(0, 1, 0.01)
+    curve_set = Bezier.Curve(t_points, sorted_points)
+
+    final_node_set = np.zeros((N,3))
+    step = 5
+
+    for i in range(20):
+        final_node_set[[i],:] = curve_set[[i*5],:]
+
+    return final_node_set    
 
 
 
@@ -88,15 +101,18 @@ def callback(data):
     # Get rid of outliers 
     # reduce your array
     size_of_outliers = len(outliers)
+    print(size_of_outliers)
     new_points = np.zeros((N-size_of_outliers,3))
+    j = 0
 
     for i in range(N):
         remove = False
         for k in range(size_of_outliers):
-            if i == size_of_outliers[k]:
+            if i == outliers[k]:
                 remove = True
         if(remove != True):
-            new_points[[i],:] = C[[i],:]
+            new_points[[j],:] = C[[i],:]
+            j = j +1
 
     # check the extreme points ( maz min x,y,z)
     # find the element with the most extreme values
@@ -139,13 +155,17 @@ def callback(data):
             end_point_C = i
             break
 
+    # sort the points 
     sorted_points = sort_points(new_points,end_point)
-    
+
+    # fit bezier curve 
+    final_node_set = get_final_node_set(sorted_points,20)
 
     count = 0
     markers = MarkerArray()
 
-    """for j in range(20):
+    # print final node set
+    for j in range(20):
 
         marker_object = Marker()
         marker_object.header.frame_id = 'camera_color_optical_frame'
@@ -156,9 +176,9 @@ def callback(data):
         marker_object.action = Marker.ADD
 
         my_point = Point()
-        my_point.x = C[j,0]
-        my_point.y = C[j,1]
-        my_point.z = C[j,2]
+        my_point.x = final_node_set[j,0]
+        my_point.y = final_node_set[j,1]
+        my_point.z = final_node_set[j,2]
         
         marker_object.pose.position = my_point
 
@@ -170,23 +190,10 @@ def callback(data):
         marker_object.scale.x = 0.025
         marker_object.scale.y = 0.025
         marker_object.scale.z = 0.025
-
-        # color the outlier in blue
-        # TO DO: Remove outlier from data set
-        #for out in outliers:
-            #if marker_object.id == out:
-            #    marker_object.color.r = 0.0
-            #    marker_object.color.g = 0.0
-            #    marker_object.color.b = 1.0
                 
-        if marker_object.id == end_point_C:
-            marker_object.color.r = 0.0
-            marker_object.color.g = 1.0
-            marker_object.color.b = 0.0
-        else:
-            marker_object.color.r = 1.0
-            marker_object.color.g = 0.0
-            marker_object.color.b = 0.0
+        marker_object.color.r = 0.0
+        marker_object.color.g = 1.0
+        marker_object.color.b = 0.0
 
         marker_object.color.a = 1.0
         marker_object.lifetime = rospy.Duration(0)
@@ -194,8 +201,8 @@ def callback(data):
         markers.markers.append(marker_object)
 
         count = count + 1
-    """
-    for j in range(len(sorted_points)):
+    
+    """for j in range(len(sorted_points)):
 
         marker_object = Marker()
         marker_object.header.frame_id = 'camera_color_optical_frame'
@@ -234,7 +241,7 @@ def callback(data):
         marker_object.lifetime = rospy.Duration(0)
 
         markers.markers.append(marker_object)
-        
+    """    
 
     marker_.publish(markers)    
 
