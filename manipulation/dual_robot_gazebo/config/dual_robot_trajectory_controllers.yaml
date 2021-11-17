@@ -4,7 +4,7 @@ joint_state_controller:
   type: joint_state_controller/JointStateController
   publish_rate: 100
 
-robot_a_controller:
+robot_a_/arm_controller:
   type: effort_controllers/JointTrajectoryController
   joints:
     - robot_a_waist
@@ -42,7 +42,7 @@ robot_a_controller:
       goal: 0.2
       trajectory: 0.2
 
-robot_b_controller:
+robot_b_/arm_controller:
   type: effort_controllers/JointTrajectoryController
   joints:
     - robot_b_waist

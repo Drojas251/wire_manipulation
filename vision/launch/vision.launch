@@ -7,6 +7,8 @@
 
   <node pkg="vision" type="rgb_segmentation.py" name="rgb_segmentation" output="screen" />
 
+  <node pkg="vision" type="process_point_cloud_server.py" name="process_point_cloud_server" output="screen" />
+
   <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />
 
   <node pkg="nodelet" type="nodelet" name="nodelet1"
@@ -16,7 +18,7 @@
     <remap from="points" to="/rscamera/depth/points"/>
   </node>
 
-  
+  <!-- replace this with robot launch file -->
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(find vision)/urdf/world_frame.urdf.xacro" />
   
   <node

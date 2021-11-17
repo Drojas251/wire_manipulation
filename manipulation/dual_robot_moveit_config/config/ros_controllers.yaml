@@ -32,7 +32,7 @@ joint_state_controller:
   type: joint_state_controller/JointStateController
   publish_rate: 50
 controller_list:
-  - name: robot_a_controller
+  - name: robot_a_arm_controller
     action_ns: follow_joint_trajectory
     default: True
     type: FollowJointTrajectory
@@ -43,7 +43,7 @@ controller_list:
       - robot_a_forearm_roll
       - robot_a_wrist_angle
       - robot_a_wrist_rotate
-  - name: robot_b_controller
+  - name: robot_b_arm_controller
     action_ns: follow_joint_trajectory
     default: True
     type: FollowJointTrajectory

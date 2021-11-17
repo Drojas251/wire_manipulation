@@ -34,14 +34,16 @@ class RGBSegmentation(object):
         kernel = np.ones((5,5), np.uint8)
         img_dilation = cv2.dilate(new_img, kernel, iterations=1)
         img_dilation_gray = cv2.cvtColor(img_dilation,cv2.COLOR_BGR2GRAY)
-
+        
+        # find largest contour
         contours, hierch = cv2.findContours(img_dilation_gray, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         largest_area = sorted(contours, key= cv2.contourArea)
         mask2 = np.zeros(img_dilation_gray.shape, np.uint8)
 
         filtered_wire = cv2.drawContours(mask2,[largest_area[-1]], 0, (255,255,255,255), -1)
 
-        new_img = cv2.erode(filtered_wire, kernel, iterations=1)
+        # erosion
+        new_img = cv2.erode(filtered_wire, kernel, iterations=3)
 
         depth_limit = 900
 

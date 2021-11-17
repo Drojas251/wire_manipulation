@@ -27,23 +27,13 @@
   <!--Spawn Robot-->
   <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"  args="-urdf -model dual_viper -param robot_description" />
 
-  <!--Launch Robot State Publisher (The node wich publishes joint informations)
-  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
-    <param name="publish_frequency" type="double" value="50.0" />
-  </node>-->
-
   <node
     name="robot_state_publisher"
     pkg="robot_state_publisher"
     type="robot_state_publisher">
   </node>
 
-
-    <!--<rosparam file="$(find dual_robot_gazebo)/config/dual_robot_trajectory_controllers.yaml" command="load" ns="$(arg robot_name)"/>-->
-
-    <rosparam file="$(find dual_robot_gazebo)/config/dual_robot_trajectory_controllers.yaml" command="load"/>
-
-
+  <rosparam file="$(find dual_robot_gazebo)/config/dual_robot_trajectory_controllers.yaml" command="load"/>
 
     <node
       name="controller_spawner"
@@ -51,10 +41,6 @@
       type="controller_manager"
       respawn="false"
       output="screen"
-      args="spawn robot_a_controller robot_b_controller joint_state_controller"/>
-
-
-
-
+      args="spawn robot_a_/arm_controller robot_b_/arm_controller joint_state_controller"/>
 
 </launch>

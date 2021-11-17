@@ -36,6 +36,7 @@
   <exec_depend>interbotix_xsarm_descriptions</exec_depend>
   <exec_depend>joint_state_controller</exec_depend>
   <exec_depend>joint_trajectory_controller</exec_depend>
+  <exec_depend>wire_modeling</exec_depend>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>rospy</build_depend>

@@ -70,6 +70,7 @@
    <exec_depend>ros_numpy</exec_depend>
    <exec_depend>realsense2_camera</exec_depend>
    <exec_depend>wire_modeling</exec_depend>
+   <exec_depend>wire_modeling_msgs</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

@@ -40,8 +40,6 @@
 
 
 
-
-
 <include file="$(find dual_robot_moveit_config)/launch/move_group.launch"/> 
 
 <node name="rviz" pkg="rviz" type="rviz" args="-d $(find dual_robot_gazebo)/config/dual_robot.rviz"/> 
