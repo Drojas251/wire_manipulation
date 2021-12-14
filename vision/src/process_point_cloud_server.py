@@ -3,6 +3,7 @@ import rospy
 #from __future__ import print_function
 from wire_modeling_msgs.srv import ProcessPointCloud, ProcessPointCloudResponse
 import math
+from numpy import linalg as la
 
 from sensor_msgs.msg import PointCloud2
 import sensor_msgs.point_cloud2 as pc2
@@ -18,6 +19,9 @@ import numpy as np
 from sklearn.cluster import KMeans
 from wire_modeling.Bezier import Bezier
 from wire_modeling.wire_sim import *
+from wire_modeling.wire_grasp_toolbox import WireGraspToolbox, rotm
+
+
 
 def sort_points(points,end_point):
     elements = []
@@ -45,17 +49,28 @@ def sort_points(points,end_point):
 def get_final_node_set(sorted_points,N):
     # N = number of nodes
     t_points = np.arange(0, 1, 0.01)
-    curve_set = Bezier.Curve(t_points, sorted_points)
+    Wire = WireGraspToolbox()
+    
+    #curve_set = Bezier.Curve(t_points, sorted_points)
+    curve_set = Wire.BCurve(t_points, sorted_points)
 
     final_node_set = np.zeros((N,3))
-    step = 5
 
     for i in range(20):
         final_node_set[[i],:] = curve_set[[i*5],:]
 
     return final_node_set 
 
+def get_wire_length(points):
+    length = 0
+    for i in range(len(points)-1):
+        length = length + ((points[i,0] - points[i+1,0])**2 + (points[i,1] - points[i+1,1])**2 + (points[i,2] - points[i+1,2])**2 )**0.5
+
+    return length
+
+
 def process_point_cloud(req):
+    # points are in camera_color_optical_frame
     pc = ros_numpy.numpify(req.pointcloud)
     points=np.zeros((len(pc)*len(pc[0]),3))
     count = 0
@@ -115,13 +130,25 @@ def process_point_cloud(req):
             j = j +1
 
 
+    # Transform the points from camera_color_optical_frame to camera_frame 
+    # rotation about x -90 
+    # rotation about y 90
+
+    # Transformation from camera frame to world is pure translation 
+    #-0.2794 0 0.38
+
+    angle = math.pi/2
+    ROT = rotm(-angle,angle,0)
+
+    for i in range(len(new_points)):
+        new_points[[i],:] = np.transpose(ROT@np.transpose(new_points[[i],:])) + np.array((-0.20,0,0.38))
+
     # check the extreme points ( maz min x,y,z)
     # find the element with the most extreme values
     # ex. element 6 might hold the max x and min z. Likley an end point
     # use this point as a starting point
-
     min_y = max_y = new_points[0,1]
-    min_x = max_x = new_points[0,0]
+    min_z = max_z = new_points[0,2]
     extrema_elements = np.zeros(4) # [min_y, max_y, min_z, max_z]
 
     for j in range(len(new_points)):
@@ -131,35 +158,43 @@ def process_point_cloud(req):
         if new_points[j,1] >= max_y:
             max_y = new_points[j,1]
             extrema_elements[1] = int(j)
-        if new_points[j,0] <= min_x:
-            min_x = new_points[j,0]
+        if new_points[j,2] <= min_z:
+            min_z = new_points[j,2]
             extrema_elements[2] = int(j)
-        if new_points[j,0] >= max_x:
-            max_x = new_points[j,0]
+        if new_points[j,2] >= max_z:
+            max_z = new_points[j,2]
             extrema_elements[3] = int(j)
 
-    #print('min_y', min_y)
-    #print('max_y', max_y)
-    #print('min_z', min_x)
-    #print('maz_z', max_x)
-
-    distance_between_y_extrema = np.abs(max_x - min_x)
+    distance_between_y_extrema = np.abs(max_y - min_y)
 
     if distance_between_y_extrema > 0.1:
-        end_point = int(extrema_elements[2])
+        end_point = int(extrema_elements[1])
         print("end point is in X", new_points[end_point])
     else:
-        end_point = int(extrema_elements[0])
+        end_point = int(extrema_elements[3])
         print("end point is in Y", new_points[end_point])
 
     # sort the points 
     sorted_points = sort_points(new_points,end_point)
 
+
     # fit bezier curve 
     final_node_set = get_final_node_set(sorted_points,20)
 
-    pose = Pose()
+
     pose_array = PoseArray()
+    markers = MarkerArray()
+    raw_points = PoseArray()
+
+    for j in range(len(sorted_points[0])):
+        pose = Pose()
+        pose.position.x = sorted_points[i,0]
+        pose.position.y = sorted_points[i,1]
+        pose.position.z = sorted_points[i,2]
+        pose.orientation.w = 1.0
+
+        raw_points.poses.append(pose)
+
 
     for i in range(N):
         pose = Pose()
@@ -168,13 +203,44 @@ def process_point_cloud(req):
         pose.position.z = final_node_set[i,2]
         pose.orientation.w = 1.0
 
-        pose_array.poses.append(pose)   
+        pose_array.poses.append(pose)  
+
+        # Visualization 
+        marker_object = Marker()
+        marker_object.header.frame_id = 'world'
+        marker_object.header.stamp = rospy.get_rostime()
+        marker_object.ns = 'point'
+        marker_object.id = i
+        marker_object.type = Marker.SPHERE
+        marker_object.action = Marker.ADD
+
+        
+        marker_object.pose.position = pose.position
+        marker_object.pose.orientation = pose.orientation
+
+        marker_object.scale.x = 0.025
+        marker_object.scale.y = 0.025
+        marker_object.scale.z = 0.025
+                
+        marker_object.color.r = 0.0
+        marker_object.color.g = 1.0
+        marker_object.color.b = 0.0
+
+        marker_object.color.a = 1.0
+        marker_object.lifetime = rospy.Duration(0)
+
+        markers.markers.append(marker_object)
+
+    marker_.publish(markers)
+    wire_length = get_wire_length(final_node_set)
+
     
-    return ProcessPointCloudResponse(pose_array)
+    return ProcessPointCloudResponse(pose = pose_array, wire_length = wire_length, raw_points = raw_points)
     
  
 if __name__ == "__main__":
     rospy.init_node('add_two_ints_server')
+    marker_ = rospy.Publisher('/marker_array', MarkerArray, queue_size=1)
     s = rospy.Service('process_point_cloud', ProcessPointCloud, process_point_cloud)
     print("Process PointCloud Server is now running")
     rospy.spin()

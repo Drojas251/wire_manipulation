@@ -25,7 +25,21 @@
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(find dual_robot_description)/urdf/dual_robot.urdf.xacro" />
 
   <!--Spawn Robot-->
-  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"  args="-urdf -model dual_viper -param robot_description" />
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"  args="-urdf -param robot_description -model dual_viper
+                                                                        -J robot_a_elbow 1.55
+                                                                        -J robot_a_forearm_roll 0
+                                                                        -J robot_a_shoulder -1.76
+                                                                        -J robot_a_waist 0
+                                                                        -J robot_a_wrist_angle 0.8
+                                                                        -J robot_a_wrist_rotate 0
+                                                                        
+                                                                        -J robot_b_elbow 1.55
+                                                                        -J robot_b_forearm_roll 0
+                                                                        -J robot_b_shoulder -1.76
+                                                                        -J robot_b_waist 0
+                                                                        -J robot_b_wrist_angle 0.8
+                                                                        -J robot_b_wrist_rotate 0" />
+
 
   <node
     name="robot_state_publisher"

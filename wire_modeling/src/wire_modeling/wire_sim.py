@@ -23,7 +23,7 @@ class DualRobotConfig:
         self.r2 = right_robot_location # robot 2 is the robot on the right ( if you are standing behind them) 3x1 vector
         self.robot_reach = robot_reach # the maximum safe reach of the robot- 1x1 scalar
         self.distance_apart = distance_apart # lateral distance between the two robots ( assume then are next to eachother)- 1x1 scalar
-        self.max_arm_thickness = 0.15 # thickness of the arm or gripper in meters
+        self.max_arm_thickness = 0.08 # thickness of the arm or gripper in meters
 
     def workspace_volume(self):
         # get the workspace volume for the two robots
@@ -32,20 +32,20 @@ class DualRobotConfig:
         workspace_volume = np.zeros((3,8))
 
         scale_on_x = 0.75
-        scale_on_z = 0.85
+        scale_on_z = 1.0
         x = scale_on_x*self.robot_reach
         y = self.robot_reach - self.distance_apart
         z = scale_on_z*self.robot_reach
 
-        workspace_volume[:,[0]] = np.array([self.r2[0] + x, self.r2[1] + y, self.r2[2] + z]) # top right forward 
-        workspace_volume[:,[1]] = np.array([self.r1[0] + x, self.r1[1] - y, self.r1[2] + z]) # top left forward 
-        workspace_volume[:,[2]] = np.array([self.r2[0] + x, self.r2[1] + y, self.r2[2]]) # bottom right forward 
-        workspace_volume[:,[3]] = np.array([self.r1[0] + x, self.r1[1] - y, self.r1[2]]) # bottom left forward 
+        workspace_volume[:,[0]] = np.array([self.r2[0] + x, self.r2[1] - y, self.r2[2] + z]) # top right forward 
+        workspace_volume[:,[1]] = np.array([self.r1[0] + x, self.r1[1] + y, self.r1[2] + z]) # top left forward 
+        workspace_volume[:,[2]] = np.array([self.r2[0] + x, self.r2[1] - y, self.r2[2]]) # bottom right forward 
+        workspace_volume[:,[3]] = np.array([self.r1[0] + x, self.r1[1] + y, self.r1[2]]) # bottom left forward 
 
-        workspace_volume[:,[4]] = np.array([self.r2[0] - x, self.r2[1] + y, self.r2[2] + z]) # top right back 
-        workspace_volume[:,[5]] = np.array([self.r1[0] - x, self.r1[1] - y, self.r1[2] + z]) # top left back 
-        workspace_volume[:,[6]] = np.array([self.r2[0] - x, self.r2[1] + y, self.r2[2]]) # bottom right back 
-        workspace_volume[:,[7]] = np.array([self.r1[0] - x, self.r1[1] - y, self.r1[2]]) # bottom left back
+        workspace_volume[:,[4]] = np.array([self.r2[0] - x, self.r2[1] - y, self.r2[2] + z]) # top right back 
+        workspace_volume[:,[5]] = np.array([self.r1[0] - x, self.r1[1] + y, self.r1[2] + z]) # top left back 
+        workspace_volume[:,[6]] = np.array([self.r2[0] - x, self.r2[1] - y, self.r2[2]]) # bottom right back 
+        workspace_volume[:,[7]] = np.array([self.r1[0] - x, self.r1[1] + y, self.r1[2]]) # bottom left back
 
         return workspace_volume 
 
@@ -58,7 +58,7 @@ class DualRobotConfig:
         # this volume represents the volume taken up by the robot arm near the grasp object
         # the volume around the robot_grasp_volume in its local frame
         # forward is in its +x axis 
-        dx = 2*self.max_arm_thickness
+        dx = self.max_arm_thickness
         dy = self.max_arm_thickness/2
         dz = self.max_arm_thickness/2
 
@@ -357,9 +357,10 @@ class WireSim:
               optimal = i
       
       # find the direction vector that matches the optimal wire config
-      optimal_action = F_vect[:,[optimal]]
+      optimal_pull_action = F_vect[:,[optimal]]
+      optimal_pick_action = wire[:,[grasp_index]]
       
-      return optimal_action
+      return optimal_pick_action, optimal_pull_action
 
   def dot_product(self,u,v):
       dp = sum([x*y for (x, *x2), y in zip(u,v)])
@@ -388,6 +389,7 @@ class WireSim:
  
   def find_optimal_action(self,wire_set):
       workspace_volume = self.robot.workspace_volume()
+      print("workspace",workspace_volume)
       object_volume_local = self.grasp_object.grasp_volume_in_local_frame()
       object_volume_global = self.grasp_object.grasp_volume_in_global_frame()
       point_of_reference = self.robot.mid_point_of_reference()
@@ -451,21 +453,22 @@ class WireSim:
       count = 0
 
       for i in range(self.actions):
-          print("WIRE" + str(jj))
+          #print("WIRE" + str(jj))
           #print(wire_in_gof)
           for j in range(self.N):
               if( -dx <= wire_in_gof[[jj],[0],[j]] and wire_in_gof[[jj],[0],[j]] <= dx
                 and -dy <= wire_in_gof[[jj],[1],[j]] and wire_in_gof[[jj],[1],[j]] <= dy
                 and -dz <= wire_in_gof[[jj],[2],[j]] and wire_in_gof[[jj],[2],[j]] <= dz):
                 conflict = 1
+                print("grasp violation")
 
-              if (robot_grasp_volume[0][4] <= wire_in_rgf[[jj],[0],[j]] and wire_in_rgf[[jj],[0],[j]] <= robot_grasp_volume[0][0]
+              """if (robot_grasp_volume[0][4] <= wire_in_rgf[[jj],[0],[j]] and wire_in_rgf[[jj],[0],[j]] <= robot_grasp_volume[0][0]
                 and robot_grasp_volume[1][1] <= wire_in_rgf[[jj],[1],[j]] and wire_in_rgf[[jj],[1],[j]] <= robot_grasp_volume[1][0]
                 and robot_grasp_volume[2][2] <= wire_in_rgf[[jj],[2],[j]] and wire_in_rgf[[jj],[2],[j]] <= robot_grasp_volume[2][1]):
-                conflict = 1
+                conflict = 1"""
 
               if (workspace_volume[0][0] < wire_set[[jj],[0],[j]] or wire_set[[jj],[0],[j]] < workspace_volume[0][4]
-                  or workspace_volume[1][0] < wire_set[[jj],[1],[j]] or wire_set[[jj],[1],[j]] < workspace_volume[1][1]
+                  or workspace_volume[1][1] < wire_set[[jj],[1],[j]] or wire_set[[jj],[1],[j]] < workspace_volume[1][0]
                   or workspace_volume[2][0] < wire_set[[jj],[2],[j]] or wire_set[[jj],[2],[j]] < workspace_volume[2][2]):
                   conflict = 1
 

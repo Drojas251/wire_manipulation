@@ -6,6 +6,7 @@ import rospy
 from geometry_msgs.msg import PoseArray
 from sensor_msgs.msg import PointCloud2
 from wire_modeling_msgs.srv import *
+from wire_modeling.wire_grasp_toolbox import WireGraspToolbox
 
 def get_wire_pointcloud(topic):
     points = rospy.wait_for_message(topic, PointCloud2)
@@ -16,7 +17,7 @@ def process_point_cloud_client(points):
      try:
          wire_nodes = rospy.ServiceProxy('process_point_cloud', ProcessPointCloud)
          response = wire_nodes(points)
-         return response.pose
+         return response
      except rospy.ServiceException as e:
          print("Service call failed: %s"%e)
 
@@ -26,22 +27,26 @@ rospy.init_node('listener', anonymous=True)
 topic = "/rscamera/depth/points"
 
 # Get segmented pointcloud data
+print("Getting PointCloud Instance")
 points = get_wire_pointcloud(topic)
 
 # Process PC data to get estimated nodes on wire
+print("Processing Pc with process_point_cloud_server")
 wire_nodes = process_point_cloud_client(points) # output data structure is a posearray
+print(wire_nodes.wire_length)
 
 # Convert PoseArray into Numpy Array
 wire = np.zeros((3,20))
 
 for i in range(20):
-    wire[[0],[i]] = wire_nodes.poses[i].position.x
-    wire[[1],[i]] = wire_nodes.poses[i].position.y
-    wire[[2],[i]] = wire_nodes.poses[i].position.z
+    wire[[0],[i]] = wire_nodes.pose.poses[i].position.x
+    wire[[1],[i]] = wire_nodes.pose.poses[i].position.y
+    wire[[2],[i]] = wire_nodes.pose.poses[i].position.z
+    print(wire[:,[i]])
 
 
 # ***** insert wire info here *****
-L = 0.35
+L = wire_nodes.wire_length # get length from point cloud process
 M = 0.028
 Ks = 13.1579
 Kb = 6.13
@@ -50,8 +55,8 @@ wire_model = WireModel(L,M,Ks,Kb,Kd) # create Wire object
 
 
 #*** Define Grasp Object **** 
-gop = np.array([[0.55],[0.05],[0.3]]) # position of grasp object
-god = np.array([[0.15],[0.15],[0.15]]) # dimensions of grasp object -> model the grasp object as a box
+gop = np.array([[0.45],[-0.2],[0.3]]) # position of grasp object
+god = np.array([[0.05],[0.05],[0.05]]) # dimensions of grasp object -> model the grasp object as a box
 # orientation of grasp object wrt to world in order (xyz)
 rx = 0 # rot about x
 ry = 0 # rot about y
@@ -60,10 +65,10 @@ grasp_object = GraspObject(gop,god,rx,ry,rz) # create grasp object, object
 
 
 #*** Define the Configuration of the Dual Arm Setup ***
-left_robot_location = np.array([[0],[0.15],[0]])
-right_robot_location = np.array([[0],[-0.15],[0]])
+left_robot_location = np.array([[0],[0.1778],[0]])
+right_robot_location = np.array([[0],[-0.1778],[0]])
 robot_reach = 0.7
-distance_apart = 0.3
+distance_apart = 0.3556
 robots = DualRobotConfig(left_robot_location, right_robot_location, robot_reach, distance_apart) # dual robot object
 
 #*** Initialize the WireSim Object ***
@@ -71,13 +76,27 @@ N = 20
 wire_sim_ = WireSim(N,wire_model,grasp_object, robots )
 
 #*** Call to WireSim class function to find pick and pull action **
-wire = np.zeros((3,N))
-wire[0] = 0.5*np.ones((1,N))
-wire[1] = np.linspace(0,L,N) - 0.1
-wire[2] = 0.3*np.ones((1,N))
 
-robot_actions = wire_sim_.simulate(wire)
-print(robot_actions)
+wire2 = np.zeros((3,N))
+wire2[0] = 0.5*np.ones((1,N))
+wire2[1] = np.linspace(0,L,N) - 0.1
+wire2[2] = 0.3*np.ones((1,N))
+
+
+
+
+print("Sending Wire Config to Simulator")
+pick, pull = wire_sim_.simulate(wire)
+print("Result Returned from Simulator")
+print("")
+print("pick", pick)
+print("pull", pull)
+
+grasp = WireGraspToolbox()
+t = np.arange(0, 1, 0.01)
+#grasp_frame = grasp.get_wire_grasp_orientation(t,,pick,threshold)
+
+
 
 
 rospy.spin()

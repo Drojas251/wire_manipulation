@@ -5,6 +5,8 @@
     <arg name="align_depth"                      value="true"/>
   </include>
 
+  <include file="$(find dual_robot_gazebo)/launch/dual_robot_gazebo.launch"/>
+
   <node pkg="vision" type="rgb_segmentation.py" name="rgb_segmentation" output="screen" />
 
   <node pkg="vision" type="process_point_cloud_server.py" name="process_point_cloud_server" output="screen" />
@@ -18,17 +20,10 @@
     <remap from="points" to="/rscamera/depth/points"/>
   </node>
 
-  <!-- replace this with robot launch file -->
-  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find vision)/urdf/world_frame.urdf.xacro" />
   
-  <node
-    name="robot_state_publisher"
-    pkg="robot_state_publisher"
-    type="robot_state_publisher">
-  </node>
 
 
-   <node pkg="tf2_ros" type="static_transform_publisher" name="camera_broadcaster" args="0 0 0.05 0 0 0 1 world camera_link" />
+   <node pkg="tf2_ros" type="static_transform_publisher" name="camera_broadcaster" args="-0.20 0 0.38 0 0 0 1 world camera_link" />
 
 
 
