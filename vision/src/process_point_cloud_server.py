@@ -135,13 +135,13 @@ def process_point_cloud(req):
     # rotation about y 90
 
     # Transformation from camera frame to world is pure translation 
-    #-0.2794 0 0.38
+    #-0.2286 0 0.4318
 
     angle = math.pi/2
     ROT = rotm(-angle,angle,0)
 
     for i in range(len(new_points)):
-        new_points[[i],:] = np.transpose(ROT@np.transpose(new_points[[i],:])) + np.array((-0.20,0,0.38))
+        new_points[[i],:] = np.transpose(ROT@np.transpose(new_points[[i],:])) + np.array((-0.2286,0,0.4318))
 
     # check the extreme points ( maz min x,y,z)
     # find the element with the most extreme values
@@ -168,10 +168,10 @@ def process_point_cloud(req):
     distance_between_y_extrema = np.abs(max_y - min_y)
 
     if distance_between_y_extrema > 0.1:
-        end_point = int(extrema_elements[1])
+        end_point = int(extrema_elements[0])
         print("end point is in X", new_points[end_point])
     else:
-        end_point = int(extrema_elements[3])
+        end_point = int(extrema_elements[2])
         print("end point is in Y", new_points[end_point])
 
     # sort the points 
@@ -186,11 +186,11 @@ def process_point_cloud(req):
     markers = MarkerArray()
     raw_points = PoseArray()
 
-    for j in range(len(sorted_points[0])):
+    for j in range(len(sorted_points)):
         pose = Pose()
-        pose.position.x = sorted_points[i,0]
-        pose.position.y = sorted_points[i,1]
-        pose.position.z = sorted_points[i,2]
+        pose.position.x = sorted_points[j,0]
+        pose.position.y = sorted_points[j,1]
+        pose.position.z = sorted_points[j,2]
         pose.orientation.w = 1.0
 
         raw_points.poses.append(pose)
@@ -221,10 +221,15 @@ def process_point_cloud(req):
         marker_object.scale.x = 0.025
         marker_object.scale.y = 0.025
         marker_object.scale.z = 0.025
-                
-        marker_object.color.r = 0.0
-        marker_object.color.g = 1.0
-        marker_object.color.b = 0.0
+
+        if i == 0:
+            marker_object.color.r = 0.0
+            marker_object.color.g = 1.0
+            marker_object.color.b = 0.0
+        else:
+            marker_object.color.r = 1.0
+            marker_object.color.g = 0.0
+            marker_object.color.b = 0.0
 
         marker_object.color.a = 1.0
         marker_object.lifetime = rospy.Duration(0)

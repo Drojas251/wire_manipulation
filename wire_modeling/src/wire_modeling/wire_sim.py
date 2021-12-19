@@ -214,6 +214,67 @@ class WireSim:
 
       return F_b
 
+  def internal_forces(self,wire,V):
+      F_s = np.zeros((3,self.N)) # structural spring force vectors
+      F_b = np.zeros((3,self.N)) # structural spring force vectors
+
+      len_arr = self.l*np.ones((1,self.N-4))
+
+      ## Structure Springs
+      l1 = la.norm(wire[:,3:self.N-1] - wire[:,2:self.N-2],axis = 0)
+      l2 = la.norm(wire[:,2:self.N-2] - wire[:,1:self.N-3],axis = 0)
+
+      F1 = self.wire_model.Ks*((len_arr/l2) - 1)*(wire[:,2:self.N-2] - wire[:,1:self.N-3])
+      F2 = -self.wire_model.Ks*((len_arr/l1) - 1)*(wire[:,3:self.N-1] - wire[:,2:self.N-2])
+      F_s[:,2:self.N-2] = F1 + F2
+
+      # case when i = 1
+      l_prime_1 = la.norm(wire[:,[2]] - wire[:,[1]]) # new distance from node i to node (i+1)
+      l_prime_2 = la.norm(wire[:,[1]] - wire[:,[0]]) # new distance from node i to node (i-1)
+      F1 = 2*self.wire_model.Ks*((self.l/l_prime_2) - 1)*(wire[:,[1]] - wire[:,[0]])
+      F2 = -self.wire_model.Ks*((self.l/l_prime_1) - 1)*(wire[:,[2]] - wire[:,[1]])
+      F_s[:,[1]] = F1 + F2
+
+      # case when i = N-2
+      l_prime_1 = la.norm(wire[:,[self.N-1]] - wire[:,[self.N-2]]) # new distance from node i to node (i+1)
+      l_prime_2 = la.norm(wire[:,[self.N-2]] - wire[:,[self.N-3]]) # new distance from node i to node (i-1)
+      F1 = self.wire_model.Ks*((self.l/l_prime_2) - 1)*(wire[:,[self.N-2]] - wire[:,[self.N-3]])
+      F2 = -2*self.wire_model.Ks*((self.l/l_prime_1) - 1)*(wire[:,[self.N-1]] - wire[:,[self.N-2]])
+      F_s[:,[self.N-2]] = F1 + F2
+
+      # damping force 
+      # i = 1 - N-2
+      x1 = wire[:,1:self.N-1] - wire[:,0:self.N-2]
+      F1_d_ = -self.wire_model.Kd*np.matmul(x1@np.transpose(x1), V[:,1:self.N-1] - V[:,0:self.N-2])/(la.norm(x1,axis=0)**2)
+
+      x2 = wire[:,2:self.N] - wire[:,1:self.N-1]
+      F2_d_ = self.wire_model.Kd*np.matmul(x2@np.transpose(x2), V[:,2:self.N] - V[:,1:self.N-1])/(la.norm(x2,axis=0)**2)
+
+      F_s[:,1:self.N-1] = F_s[:,1:self.N-1] + F2_d_ + F1_d_
+
+      ## Bending Spring 
+      # 3 - N-3
+      len_arr = self.l*np.ones((1,self.N-6))
+
+      l1 = la.norm(wire[:,5:self.N-1] - wire[:,3:self.N-3],axis = 0)
+      l2 = la.norm(wire[:,3:self.N-3] - wire[:,1:self.N-5],axis = 0)
+
+      F2 = self.wire_model.Kb*((len_arr/l2) - 1)*(wire[:,3:self.N-3] - wire[:,1:self.N-5])
+      F1 = -self.wire_model.Kb*((len_arr/l1) - 1)*(wire[:,5:self.N-1] - wire[:,3:self.N-3])
+      F_b[:,3:self.N-3] = F1 + F2
+
+      # 1:2
+      len_arr = self.l*np.ones((1,2))
+      l11 = la.norm(wire[:,3:5] - wire[:,1:3],axis = 0)
+      F_b[:,1:3] = -self.wire_model.Kb*((len_arr/l11) - 1)*(wire[:,3:5] - wire[:,1:3])
+
+      # N-3 N-2
+      l22 = la.norm(wire[:,self.N-3:self.N-1] - wire[:,self.N-5:self.N-3],axis = 0)
+      F_b[:,self.N-3:self.N-1] = self.wire_model.Kb*((len_arr/l22) - 1)*(wire[:,self.N-3:self.N-1] - wire[:,self.N-5:self.N-3])
+
+      F = F_s + F_b
+      return F
+
   def __normal_vec(self,ref_vec):
 
       # check for any zeros to avoid dividing by zero
@@ -324,8 +385,11 @@ class WireSim:
           while stop == 0:   
 
               F_s = self.__force_for_struct_springs(wire_sim,v)
-              F_b = self.__force_for_bending_springs(wire_sim)
+              #F_b = self.__force_for_bending_springs(wire_sim)
               F_net = F_s #+ F_b
+
+              # compute internal forces
+              #F_net = self.internal_forces(wire,v)
               F_net[2,1:(self.N-1)] = F_net[2,1:(self.N-1)] - self.m*9.81
 
               F_applied = 0.5*F_vect[:,[i]]
@@ -359,8 +423,13 @@ class WireSim:
       # find the direction vector that matches the optimal wire config
       optimal_pull_action = F_vect[:,[optimal]]
       optimal_pick_action = wire[:,[grasp_index]]
+
+      if optimal_pick_action[1] >= self.grasp_object.gop[1]:
+          robot_to_grasp_wire = "left"
+      else:
+          robot_to_grasp_wire ="right"
       
-      return optimal_pick_action, optimal_pull_action
+      return optimal_pick_action, optimal_pull_action , robot_to_grasp_wire
 
   def dot_product(self,u,v):
       dp = sum([x*y for (x, *x2), y in zip(u,v)])
@@ -471,6 +540,10 @@ class WireSim:
                   or workspace_volume[1][1] < wire_set[[jj],[1],[j]] or wire_set[[jj],[1],[j]] < workspace_volume[1][0]
                   or workspace_volume[2][0] < wire_set[[jj],[2],[j]] or wire_set[[jj],[2],[j]] < workspace_volume[2][2]):
                   conflict = 1
+                  #print("workspace violation")
+                  #print(wire_set[[jj],[0],[j]])
+                  #print(wire_set[[jj],[1],[j]])
+                  #print(wire_set[[jj],[2],[j]])
 
           if(conflict ==1):
             print("wire" + str(jj) + " violated grasp")

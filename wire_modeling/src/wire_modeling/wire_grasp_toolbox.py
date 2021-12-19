@@ -3,6 +3,7 @@
 import numpy as np
 import math
 from numpy import linalg as la
+from scipy.spatial.transform import Rotation as R
 
 class WireGraspToolbox():
   def __init__(self):
@@ -57,7 +58,7 @@ class WireGraspToolbox():
     B = np.cross(Q_dot[element],Q_dot_dot[element])/(la.norm(np.cross(Q_dot[element],Q_dot_dot[element])))
     N = np.cross(B,T)
 
-    Transform = np.matrix([T,N,B])
+    Transform = np.matrix([B,T,N])
     return Transform
 
   # Rotation Matrices and Euler Angle tools
@@ -104,20 +105,21 @@ class WireGraspToolbox():
   # Grasp Correction function
   def grasp_correction(self,Frame,threshold):
     E = self.rotationMatrixToEulerAngles(Frame)
+    print(E)
 
-    if(E[0]<threshold and E[0]> -1*threshold):
+    if(E[1]<threshold and E[1]> -1*threshold):
       print("Good Orientation")
       rotm = self.ROT(0,0,0)
-    elif(E[0] > threshold):
-      correction = -1*E[0]
+    elif(E[1] > threshold):
+      correction = -1*E[1]
       print("correction= ",correction)
-      rotm = self.ROT(correction,0,0)
-    elif(E[0]< -1*threshold):
-      correction = -1*E[0]
+      rotm = self.ROT(0,correction,0)
+    elif(E[1]< -1*threshold):
+      correction = -1*E[1]
       print("correction= ",correction)
-      rotm = self.ROT(correction,0,0)
+      rotm = self.ROT(0,correction,0)
 
-    new_frame = self.ROT(-math.pi/2,0,0)@rotm@Frame
+    new_frame = rotm@Frame
     return new_frame
 
   # Grasp Orientaion Function
@@ -125,18 +127,33 @@ class WireGraspToolbox():
     # get the wire grasp orientation at a grasp point on the wire 
 
     # P = raw control points to make up bezier curve 
+    print("grasp_point", grasp_point)
 
     curve = self.BCurve(t,P)
+    element = 25
+    TOL = 0.08
+
     for i in range(len(t)):
       if np.array_equal(curve[[i],:],grasp_point):
         element = i
-        print("element",element)
+        print("exactl point found")
         break
-    
+    if element == 25:
+      for i in range(len(t)):
+        diff = grasp_point - curve[[i],:]
+        diff = diff.flatten()
+        if np.abs(float(diff[0])) < TOL and np.abs(float(diff[1])) < TOL and np.abs(float(diff[2])) < TOL:
+          element = i
+          print("approximate point found")
+          break
+
     Frame = self.TNB_frame(t,P,element)
     Grasp = self.grasp_correction(Frame,threshold)
 
-    return Grasp
+    r = R.from_matrix(Grasp)
+    q = r.as_quat() # x y z w
+
+    return q
 
 
 def rotm(rx,ry,rz):
