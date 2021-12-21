@@ -244,6 +244,7 @@ class WireSim:
 
       # damping force 
       # i = 1 - N-2
+      """
       x1 = wire[:,1:self.N-1] - wire[:,0:self.N-2]
       F1_d_ = -self.wire_model.Kd*np.matmul(x1@np.transpose(x1), V[:,1:self.N-1] - V[:,0:self.N-2])/(la.norm(x1,axis=0)**2)
 
@@ -251,6 +252,21 @@ class WireSim:
       F2_d_ = self.wire_model.Kd*np.matmul(x2@np.transpose(x2), V[:,2:self.N] - V[:,1:self.N-1])/(la.norm(x2,axis=0)**2)
 
       F_s[:,1:self.N-1] = F_s[:,1:self.N-1] + F2_d_ + F1_d_
+      """
+
+      """
+
+      for i in range(1,self.N-1):
+        # INCLUDE DAMPING FORCE
+        x1 = wire[:,[i]] - wire[:,[i-1]]
+        F1_d = -self.wire_model.Kd*np.matmul(x1*np.transpose(x1), V[:,[i]] - V[:,[i-1]])/(la.norm(x1)**2)
+
+        x2 = wire[:,[i+1]] - wire[:,[i]]
+        F2_d = self.wire_model.Kd*np.matmul(x2*np.transpose(x2), V[:,[i+1]] - V[:,[i]])/(la.norm(x2)**2)
+
+        F_s[:,[i]] = F_s[:,[i]] + F2_d + F1_d
+
+      """
 
       ## Bending Spring 
       # 3 - N-3
@@ -272,7 +288,7 @@ class WireSim:
       l22 = la.norm(wire[:,self.N-3:self.N-1] - wire[:,self.N-5:self.N-3],axis = 0)
       F_b[:,self.N-3:self.N-1] = self.wire_model.Kb*((len_arr/l22) - 1)*(wire[:,self.N-3:self.N-1] - wire[:,self.N-5:self.N-3])
 
-      F = F_s + F_b
+      F = F_s #+ F_b
       return F
 
   def __normal_vec(self,ref_vec):
@@ -384,12 +400,12 @@ class WireSim:
 
           while stop == 0:   
 
-              F_s = self.__force_for_struct_springs(wire_sim,v)
+              #F_s = self.__force_for_struct_springs(wire_sim,v)
               #F_b = self.__force_for_bending_springs(wire_sim)
-              F_net = F_s #+ F_b
+              #F_net = F_s #+ F_b
 
               # compute internal forces
-              #F_net = self.internal_forces(wire,v)
+              F_net = self.internal_forces(wire_sim,v)
               F_net[2,1:(self.N-1)] = F_net[2,1:(self.N-1)] - self.m*9.81
 
               F_applied = 0.5*F_vect[:,[i]]
@@ -415,20 +431,27 @@ class WireSim:
       # get optimal wire config
       optimal_wire_config = self.find_optimal_action(wire_set)
 
-      # find the optimal wire config in the original wire set
-      for i in range(self.actions):
-          if np.array_equal(optimal_wire_config,wire_set[[i],:,:]):
-              optimal = i
-      
-      # find the direction vector that matches the optimal wire config
-      optimal_pull_action = F_vect[:,[optimal]]
-      optimal_pick_action = wire[:,[grasp_index]]
+      if (len(optimal_wire_config) >0):
+        # find the optimal wire config in the original wire set
+        for i in range(self.actions):
+            if np.array_equal(optimal_wire_config,wire_set[[i],:,:]):
+                optimal = i
+        
+        # find the direction vector that matches the optimal wire config
+        optimal_pull_action = F_vect[:,[optimal]]
+        optimal_pick_action = wire[:,[grasp_index]]
 
-      if optimal_pick_action[1] >= self.grasp_object.gop[1]:
-          robot_to_grasp_wire = "left"
+        if optimal_pick_action[1] >= self.grasp_object.gop[1]:
+            robot_to_grasp_wire = "left"
+        else:
+            robot_to_grasp_wire ="right"
+
       else:
-          robot_to_grasp_wire ="right"
-      
+          print("STATUS: No Solution Found")
+          optimal_pull_action = np.array([])
+          optimal_pick_action = np.array([])
+          robot_to_grasp_wire = None
+
       return optimal_pick_action, optimal_pull_action , robot_to_grasp_wire
 
   def dot_product(self,u,v):
@@ -458,11 +481,18 @@ class WireSim:
  
   def find_optimal_action(self,wire_set):
       workspace_volume = self.robot.workspace_volume()
-      print("workspace",workspace_volume)
       object_volume_local = self.grasp_object.grasp_volume_in_local_frame()
       object_volume_global = self.grasp_object.grasp_volume_in_global_frame()
       point_of_reference = self.robot.mid_point_of_reference()
       ROT = self.grasp_object.rotation_matrix()
+
+      # projections of points onto a plane that is normal to the x axis of the grasp object frame
+      projections = np.zeros((self.actions,3,self.N))
+      projections_in_gof = np.zeros((self.actions,3,self.N))
+      Distance = np.zeros((1,self.actions))
+
+      for j in range(self.actions):
+        projections[[j],:,:] , projections_in_gof[[j],:,:] , Distance[0][j] = self.projections(wire_set[[j],:,:].reshape((3,20)))
 
       # First volume constraint is the object_volume 
       # Second volume constraint is the robot arm grasp volume 
@@ -521,15 +551,14 @@ class WireSim:
       conflict = 0
       count = 0
 
+      print("  WIRE CONFIG SOLUTION")
+
       for i in range(self.actions):
-          #print("WIRE" + str(jj))
-          #print(wire_in_gof)
-          for j in range(self.N):
+          for j in range(3,self.N-4):
               if( -dx <= wire_in_gof[[jj],[0],[j]] and wire_in_gof[[jj],[0],[j]] <= dx
                 and -dy <= wire_in_gof[[jj],[1],[j]] and wire_in_gof[[jj],[1],[j]] <= dy
                 and -dz <= wire_in_gof[[jj],[2],[j]] and wire_in_gof[[jj],[2],[j]] <= dz):
                 conflict = 1
-                print("grasp violation")
 
               """if (robot_grasp_volume[0][4] <= wire_in_rgf[[jj],[0],[j]] and wire_in_rgf[[jj],[0],[j]] <= robot_grasp_volume[0][0]
                 and robot_grasp_volume[1][1] <= wire_in_rgf[[jj],[1],[j]] and wire_in_rgf[[jj],[1],[j]] <= robot_grasp_volume[1][0]
@@ -540,24 +569,61 @@ class WireSim:
                   or workspace_volume[1][1] < wire_set[[jj],[1],[j]] or wire_set[[jj],[1],[j]] < workspace_volume[1][0]
                   or workspace_volume[2][0] < wire_set[[jj],[2],[j]] or wire_set[[jj],[2],[j]] < workspace_volume[2][2]):
                   conflict = 1
-                  #print("workspace violation")
-                  #print(wire_set[[jj],[0],[j]])
-                  #print(wire_set[[jj],[1],[j]])
-                  #print(wire_set[[jj],[2],[j]])
 
           if(conflict ==1):
-            print("wire" + str(jj) + " violated grasp")
+            print("     wire" + str(i) + " violated grasp")
             wire_in_gof = np.delete(wire_in_gof,jj,0) 
             wire_in_rgf = np.delete(wire_in_rgf,jj,0) 
             wire_set = np.delete(wire_set,jj,0) 
+            Distance = np.delete(Distance,jj,1)
             conflict = 0    
             count = count + 1
           else:
             jj = jj +1 
+
+      # find the wire config with max distance from grasp object
+      print("")
+      print("       " + str(8 - count) + " Possible Solution Configurations to move the Wire to")
+      if count < 7:
+        max_dist = 0
+        for j in range(len(Distance[0])):
+          if Distance[0][j] >= max_dist:
+            max_dist = Distance[0][j]
+            max_dist_element = j
+        print("     Found optimal solution")
+        optimal_wire_config = wire_set[[max_dist_element],:,:]
+
+      elif count == 7:
+        print("     Only one valid Solution")
+        optimal_wire_config = wire_set
+      else:
+        print("     No solution")
+        optimal_wire_config = np.array([])     
               
       # need to employ one more constraint -> projections and max distance 
       # this will converge on a single wire config 
       # just return the first one for now
-      return wire_set[[0],:,:]
+      return optimal_wire_config
+
+
+  def projections(self,wire_set):
+      # Exlude for now
+      projection_in_global = np.zeros((3,self.N)) # projections of points on grasp object normal plane in global frame
+      projection_in_gof = np.zeros((3,self.N)) # projections of points on grasp object normal plane in grasp object frame
+      ROT = self.grasp_object.rotation_matrix()
+      grasp_axis = ROT@self.grasp_object.normal_axis
+
+      Distance = 0
+      
+      for i in range(self.N):
+        projection_in_global[:,[i]] = wire_set[:,[i]] - np.dot(np.transpose(wire_set[:,[i]] - self.grasp_object.gop), grasp_axis)*grasp_axis
+        projection_in_gof[:,[i]] = self.homo_to_vector(la.inv(self.homo_trans_matrix(self.grasp_object.gop,ROT))@self.vector_to_homo(projection_in_global[:,[i]]))
+
+        if i != 0 or i != 1 or i != 2 or i !=(self.N-3) or i !=(self.N -2) or i !=(self.N -1):
+          Distance = Distance + (projection_in_gof[0][i]**2 + projection_in_gof[1][i]**2)**0.5
+
+      Distance = Distance/(self.N-6)
+    
+      return projection_in_global , projection_in_gof , Distance
 
 

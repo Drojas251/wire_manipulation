@@ -58,7 +58,7 @@ class WireGraspToolbox():
     B = np.cross(Q_dot[element],Q_dot_dot[element])/(la.norm(np.cross(Q_dot[element],Q_dot_dot[element])))
     N = np.cross(B,T)
 
-    Transform = np.matrix([B,T,N])
+    Transform = np.matrix([N,B,T])
     return Transform
 
   # Rotation Matrices and Euler Angle tools
@@ -103,32 +103,42 @@ class WireGraspToolbox():
     return rotm
 
   # Grasp Correction function
-  def grasp_correction(self,Frame,threshold):
-    E = self.rotationMatrixToEulerAngles(Frame)
-    print(E)
+  def grasp_correction(self,Frame, grasp_vector, TOL = 0.02 ,flip=False):
+    # grasp_vec = 1 x 3
+    correction = 0.0174533 # 1 deg
+    status = 1
+    iter = 0
 
-    if(E[1]<threshold and E[1]> -1*threshold):
-      print("Good Orientation")
-      rotm = self.ROT(0,0,0)
-    elif(E[1] > threshold):
-      correction = -1*E[1]
-      print("correction= ",correction)
-      rotm = self.ROT(0,correction,0)
-    elif(E[1]< -1*threshold):
-      correction = -1*E[1]
-      print("correction= ",correction)
-      rotm = self.ROT(0,correction,0)
+    while status == 1 and iter < 500:
 
-    new_frame = rotm@Frame
-    return new_frame
+      gripper_x_axis_pointing = np.dot(Frame[[0],:], np.array([1,0,0]))
+      pull_vec_alignment = np.dot(Frame[[1],:],grasp_vector.flatten())
+
+      if (gripper_x_axis_pointing >= 0 and (1-np.abs(pull_vec_alignment))< TOL):
+        status = 0
+      else:
+        rotm = self.ROT(0,0,correction)
+        Frame = rotm@Frame
+      iter = iter + 1
+
+    print("pull vec ", pull_vec_alignment)
+    print("F ", Frame[[1],:] )
+    print("grasp ", grasp_vector)
+    print("")
+    print("gripper_x_axis_pointing ", gripper_x_axis_pointing)
+    print("F ", Frame[[0],:])
+    #print("orientation Reached in Step: ", iter)
+    #print("Dot product between gripper x axis and global x axis: ", gripper_x_axis_pointing)
+    #print("Dot product between gripper y axis and grasp vector: ",pull_vec_alignment)
+    return Frame
 
   # Grasp Orientaion Function
-  def get_wire_grasp_orientation(self,t,P,grasp_point,threshold):
+  def get_wire_grasp_orientation(self,t,P,grasp_point,grasp_vector):
     # get the wire grasp orientation at a grasp point on the wire 
-
-    # P = raw control points to make up bezier curve 
-    print("grasp_point", grasp_point)
-
+    # t = 100 x 1
+    # P = N x 3
+    # grasp_point = 1 x 3
+    # grasp_vec = 1 x 3
     curve = self.BCurve(t,P)
     element = 25
     TOL = 0.08
@@ -136,7 +146,6 @@ class WireGraspToolbox():
     for i in range(len(t)):
       if np.array_equal(curve[[i],:],grasp_point):
         element = i
-        print("exactl point found")
         break
     if element == 25:
       for i in range(len(t)):
@@ -144,16 +153,19 @@ class WireGraspToolbox():
         diff = diff.flatten()
         if np.abs(float(diff[0])) < TOL and np.abs(float(diff[1])) < TOL and np.abs(float(diff[2])) < TOL:
           element = i
-          print("approximate point found")
           break
 
     Frame = self.TNB_frame(t,P,element)
-    Grasp = self.grasp_correction(Frame,threshold)
+    #grasp_rotm = self.grasp_correction(Frame,grasp_vector)
+    grasp_rotm = Frame
 
-    r = R.from_matrix(Grasp)
-    q = r.as_quat() # x y z w
+    r = R.from_matrix(grasp_rotm)
+    print("Rot", grasp_rotm)
+    grasp_quat = r.as_quat() # x y z w
+    print("quat", grasp_quat)
 
-    return q
+
+    return grasp_rotm , grasp_quat
 
 
 def rotm(rx,ry,rz):

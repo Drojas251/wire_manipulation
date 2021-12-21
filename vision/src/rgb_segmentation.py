@@ -8,11 +8,11 @@ import numpy as np
 class RGBSegmentation(object):
 
     def __init__(self):
-        self.aligned_depth_rgb_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_depth_data)
-        self.rgb_img_sub = rospy.Subscriber("/camera/color/image_raw",Image, self.rgb_callback)
-        self.depth_img_camera_info = rospy.Subscriber("/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback)
+        self.aligned_depth_rgb_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_depth_data,queue_size=1)
+        self.rgb_img_sub = rospy.Subscriber("/camera/color/image_raw",Image, self.rgb_callback,queue_size=1)
+        self.depth_img_camera_info = rospy.Subscriber("/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback,queue_size=1)
         self.image_pub = rospy.Publisher("/rs_segmented_image", Image, queue_size=1)
-        self.depth_image_pub = rospy.Publisher("/seg_depth/image_raw", Image, queue_size=10)
+        self.depth_image_pub = rospy.Publisher("/seg_depth/image_raw", Image, queue_size=1)
         self.depth_img_cam_info_pub = rospy.Publisher("/seg_depth/camera_info", CameraInfo, queue_size=1)
         self.bridge_object = CvBridge()
         self.depth_data = []

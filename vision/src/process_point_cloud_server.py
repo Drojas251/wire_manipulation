@@ -141,7 +141,7 @@ def process_point_cloud(req):
     ROT = rotm(-angle,angle,0)
 
     for i in range(len(new_points)):
-        new_points[[i],:] = np.transpose(ROT@np.transpose(new_points[[i],:])) + np.array((-0.2286,0,0.4318))
+        new_points[[i],:] = np.transpose(ROT@np.transpose(new_points[[i],:])) + np.array((-0.2286,-0.0325,0.4064))
 
     # check the extreme points ( maz min x,y,z)
     # find the element with the most extreme values
@@ -166,12 +166,13 @@ def process_point_cloud(req):
             extrema_elements[3] = int(j)
 
     distance_between_y_extrema = np.abs(max_y - min_y)
+    distance_between_z_extrema = np.abs(max_z - min_z)
 
-    if distance_between_y_extrema > 0.1:
-        end_point = int(extrema_elements[0])
-        print("end point is in X", new_points[end_point])
-    else:
+    if distance_between_z_extrema > distance_between_y_extrema:
         end_point = int(extrema_elements[2])
+        print("end point is in Z", new_points[end_point])
+    else:
+        end_point = int(extrema_elements[0])
         print("end point is in Y", new_points[end_point])
 
     # sort the points 
