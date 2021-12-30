@@ -122,9 +122,8 @@ print("")
 if (len(pick) > 0 and len(pull) > 0):
 
     # Get grasp orientation as quaternion 
-    grasp = WireGraspToolbox()
-    t = np.arange(0, 1, 0.01)
-    grasp_rotm, grasp_quat = grasp.get_wire_grasp_orientation(t,raw_data,np.transpose(pick),np.transpose(pull))
+    grasp = WireGraspToolbox(raw_data)
+    grasp_rotm, grasp_quat = grasp.get_wire_grasp_orientation(np.transpose(pick),np.transpose(pull))
 
 
     ###### Robot Control Setup ########

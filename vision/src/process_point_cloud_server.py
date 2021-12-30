@@ -48,15 +48,14 @@ def sort_points(points,end_point):
 
 def get_final_node_set(sorted_points,N):
     # N = number of nodes
-    t_points = np.arange(0, 1, 0.01)
-    Wire = WireGraspToolbox()
+    Wire = WireGraspToolbox(sorted_points)
     
     #curve_set = Bezier.Curve(t_points, sorted_points)
-    curve_set = Wire.BCurve(t_points, sorted_points)
+    curve_set = Wire.BCurve()
 
     final_node_set = np.zeros((N,3))
 
-    for i in range(20):
+    for i in range(N):
         final_node_set[[i],:] = curve_set[[i*5],:]
 
     return final_node_set 

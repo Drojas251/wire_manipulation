@@ -7,6 +7,7 @@ from mpl_toolkits import mplot3d
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+from wire_modeling.wire_grasp_toolbox import WireGraspToolbox
 
 # FLOW of Service 
 # Get PC size ~ 
@@ -135,7 +136,7 @@ class WireModel:
 
         
 class WireSim:
-  def __init__(self,N,wire_model, grasp_object,robot):
+  def __init__(self,N,wire_model, grasp_object,robot, curve):
     self.N = N # number of nodes that represents the wire
     self.wire_model = wire_model
     self.m = self.wire_model.M/self.N # individual node mass
@@ -143,6 +144,7 @@ class WireSim:
     self.actions = 8
     self.grasp_object = grasp_object
     self.robot = robot
+    self.curve = curve
     
 
   def __force_for_struct_springs(self,wire,V):
@@ -329,7 +331,13 @@ class WireSim:
       grasp_index = grasp_index - 1 # grasp index is interms of the node number, but we reduce by one to track in python array index
       vectors = np.zeros((3,8))
 
-      ref_vec = wire[:,[grasp_index + 1]] - wire[:,[grasp_index]]
+      element = self.curve.find_point_on_curve_from_node(np.transpose(wire[:,[grasp_index]]))
+      tangent = self.curve.get_tangent_vector(element)
+
+      ref_vec = np.array([[tangent[0]], [tangent[1]], [tangent[2]]])
+
+      #ref_vec = wire[:,[grasp_index + 1]] - wire[:,[grasp_index]]
+
       norm_vec = self.__normal_vec(ref_vec)
 
       norv1 = np.cross(np.transpose(ref_vec),np.transpose(norm_vec))

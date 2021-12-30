@@ -6,53 +6,80 @@ from numpy import linalg as la
 from scipy.spatial.transform import Rotation as R
 
 class WireGraspToolbox():
-  def __init__(self):
+  def __init__(self,P):
     self = self
+    self.P = P
+    self.t = np.arange(0, 1, 0.01)
 
   # Bezier Curve Tools
   def Bernstein(self,n,j,t):
     B = math.factorial(n)/(math.factorial(j)*math.factorial(n-j))*(t**j)*(1-t)**(n-j)
     return B
 
-  def BCurve(self,t,P):
+  def BCurve(self):
     # input should be a N x 3 array where N = # of points 
     # output is a 100 x 3 array of points 
-    n = len(P)
-    curve = np.zeros((len(t),3))
-    for k in range(len(t)):
+    n = len(self.P)
+    curve = np.zeros((len(self.t),3))
+    for k in range(len(self.t)):
       curve[[k],:] = np.zeros((1,3))
       for j in range(n):
-        curve[[k],:] = curve[[k],:] + P[[j],:]*self.Bernstein(n-1,j,t[k])
+        curve[[k],:] = curve[[k],:] + self.P[[j],:]*self.Bernstein(n-1,j,self.t[k])
     return curve
 
-  def BCurve_first_derivative(self,t,P):
+  def BCurve_first_derivative(self):
 
     # input should be a N x 3 array where N = # of points 
     # output is a 100 x 3 array of points
-    n = len(P)
-    Q = np.zeros((len(t),3))
-    for k in range(len(t)):
+    n = len(self.P)
+    Q = np.zeros((len(self.t),3))
+    for k in range(len(self.t)):
       Q[[k],:] = np.zeros((1,3))
       for j in range(n-1):
-        Q[[k],:] = Q[[k],:] + (n-1)*(P[[j+1],:] - P[[j],:])*self.Bernstein(n-2,j,t[k])
+        Q[[k],:] = Q[[k],:] + (n-1)*(self.P[[j+1],:] - self.P[[j],:])*self.Bernstein(n-2,j,self.t[k])
     return Q
 
-  def BCurve_second_derivative(self,t,P):
+  def BCurve_second_derivative(self):
 
     # input should be a N x 3 array where N = # of points 
     # output is a 100 x 3 array of points
-    n = len(P)
-    Q = np.zeros((len(t),3))
-    for k in range(len(t)):
+    n = len(self.P)
+    Q = np.zeros((len(self.t),3))
+    for k in range(len(self.t)):
       Q[[k],:] = np.zeros((1,3))
       for j in range(n-2):
-        Q[[k],:] = Q[[k],:] + (n-1)*(n-2)*(P[[j+2],:] - 2*P[[j+1],:] + P[[j],:])*self.Bernstein(n-3,j,t[k])
+        Q[[k],:] = Q[[k],:] + (n-1)*(n-2)*(self.P[[j+2],:] - 2*self.P[[j+1],:] + self.P[[j],:])*self.Bernstein(n-3,j,self.t[k])
     return Q
 
-  def TNB_frame(self,t,P,element):
-    Q = self.BCurve(t,P) # bezier curve
-    Q_dot = self.BCurve_first_derivative(t,P) # first derivative of B curve
-    Q_dot_dot = self.BCurve_second_derivative(t,P) # second derivative of B curve
+  def get_tangent_vector(self,element):
+    Q_dot = self.BCurve_first_derivative() # first derivative of B curve
+
+    T = Q_dot[element]/(la.norm(Q_dot[element]))
+    return T
+
+  def find_point_on_curve_from_node(self,grasp_point):
+    # grasp point is one of 20 points on a defined wire:  1 x 3
+    curve = self.BCurve()
+    element = 25
+    TOL = 0.08
+
+    for i in range(len(self.t)):
+      if np.array_equal(curve[[i],:],grasp_point):
+        element = i
+        break
+    if element == 25:
+      for i in range(len(self.t)):
+        diff = grasp_point - curve[[i],:]
+        diff = diff.flatten()
+        if np.abs(float(diff[0])) < TOL and np.abs(float(diff[1])) < TOL and np.abs(float(diff[2])) < TOL:
+          element = i
+          break
+    return element
+
+
+  def TNB_frame(self,element):
+    Q_dot = self.BCurve_first_derivative() # first derivative of B curve
+    Q_dot_dot = self.BCurve_second_derivative() # second derivative of B curve
 
     T = Q_dot[element]/(la.norm(Q_dot[element]))
     B = np.cross(Q_dot[element],Q_dot_dot[element])/(la.norm(np.cross(Q_dot[element],Q_dot_dot[element])))
@@ -61,6 +88,7 @@ class WireGraspToolbox():
     Transform = np.matrix([N,B,T])
     return Transform
 
+  """
   # Rotation Matrices and Euler Angle tools
   def isRotationMatrix(self,R) :
       Rt = np.transpose(R)
@@ -87,6 +115,7 @@ class WireGraspToolbox():
           z = 0
 
       return np.array([x, y, z])
+  """
 
   def ROT(self,rx,ry,rz):
     rotation_x = np.matrix([[1, 0, 0],
@@ -103,66 +132,79 @@ class WireGraspToolbox():
     return rotm
 
   # Grasp Correction function
-  def grasp_correction(self,Frame, grasp_vector, TOL = 0.02 ,flip=False):
+  def grasp_correction(self,Frame, grasp_vector, TOL = 0.001 ,flip=False):
     # grasp_vec = 1 x 3
-    correction = 0.0174533 # 1 deg
+    correction = 0.00872665 # 0.5 deg
     status = 1
     iter = 0
+    min_value = 1
+    MAX_ITER = 1000
 
-    while status == 1 and iter < 500:
+    while status == 1 and iter < MAX_ITER:
 
       gripper_x_axis_pointing = np.dot(Frame[[0],:], np.array([1,0,0]))
       pull_vec_alignment = np.dot(Frame[[1],:],grasp_vector.flatten())
+      compare = 1-np.abs(pull_vec_alignment)
 
-      if (gripper_x_axis_pointing >= 0 and (1-np.abs(pull_vec_alignment))< TOL):
+      if (gripper_x_axis_pointing >= 0 and compare< TOL):
         status = 0
+        print("Min_value ", compare)
       else:
         rotm = self.ROT(0,0,correction)
         Frame = rotm@Frame
       iter = iter + 1
 
-    print("pull vec ", pull_vec_alignment)
-    print("F ", Frame[[1],:] )
-    print("grasp ", grasp_vector)
-    print("")
-    print("gripper_x_axis_pointing ", gripper_x_axis_pointing)
-    print("F ", Frame[[0],:])
+      if gripper_x_axis_pointing >= 0:
+        if compare < min_value:
+          Best_frame = Frame
+          min_value = compare
+
+    if iter >= MAX_ITER:
+      Frame = Best_frame
+      print("Reached Max Iteration. Going with Best Option Found")
+      print("Min_value ", min_value)
+
+    print("iteration ", iter)
+    #print("F ", Frame[[1],:] )
+    #print("grasp ", grasp_vector)
+    #print("")
+    #print("gripper_x_axis_pointing ", gripper_x_axis_pointing)
+    #print("F ", Frame[[0],:])
     #print("orientation Reached in Step: ", iter)
     #print("Dot product between gripper x axis and global x axis: ", gripper_x_axis_pointing)
     #print("Dot product between gripper y axis and grasp vector: ",pull_vec_alignment)
     return Frame
 
   # Grasp Orientaion Function
-  def get_wire_grasp_orientation(self,t,P,grasp_point,grasp_vector):
+  def get_wire_grasp_orientation(self,grasp_point,grasp_vector):
     # get the wire grasp orientation at a grasp point on the wire 
     # t = 100 x 1
     # P = N x 3
     # grasp_point = 1 x 3
     # grasp_vec = 1 x 3
-    curve = self.BCurve(t,P)
+    curve = self.BCurve()
     element = 25
     TOL = 0.08
 
-    for i in range(len(t)):
+    for i in range(len(self.t)):
       if np.array_equal(curve[[i],:],grasp_point):
         element = i
         break
     if element == 25:
-      for i in range(len(t)):
+      for i in range(len(self.t)):
         diff = grasp_point - curve[[i],:]
         diff = diff.flatten()
         if np.abs(float(diff[0])) < TOL and np.abs(float(diff[1])) < TOL and np.abs(float(diff[2])) < TOL:
           element = i
           break
 
-    Frame = self.TNB_frame(t,P,element)
-    #grasp_rotm = self.grasp_correction(Frame,grasp_vector)
-    grasp_rotm = Frame
+    Frame = self.TNB_frame(element)
+    grasp_rotm = self.grasp_correction(Frame,grasp_vector)
 
     r = R.from_matrix(grasp_rotm)
-    print("Rot", grasp_rotm)
+    #print("Rot", grasp_rotm)
     grasp_quat = r.as_quat() # x y z w
-    print("quat", grasp_quat)
+    #print("quat", grasp_quat)
 
 
     return grasp_rotm , grasp_quat
