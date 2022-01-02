@@ -591,14 +591,14 @@ class WireSim:
 
       # find the wire config with max distance from grasp object
       print("")
-      print("       " + str(8 - count) + " Possible Solution Configurations to move the Wire to")
+      print("      " + str(8 - count) + " Possible Wire Configurations Found")
       if count < 7:
         max_dist = 0
         for j in range(len(Distance[0])):
           if Distance[0][j] >= max_dist:
             max_dist = Distance[0][j]
             max_dist_element = j
-        print("     Found optimal solution")
+        print("     Best Solution Found")
         optimal_wire_config = wire_set[[max_dist_element],:,:]
 
       elif count == 7:

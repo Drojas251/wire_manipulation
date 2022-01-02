@@ -85,7 +85,8 @@ class WireGraspToolbox():
     B = np.cross(Q_dot[element],Q_dot_dot[element])/(la.norm(np.cross(Q_dot[element],Q_dot_dot[element])))
     N = np.cross(B,T)
 
-    Transform = np.matrix([N,B,T])
+    Transform = np.matrix([N,B,T]) # The TNB frame expressed in the world
+
     return Transform
 
   """
@@ -132,47 +133,48 @@ class WireGraspToolbox():
     return rotm
 
   # Grasp Correction function
-  def grasp_correction(self,Frame, grasp_vector, TOL = 0.001 ,flip=False):
+  def grasp_correction(self,Frame, grasp_vector, TOL = 0.01 ,flip=False):
     # grasp_vec = 1 x 3
+
+    # Goal of Function: Want the pull vector and y axis of the gripper frame to be parallel 
+
     correction = 0.00872665 # 0.5 deg
     status = 1
     iter = 0
     min_value = 1
     MAX_ITER = 1000
 
+
     while status == 1 and iter < MAX_ITER:
 
-      gripper_x_axis_pointing = np.dot(Frame[[0],:], np.array([1,0,0]))
-      pull_vec_alignment = np.dot(Frame[[1],:],grasp_vector.flatten())
-      compare = 1-np.abs(pull_vec_alignment)
+      gripper_x_axis_pointing = np.dot(Frame[[0],:], np.array([1,0,0])) # dot product of the x axis in the world and TNB frame
+      pull_vec_alignment = np.dot(Frame[[1],:],grasp_vector.flatten()) # dot product of the y axis of the TNB frame and pull vector
+      compare = 1-np.abs(pull_vec_alignment) 
 
-      if (gripper_x_axis_pointing >= 0 and compare< TOL):
-        status = 0
-        print("Min_value ", compare)
-      else:
-        rotm = self.ROT(0,0,correction)
-        Frame = rotm@Frame
-      iter = iter + 1
-
+      # Finds the Next best solution if the Tolerance is not met in 1000 iterations 
       if gripper_x_axis_pointing >= 0:
         if compare < min_value:
           Best_frame = Frame
           min_value = compare
 
+      # If tolerance is met, breake the loop, otherwise rotate about z axis 
+      if (gripper_x_axis_pointing >= 0 and compare< TOL):
+        status = 0
+      else:
+        rotm = self.ROT(0,0,correction)
+        Frame = rotm@Frame
+      iter = iter + 1
+
+      
+    # If Tolerance not met in 1000 iterations, find Best frame available 
     if iter >= MAX_ITER:
       Frame = Best_frame
-      print("Reached Max Iteration. Going with Best Option Found")
+      print("Reached Max Iteration. Going with Best Available Gripper Orientation Found. May not be Optimal")
       print("Min_value ", min_value)
 
-    print("iteration ", iter)
-    #print("F ", Frame[[1],:] )
-    #print("grasp ", grasp_vector)
-    #print("")
-    #print("gripper_x_axis_pointing ", gripper_x_axis_pointing)
-    #print("F ", Frame[[0],:])
-    #print("orientation Reached in Step: ", iter)
-    #print("Dot product between gripper x axis and global x axis: ", gripper_x_axis_pointing)
-    #print("Dot product between gripper y axis and grasp vector: ",pull_vec_alignment)
+    # Transpose to get correct quaternion. This is required 
+    Frame = Frame.getT()
+
     return Frame
 
   # Grasp Orientaion Function
@@ -201,11 +203,9 @@ class WireGraspToolbox():
     Frame = self.TNB_frame(element)
     grasp_rotm = self.grasp_correction(Frame,grasp_vector)
 
-    r = R.from_matrix(grasp_rotm)
-    #print("Rot", grasp_rotm)
-    grasp_quat = r.as_quat() # x y z w
-    #print("quat", grasp_quat)
 
+    r = R.from_matrix(grasp_rotm)
+    grasp_quat = r.as_quat() # x y z w
 
     return grasp_rotm , grasp_quat
 
