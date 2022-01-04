@@ -244,7 +244,7 @@ def process_point_cloud(req):
     
  
 if __name__ == "__main__":
-    rospy.init_node('add_two_ints_server')
+    rospy.init_node('process_point_cloud_server')
     marker_ = rospy.Publisher('/marker_array', MarkerArray, queue_size=1)
     s = rospy.Service('process_point_cloud', ProcessPointCloud, process_point_cloud)
     print("Process PointCloud Server is now running")

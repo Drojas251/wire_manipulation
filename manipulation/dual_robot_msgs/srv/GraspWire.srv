@@ -1,0 +1,6 @@
+string wire_grasping_robot
+geometry_msgs/Pose wire_grasp_pose 
+geometry_msgs/Vector3 pull_vec
+geometry_msgs/Pose object_grasp_pose 
+---
+bool status 

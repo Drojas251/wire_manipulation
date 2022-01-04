@@ -6,6 +6,7 @@ from geometry_msgs.msg import PoseArray
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Pose
 import numpy as np 
+from wire_modeling.wire_grasp_toolbox import WireGraspToolbox
 
 class MarkerBasics(object):
     def __init__(self):
@@ -13,79 +14,83 @@ class MarkerBasics(object):
         self.rate = rospy.Rate(1)
         self.init_maker()
 
+
+    def get_final_node_set(self,sorted_points,N):
+        # N = number of nodes
+        Wire = WireGraspToolbox(sorted_points)
         
+        #curve_set = Bezier.Curve(t_points, sorted_points)
+        curve_set = Wire.BCurve()
+
+        final_node_set = np.zeros((N,3))
+
+        for i in range(N):
+            final_node_set[[i],:] = curve_set[[i*5],:]
+
+        return final_node_set 
 
     def init_maker(self):
 
-        self.pose_1 = Pose()
-        self.pose_1.orientation.x = 0
-        self.pose_1.orientation.y = 0
-        self.pose_1.orientation.z = 0
-        self.pose_1.orientation.w = 1
-        self.pose_1.position.x = 1
-        self.pose_1.position.y = 0
-        self.pose_1.position.z = 1
 
-        self.pose_2 = Pose()
-        self.pose_2.orientation = self.pose_1.orientation
-        self.pose_2.position.x = 1
-        self.pose_2.position.y = 1
-        self.pose_2.position.z = 1
+        print("Creating Data")
+        x = 0.39
+        raw_data = np.array([[x,-0.25,0.08],[x,-0.2,0.2],[x,-0.15,0.4],[x,-.05,0.48]]) #Wire1
+        #raw_data = np.array([[x,-0.2,0.13],[x,-0.1,0.2],[x,0.0,0.2],[x,.1,0.15]]) # Wire2
+        #raw_data = np.array([[x,0,0.0],[x,0.02,0.15],[x,0.05,0.3],[x,0.03,0.45]]) # Wire3
+        points = self.get_final_node_set(raw_data,20)
 
-        self.pose_3 = Pose()
-        self.pose_3.orientation = self.pose_1.orientation
-        self.pose_3.position.x = 0
-        self.pose_3.position.y = 1
-        self.pose_3.position.z = 1
+        wire = np.zeros((3,20))
 
-        self.poses_ = PoseArray()
-        self.poses_.header.frame_id = 'map'
-        self.poses_.poses.append(self.pose_1)
-        self.poses_.poses.append(self.pose_2)
-        self.poses_.poses.append(self.pose_3)
+        for i in range(20):
+            wire[:,[i]] = np.transpose(points[[i],:])
 
-        self.pose_ = Pose()
-        count = 0
+
+        # visualize 
+        pose_array = PoseArray()
         self.markers = MarkerArray()
 
 
-        for self.pose_ in self.poses_.poses:
-        
-            self.marker_object = Marker()
-            self.marker_object.header.frame_id = 'map'
-            self.marker_object.header.stamp = rospy.get_rostime()
-            self.marker_object.ns = 'point'
-            self.marker_object.id = count
-            self.marker_object.type = Marker.SPHERE
-            self.marker_object.action = Marker.ADD
+        for i in range(20):
+            pose = Pose()
+            pose.position.x = points[i,0]
+            pose.position.y = points[i,1]
+            pose.position.z = points[i,2]
+            pose.orientation.w = 1.0
 
-            my_point = Point()
-            my_point = self.pose_.position
-            self.marker_object.pose.position = my_point
+            pose_array.poses.append(pose)  
 
-            self.marker_object.pose.orientation = self.pose_.orientation
-
-            self.marker_object.scale.x = 1.0
-            self.marker_object.scale.y = 1.0
-            self.marker_object.scale.z = 1.0
-
-            self.marker_object.color.r = 0.0
-            self.marker_object.color.g = 0.0
-            self.marker_object.color.b = 1.0
-
-            self.marker_object.color.a = 1.0
-
-            self.marker_object.lifetime = rospy.Duration(0)
-
-            self.markers.markers.append(self.marker_object)
-
-            count = count + 1
+            # Visualization 
+            marker_object = Marker()
+            marker_object.header.frame_id = 'world'
+            marker_object.header.stamp = rospy.get_rostime()
+            marker_object.ns = 'point'
+            marker_object.id = i
+            marker_object.type = Marker.SPHERE
+            marker_object.action = Marker.ADD
 
             
+            marker_object.pose.position = pose.position
+            marker_object.pose.orientation = pose.orientation
 
+            marker_object.scale.x = 0.025
+            marker_object.scale.y = 0.025
+            marker_object.scale.z = 0.025
 
+            if i == 0:
+                marker_object.color.r = 0.0
+                marker_object.color.g = 1.0
+                marker_object.color.b = 0.0
+            else:
+                marker_object.color.r = 1.0
+                marker_object.color.g = 0.0
+                marker_object.color.b = 0.0
 
+            marker_object.color.a = 1.0
+            marker_object.lifetime = rospy.Duration(0)
 
+            self.markers.markers.append(marker_object)
+
+    
     def start(self):
         while not rospy.is_shutdown():
             self.marker_.publish(self.markers)

@@ -53,7 +53,7 @@
         <joint name="robot_b_wrist_angle" value="0.9877"/>
         <joint name="robot_b_wrist_rotate" value="0"/>
     </group_state>
-    <group_state name="robot_a_Sleep" group="robot_a">
+    <group_state name="sleep" group="robot_a">
         <joint name="robot_a_elbow" value="1.55"/>
         <joint name="robot_a_forearm_roll" value="0"/>
         <joint name="robot_a_shoulder" value="-1.76"/>
@@ -61,7 +61,7 @@
         <joint name="robot_a_wrist_angle" value="0.8"/>
         <joint name="robot_a_wrist_rotate" value="0"/>
     </group_state>
-    <group_state name="robot_b_Sleep" group="robot_b">
+    <group_state name="sleep" group="robot_b">
         <joint name="robot_b_elbow" value="1.55"/>
         <joint name="robot_b_forearm_roll" value="0"/>
         <joint name="robot_b_shoulder" value="-1.76"/>

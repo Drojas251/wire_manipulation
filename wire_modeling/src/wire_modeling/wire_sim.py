@@ -8,6 +8,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 from wire_modeling.wire_grasp_toolbox import WireGraspToolbox
+import colorama
+from colorama import Fore
 
 # FLOW of Service 
 # Get PC size ~ 
@@ -455,7 +457,7 @@ class WireSim:
             robot_to_grasp_wire ="right"
 
       else:
-          print("STATUS: No Solution Found")
+          print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "No Solution Found \n")
           optimal_pull_action = np.array([])
           optimal_pick_action = np.array([])
           robot_to_grasp_wire = None
@@ -559,7 +561,7 @@ class WireSim:
       conflict = 0
       count = 0
 
-      print("  WIRE CONFIG SOLUTION")
+      print(Fore.YELLOW + "  WIRE CONFIG SOLUTION")
 
       for i in range(self.actions):
           for j in range(3,self.N-4):
@@ -579,7 +581,7 @@ class WireSim:
                   conflict = 1
 
           if(conflict ==1):
-            print("     wire" + str(i) + " violated grasp")
+            print(Fore.RED + "     wire" + str(i) + " violated grasp")
             wire_in_gof = np.delete(wire_in_gof,jj,0) 
             wire_in_rgf = np.delete(wire_in_rgf,jj,0) 
             wire_set = np.delete(wire_set,jj,0) 
@@ -591,21 +593,21 @@ class WireSim:
 
       # find the wire config with max distance from grasp object
       print("")
-      print("      " + str(8 - count) + " Possible Wire Configurations Found")
+      print(Fore.GREEN + "     " + str(8 - count) + " Possible Wire Configurations Found")
       if count < 7:
         max_dist = 0
         for j in range(len(Distance[0])):
           if Distance[0][j] >= max_dist:
             max_dist = Distance[0][j]
             max_dist_element = j
-        print("     Best Solution Found")
+        print(Fore.GREEN + "     Best Solution Found \n")
         optimal_wire_config = wire_set[[max_dist_element],:,:]
 
       elif count == 7:
-        print("     Only one valid Solution")
+        print(Fore.GREEN + "     Only one valid Solution \n")
         optimal_wire_config = wire_set
       else:
-        print("     No solution")
+        print(Fore.YELLOW + "     No solution \n")
         optimal_wire_config = np.array([])     
               
       # need to employ one more constraint -> projections and max distance 
