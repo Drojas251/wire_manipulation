@@ -140,7 +140,7 @@ def process_point_cloud(req):
     ROT = rotm(-angle,angle,0)
 
     for i in range(len(new_points)):
-        new_points[[i],:] = np.transpose(ROT@np.transpose(new_points[[i],:])) + np.array((-0.2286,-0.0325,0.4064))
+        new_points[[i],:] = np.transpose(ROT@np.transpose(new_points[[i],:])) + np.array((-0.3556,0.015,0.4064))
 
     # check the extreme points ( maz min x,y,z)
     # find the element with the most extreme values
@@ -170,9 +170,11 @@ def process_point_cloud(req):
     if distance_between_z_extrema > distance_between_y_extrema:
         end_point = int(extrema_elements[2])
         print("end point is in Z", new_points[end_point])
+        wire_class = "type1" # wire is mostly verticle
     else:
         end_point = int(extrema_elements[0])
         print("end point is in Y", new_points[end_point])
+        wire_class = "type2" # wire is mostyl horizontal 
 
     # sort the points 
     sorted_points = sort_points(new_points,end_point)
@@ -240,7 +242,7 @@ def process_point_cloud(req):
     wire_length = get_wire_length(final_node_set)
 
     
-    return ProcessPointCloudResponse(pose = pose_array, wire_length = wire_length, raw_points = raw_points)
+    return ProcessPointCloudResponse(pose = pose_array, wire_length = wire_length, raw_points = raw_points, wire_class = wire_class)
     
  
 if __name__ == "__main__":

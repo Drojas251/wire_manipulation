@@ -20,14 +20,15 @@
   
   -->
 
-  <node pkg="vision" type="marker_array.py" name="marker_array" output="screen" />
-  <!--<node pkg="dual_robot_control" type="robot_control_server.py" name="robot_control_server" output="screen" />-->
+  <!--<node pkg="vision" type="marker_array.py" name="marker_array" output="screen" />-->
+  <node pkg="dual_robot_control" type="robot_control_server.py" name="robot_control_server" output="screen" />
 
 
   <include file="$(find dual_robot_gazebo)/launch/dual_robot_gazebo.launch"/>
 
    <node pkg="tf2_ros" type="static_transform_publisher" name="camera_broadcaster" args="-0.2286 -0.0325 0.4064 0 0 0 1 world camera_link" />
-
+ 
+  <!--<include file="$(find dual_robot_moveit_config)/launch/dual_robot_moveit.launch"/>-->
 
 
 

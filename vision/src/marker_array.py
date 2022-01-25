@@ -34,8 +34,8 @@ class MarkerBasics(object):
 
         print("Creating Data")
         x = 0.39
-        raw_data = np.array([[x,-0.25,0.08],[x,-0.2,0.2],[x,-0.15,0.4],[x,-.05,0.48]]) #Wire1
-        #raw_data = np.array([[x,-0.2,0.13],[x,-0.1,0.2],[x,0.0,0.2],[x,.1,0.15]]) # Wire2
+        #raw_data = np.array([[x,-0.25,0.08],[x,-0.2,0.2],[x,-0.15,0.4],[x,-.05,0.48]]) #Wire1
+        raw_data = np.array([[x,-0.25,0.45],[x,-0.1,0.4],[x,0.0,0.2],[x,.25,0.35]]) # Wire2
         #raw_data = np.array([[x,0,0.0],[x,0.02,0.15],[x,0.05,0.3],[x,0.03,0.45]]) # Wire3
         points = self.get_final_node_set(raw_data,20)
 

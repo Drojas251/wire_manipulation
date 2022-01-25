@@ -129,14 +129,15 @@ class GraspObject:
         return grasp_volume_in_global_frame
 
 class WireModel:
-    def __init__(self,L,M,Ks,Kb,Kd): 
+    def __init__(self,L,M,Ks,Kb,Kd,wire_class): 
         self.L = L #length of wire
         self.M = M # mass of wire
         self.Ks = Ks # Stifness of structural spring
         self.Kb = Kb # stiffness of bending spring
         self.Kd = Kd # damping
+        self.wire_class = wire_class
 
-        
+
 class WireSim:
   def __init__(self,N,wire_model, grasp_object,robot, curve):
     self.N = N # number of nodes that represents the wire
@@ -392,8 +393,8 @@ class WireSim:
 
   def simulate(self,wire):
       wire_set = np.zeros((self.actions,3,self.N))
-      dt = 0.01
-      grasp_index = 10
+      dt = 0.005
+      grasp_index = self.get_grasp_index(wire)
       F_vect = self.get_normal_vectors(wire,grasp_index)
       
       for i in range(self.actions):
@@ -405,7 +406,7 @@ class WireSim:
           TOL = 0.1
           stop = 0
           count = 0
-          MAX_iterations = 300 
+          MAX_iterations = 220 
           wire_sim = wire
 
           while stop == 0:   
@@ -435,11 +436,14 @@ class WireSim:
 
               if count == MAX_iterations:
                   stop = 1
+                  print("MAX ITERATIONS REACHED")
               count = count + 1
           wire_set[[i],:,:] = wire_sim
+          print("Z_coord ", wire_set[[i],[2],[grasp_index]])
+          print("FORCE VEC ", F_vect[:,[i]])
 
       # get optimal wire config
-      optimal_wire_config = self.find_optimal_action(wire_set)
+      optimal_wire_config = self.find_optimal_action(wire_set,F_vect)
 
       if (len(optimal_wire_config) >0):
         # find the optimal wire config in the original wire set
@@ -451,7 +455,19 @@ class WireSim:
         optimal_pull_action = F_vect[:,[optimal]]
         optimal_pick_action = wire[:,[grasp_index]]
 
-        if optimal_pick_action[1] >= self.grasp_object.gop[1]:
+        future_ee_point = np.array([optimal_pick_action[0] + optimal_pull_action[0],
+                                    optimal_pick_action[1] + optimal_pull_action[1],
+                                    optimal_pick_action[2] + optimal_pull_action[2]])
+
+        # idea: for determining which robot should do what
+        # determine the absolute biggest value in pull_action, which represents the greatest 
+        # axis of motion for the robot
+        # then have conditions to compare the grasp object location with
+        # ex. if pull vec is [0.2,0.7,0.1] then the robot will move mostly in the +y direction
+        # so, you have a condition that checks if y is the greates ( also cond to test x, y), and if so, you 
+        # you compute where the future_ee_point will be and compare that to the grasp object position
+
+        if future_ee_point[1] >= self.grasp_object.gop[1]:
             robot_to_grasp_wire = "left"
         else:
             robot_to_grasp_wire ="right"
@@ -489,7 +505,7 @@ class WireSim:
       vector = np.array([[homo[0][0]], [homo[1][0]], [homo[2][0]] ])
       return vector
  
-  def find_optimal_action(self,wire_set):
+  def find_optimal_action(self,wire_set,F_vect):
       workspace_volume = self.robot.workspace_volume()
       object_volume_local = self.grasp_object.grasp_volume_in_local_frame()
       object_volume_global = self.grasp_object.grasp_volume_in_global_frame()
@@ -500,9 +516,10 @@ class WireSim:
       projections = np.zeros((self.actions,3,self.N))
       projections_in_gof = np.zeros((self.actions,3,self.N))
       Distance = np.zeros((1,self.actions))
+      behind_grasp_object_score = np.zeros((1,self.actions))
 
       for j in range(self.actions):
-        projections[[j],:,:] , projections_in_gof[[j],:,:] , Distance[0][j] = self.projections(wire_set[[j],:,:].reshape((3,20)))
+        projections[[j],:,:] , projections_in_gof[[j],:,:] , Distance[0][j], behind_grasp_object_score[0][j]  = self.projections(wire_set[[j],:,:].reshape((3,20)))
 
       # First volume constraint is the object_volume 
       # Second volume constraint is the robot arm grasp volume 
@@ -561,6 +578,9 @@ class WireSim:
       conflict = 0
       count = 0
 
+      ## Delete this after done testing 
+      distance_test = Distance
+
       print(Fore.YELLOW + "  WIRE CONFIG SOLUTION")
 
       for i in range(self.actions):
@@ -569,46 +589,71 @@ class WireSim:
                 and -dy <= wire_in_gof[[jj],[1],[j]] and wire_in_gof[[jj],[1],[j]] <= dy
                 and -dz <= wire_in_gof[[jj],[2],[j]] and wire_in_gof[[jj],[2],[j]] <= dz):
                 conflict = 1
+                print(Fore.RED + "     wire" + str(i) + " Violated Grasp: Collision with Grasp Object")
+                break
 
-              """if (robot_grasp_volume[0][4] <= wire_in_rgf[[jj],[0],[j]] and wire_in_rgf[[jj],[0],[j]] <= robot_grasp_volume[0][0]
+              if (robot_grasp_volume[0][4] <= wire_in_rgf[[jj],[0],[j]] and wire_in_rgf[[jj],[0],[j]] <= robot_grasp_volume[0][0]
                 and robot_grasp_volume[1][1] <= wire_in_rgf[[jj],[1],[j]] and wire_in_rgf[[jj],[1],[j]] <= robot_grasp_volume[1][0]
                 and robot_grasp_volume[2][2] <= wire_in_rgf[[jj],[2],[j]] and wire_in_rgf[[jj],[2],[j]] <= robot_grasp_volume[2][1]):
-                conflict = 1"""
+                conflict = 1
+                print(Fore.RED + "     wire" + str(i) + " Violated Grasp: insufficent Room for Robot EE")
+                break
+                
 
               if (workspace_volume[0][0] < wire_set[[jj],[0],[j]] or wire_set[[jj],[0],[j]] < workspace_volume[0][4]
                   or workspace_volume[1][1] < wire_set[[jj],[1],[j]] or wire_set[[jj],[1],[j]] < workspace_volume[1][0]
                   or workspace_volume[2][0] < wire_set[[jj],[2],[j]] or wire_set[[jj],[2],[j]] < workspace_volume[2][2]):
                   conflict = 1
+                  print(Fore.RED + "     wire" + str(i) + " Violated Grasp: Out of Workspace Limits")
+                  break
 
           if(conflict ==1):
-            print(Fore.RED + "     wire" + str(i) + " violated grasp")
             wire_in_gof = np.delete(wire_in_gof,jj,0) 
             wire_in_rgf = np.delete(wire_in_rgf,jj,0) 
             wire_set = np.delete(wire_set,jj,0) 
             Distance = np.delete(Distance,jj,1)
+            F_vect = np.delete(F_vect,jj,1)
+            behind_grasp_object_score = np.delete(behind_grasp_object_score,jj,1)
             conflict = 0    
             count = count + 1
           else:
             jj = jj +1 
 
       # find the wire config with max distance from grasp object
-      print("")
       print(Fore.GREEN + "     " + str(8 - count) + " Possible Wire Configurations Found")
+      print("F_vect", F_vect)
+
+      print("behind_grasp_object_score", behind_grasp_object_score)
+
+      """
+
+      if(len(behind_grasp_object_score[0])>0):
+          max_score = 0
+          for j in range(len(behind_grasp_object_score[0])):
+              if behind_grasp_object_score[0][j] >= max_score:
+                  max_score = behind_grasp_object_score[0][j]
+                  max_score_element = j
+          print(Fore.GREEN + "     Best Solution Found \n")
+          optimal_wire_config = wire_set[[max_score_element],:,:]
+
+      else:
+      """
+
       if count < 7:
-        max_dist = 0
-        for j in range(len(Distance[0])):
-          if Distance[0][j] >= max_dist:
-            max_dist = Distance[0][j]
-            max_dist_element = j
-        print(Fore.GREEN + "     Best Solution Found \n")
-        optimal_wire_config = wire_set[[max_dist_element],:,:]
+          max_dist = 0
+          for j in range(len(Distance[0])):
+              if Distance[0][j] >= max_dist:
+                  max_dist = Distance[0][j]
+                  max_dist_element = j
+          print(Fore.GREEN + "     Best Solution Found Based on Planar Distance \n")
+          optimal_wire_config = wire_set[[max_dist_element],:,:]
 
       elif count == 7:
-        print(Fore.GREEN + "     Only one valid Solution \n")
-        optimal_wire_config = wire_set
+          print(Fore.GREEN + "     Only one valid Solution \n")
+          optimal_wire_config = wire_set
       else:
-        print(Fore.YELLOW + "     No solution \n")
-        optimal_wire_config = np.array([])     
+          print(Fore.YELLOW + "     No solution \n")
+          optimal_wire_config = np.array([])     
               
       # need to employ one more constraint -> projections and max distance 
       # this will converge on a single wire config 
@@ -620,20 +665,58 @@ class WireSim:
       # Exlude for now
       projection_in_global = np.zeros((3,self.N)) # projections of points on grasp object normal plane in global frame
       projection_in_gof = np.zeros((3,self.N)) # projections of points on grasp object normal plane in grasp object frame
+      wire_in_gof = np.zeros((3,self.N)) # projections of points on grasp object normal plane in grasp object frame
+
       ROT = self.grasp_object.rotation_matrix()
       grasp_axis = ROT@self.grasp_object.normal_axis
 
-      Distance = 0
+      behind_grasp_object_score = 0
+      plane_distance = 0
       
       for i in range(self.N):
         projection_in_global[:,[i]] = wire_set[:,[i]] - np.dot(np.transpose(wire_set[:,[i]] - self.grasp_object.gop), grasp_axis)*grasp_axis
         projection_in_gof[:,[i]] = self.homo_to_vector(la.inv(self.homo_trans_matrix(self.grasp_object.gop,ROT))@self.vector_to_homo(projection_in_global[:,[i]]))
+        wire_in_gof[:,[i]] = self.homo_to_vector(la.inv(self.homo_trans_matrix(self.grasp_object.gop,ROT))@self.vector_to_homo(wire_set[:,[i]]))
 
         if i != 0 or i != 1 or i != 2 or i !=(self.N-3) or i !=(self.N -2) or i !=(self.N -1):
-          Distance = Distance + (projection_in_gof[0][i]**2 + projection_in_gof[1][i]**2)**0.5
+          plane_distance = plane_distance + (projection_in_gof[2][i]**2 + projection_in_gof[1][i]**2)**0.5
+          
 
-      Distance = Distance/(self.N-6)
+          if wire_in_gof[0][i] < -0.005:
+              behind_grasp_object_score = behind_grasp_object_score + np.abs(wire_in_gof[0][i])
+
+      plane_distance = plane_distance/(self.N-6)
+      print("behind_grasp_object_score ", behind_grasp_object_score)
     
-      return projection_in_global , projection_in_gof , Distance
+      return projection_in_global , projection_in_gof , plane_distance, behind_grasp_object_score
+
+  def get_grasp_index(self,wire):
+
+      # wire is mostly verticle 
+      if self.wire_model.wire_class == "type1":
+          # find the point that is closest to the grasps object z coordinate
+          closest_value = np.abs(self.grasp_object.gop[2] - wire[[2],[0]])
+
+          for i in range(self.N):
+              diff_z = np.abs(self.grasp_object.gop[2] - wire[[2],[i]])
+              if diff_z <= closest_value:
+                  matching_element = i
+                  closest_value = diff_z
+
+      # wire is mostly horizontal
+      elif self.wire_model.wire_class == "type2":
+          # find the point that is closest to the grasps object y coordinate
+          closest_value = np.abs(self.grasp_object.gop[1] - wire[[1],[0]])
+
+          for i in range(self.N):
+              diff_z = np.abs(self.grasp_object.gop[1] - wire[[1],[i]])
+              if diff_z <= closest_value:
+                  matching_element = i
+                  closest_value = diff_z
+      
+      # want the node next to the node that is closest. 
+      matching_element = matching_element + 1
+      return matching_element
+
 
 
