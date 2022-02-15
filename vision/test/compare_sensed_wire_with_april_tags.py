@@ -3,16 +3,15 @@
 import numpy as np
 from wire_modeling.wire_sim import *
 import rospy
-from geometry_msgs.msg import PoseArray
-from sensor_msgs.msg import PointCloud2
 from apriltag_ros.msg import AprilTagDetectionArray
 from wire_modeling.wire_grasp_toolbox import WireGraspToolbox, rotm
 import math
 import os.path
 
-test_number = 1
+wire_thickness = 1
+test_number = 3
 
-save_path = '/usr/local/src/wire_manipulation_framework/src/wire_manipulation/testing/vision_testing/test' + str(test_number)
+save_path = '/usr/local/src/wire_manipulation_framework/src/wire_manipulation/testing/vision_testing/wire' + str(wire_thickness) + '/test' + str(test_number)
 name_of_ground_truth_file = "vision_test_" + str(test_number) + "_ground_truth"  
 name_of_sensed_file = "vision_test_" + str(test_number) + "_sensed_truth"
 

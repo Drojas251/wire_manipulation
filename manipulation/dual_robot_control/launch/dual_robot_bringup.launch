@@ -9,17 +9,6 @@
   <arg name="use_fake"                          default="false"/>
   <arg name="world_name"                        default="$(find interbotix_xsarm_gazebo)/worlds/xsarm_gazebo.world"/>
 
-  <!--<include if="$(arg use_gazebo)" file="$(find interbotix_xsarm_gazebo)/launch/xsarm_gazebo.launch">
-    <arg name="robot_model"                       value="$(arg robot_model)"/>
-    <arg name="robot_name"                        value="$(arg robot_name)"/>
-    <arg name="base_link_frame"                   value="$(arg base_link_frame)"/>
-    <arg name="show_ar_tag"                       value="$(arg show_ar_tag)"/>
-    <arg name="use_world_frame"                   value="$(arg use_world_frame)"/>
-    <arg name="external_urdf_loc"                 value="$(arg external_urdf_loc)"/>
-    <arg name="world_name"                        value="$(arg world_name)"/>
-    <arg name="use_trajectory_controllers"        value="true"/>
-  </include>-->
-
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(find dual_robot_description)/urdf/dual_robot.urdf.xacro" />
 
   <node
@@ -36,12 +25,13 @@
    <include file="$(find dual_robot_control)/launch/dual_robot_ros_control.launch">
     <arg name="robot_name"                        value="$(arg robot2_name)"/>
     <arg name="mode_configs"                      value="$(arg mode_configs)"/>
+    <!--<arg name="mode_configs"                      value="$(find dual_robot_control)/config/robot_b_modes.yaml"/>
+    <arg name="hardware_configs_ns"               value="$(arg robot2_name)"/>-->
   </include>
 
 
 
 <include file="$(find dual_robot_moveit_config)/launch/move_group.launch"/> 
-
 <node name="rviz" pkg="rviz" type="rviz" args="-d $(find dual_robot_gazebo)/config/dual_robot.rviz"/> 
 
   

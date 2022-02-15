@@ -3,10 +3,11 @@
   <arg name="robot_name"                        default=""/>
   <arg name="mode_configs"                      default="$(find dual_robot_control)/config/modes.yaml"/>
   <arg name="motor_configs"                     default="$(find dual_robot_control)/config/$(arg robot_name).yaml"/>
+  <arg name="hardware_configs_ns"               default=""/>
   <arg name="load_configs"                      default="true"/>
 
   <rosparam file="$(find dual_robot_control)/config/$(arg robot_name)controllers.yaml" command="load" ns="$(arg robot_name)"/>
-  <rosparam file="$(find dual_robot_control)/config/hardware.yaml" command="load" ns="$(arg robot_name)"/>
+  <rosparam file="$(find dual_robot_control)/config/$(arg hardware_configs_ns)hardware.yaml" command="load" ns="$(arg robot_name)"/>
 
   <node
     name="xs_sdk"

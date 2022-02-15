@@ -43,9 +43,9 @@ class RGBSegmentation(object):
         filtered_wire = cv2.drawContours(mask2,[largest_area[-1]], 0, (255,255,255,255), -1)
 
         # erosion
-        new_img = cv2.erode(filtered_wire, kernel, iterations=3)
+        new_img = cv2.erode(filtered_wire, kernel, iterations=2)
 
-        depth_limit = 900
+        depth_limit = 1000
 
 
         depth = self.depth_data

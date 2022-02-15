@@ -1,25 +1,19 @@
 #!/usr/bin/env python3
 import rospy
-#from __future__ import print_function
-from wire_modeling_msgs.srv import ProcessPointCloud, ProcessPointCloudResponse
-import math
-from numpy import linalg as la
-
-from sensor_msgs.msg import PointCloud2
-import sensor_msgs.point_cloud2 as pc2
-
-from visualization_msgs.msg import Marker
-from visualization_msgs.msg import MarkerArray
-from geometry_msgs.msg import PoseArray
-from geometry_msgs.msg import Point
-from geometry_msgs.msg import Pose
-
 import ros_numpy
 import numpy as np
+from numpy import linalg as la
+import math
+
+from geometry_msgs.msg import PoseArray
+from geometry_msgs.msg import Pose
+from visualization_msgs.msg import Marker
+from visualization_msgs.msg import MarkerArray
+
 from sklearn.cluster import KMeans
-from wire_modeling.Bezier import Bezier
 from wire_modeling.wire_sim import *
 from wire_modeling.wire_grasp_toolbox import WireGraspToolbox, rotm
+from wire_modeling_msgs.srv import ProcessPointCloud, ProcessPointCloudResponse
 
 
 
@@ -129,10 +123,11 @@ def process_point_cloud(req):
             j = j +1
 
 
+    #TO DO:: Automate this with tf2
+    
     # Transform the points from camera_color_optical_frame to camera_frame 
     # rotation about x -90 
     # rotation about y 90
-
     # Transformation from camera frame to world is pure translation 
     #-0.2286 0 0.4318
 

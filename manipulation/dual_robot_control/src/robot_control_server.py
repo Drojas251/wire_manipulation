@@ -42,6 +42,10 @@ class RobotControl:
         box_pose.pose.position.z = req.object_grasp_pose.position.z  
         self.scene.add_box(box_name, box_pose, size=(0.025, 0.025, 0.025))
 
+        req.wire_grasping_robot = "right"
+
+
+
         # Determining which Robot will Grasp wire
         if(req.wire_grasping_robot == "left"):
             robot_grasp_object = self.right_arm
@@ -87,7 +91,7 @@ class RobotControl:
         # Grasp Wire
         print("     Executing action: grasping wire")
 
-        grasp = self.post_grasp_offset*grasp_obj_rotm[:,[0]] # get pre-grasp offset
+        grasp = self.post_grasp_offset*1.5*grasp_obj_rotm[:,[0]] # get pre-grasp offset
         pose_target.position.x = req.wire_grasp_pose.position.x + float(grasp[0])
         pose_target.position.y = req.wire_grasp_pose.position.y + float(grasp[1])
         pose_target.position.z = req.wire_grasp_pose.position.z + float(grasp[2])
@@ -109,6 +113,8 @@ class RobotControl:
 
         (plan1, fraction) = robot_grasp_wire.compute_cartesian_path(waypoints, 0.01, 0.0)  
         robot_grasp_wire.execute(plan1, wait=True)
+
+        
 
         ## GRASPING OBJECT
 
@@ -168,7 +174,11 @@ class RobotControl:
                 if i >= self.num_of_grasp:
                     print(Fore.RED + "NO SOLUTION FOUND")
 
+        
+
         self.scene.remove_world_object(box_name)
+
+
 
         return GraspWireResponse(status = True)
 

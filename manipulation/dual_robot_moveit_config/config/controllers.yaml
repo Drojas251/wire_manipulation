@@ -8,7 +8,7 @@ controller_list:
     type: FollowJointTrajectory
     joints: [robot_b_waist, robot_b_shoulder, robot_b_elbow, robot_b_forearm_roll, robot_b_wrist_angle, robot_b_wrist_rotate]
 
-  #- name: "gripper_controller"
+  #- name: "robot_b_/gripper_controller"
   #  action_ns: follow_joint_trajectory
   #  type: FollowJointTrajectory
-  #  joints: [left_finger, right_finger]
+  #  joints: [robot_b_left_finger, robot_b_right_finger]

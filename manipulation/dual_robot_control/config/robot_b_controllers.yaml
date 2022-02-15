@@ -11,7 +11,7 @@ arm_controller:
     goal_time: 1
     stopped_velocity_tolerance: 0.02
 
-gripper_controller:
-  type: position_controllers/JointTrajectoryController
-  joints:
-    - robot_b_left_finger
+#gripper_controller:
+#  type: position_controllers/JointTrajectoryController
+#  joints:
+#    - robot_b_left_finger
