@@ -366,7 +366,7 @@ class WireSim:
 
       wire_collision_object = [] # Get Collision Objects for wire configs
       for i in range(self.actions):
-            collision_object = self.collisions.make_wire_collision_object(wire_set[[i],:,:].reshape((3,15)))
+            collision_object = self.collisions.make_wire_collision_object(wire_set[[i],:,:].reshape((3,20)))
             wire_collision_object.append(collision_object)
 
       env_collision_manager = self.collisions.make_env_collision_manager() #define collision manager for env
