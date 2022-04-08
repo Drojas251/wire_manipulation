@@ -6,14 +6,15 @@
 https://github.com/Drojas251/interbotix_ros_toolboxes.git
 https://github.com/Drojas251/interbotix_ros_core.git
 https://github.com/ROBOTIS-GIT/DynamixelSDK.git
+git clone -b noetic https://github.com/Drojas251/image_pipeline.git
 
 ```
 
 ### Other packages 
 ```
 pip install python-fcl
-scipy
-sklearn
+sudo apt-get install python-numpy python-scipy
+pip install -U scikit-learn
 sudo apt-get install ros-noetic-realsense2-camera
 ```
 ## ROS Version and Dependencies 

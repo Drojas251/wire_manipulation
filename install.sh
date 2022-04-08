@@ -15,8 +15,17 @@ sudo apt-get upgrade
 cd $catkin_ws/src
 
 git clone https://github.com/Drojas251/interbotix_ros_core.git
-git clone -b noetic https://github.com/Drojas251/interbotix_ros_manipulators.git
 git clone https://github.com/Drojas251/interbotix_ros_toolboxes.git
 git clone -b noetic https://github.com/Drojas251/image_pipeline.git
+git clone https://github.com/ROBOTIS-GIT/DynamixelSDK.git
+
+# moveit and ros control 
+sudo apt-get install ros-noetic-ros-control ros-noetic-ros-controllers ros-noetic-moveit
+
+# python related packages 
+pip install python-fcl
+pip install -U scikit-learn
+sudo apt-get install python-numpy python-scipy
+
 
 
