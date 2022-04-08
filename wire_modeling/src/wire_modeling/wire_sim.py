@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
+
+#Python
 import numpy as np
 from numpy import linalg as la
 from numpy.lib.function_base import vectorize
-
-import numpy as np
-import matplotlib.pyplot as plt
 import math
-from wire_modeling.wire_grasp_toolbox import WireGraspToolbox
-import colorama
 from colorama import Fore
+
+#Other
+from wire_modeling.wire_grasp_toolbox import WireGraspToolbox
 import fcl
 
-# FLOW of Service 
+# FLOW 
 # Get PC size ~ 
 # Pass PC to State estimation to output 3x20 vector representing wire 
 # Pass 3x20 vector to sim function. Output is 8x3x20 tensor representing results to 8 actions 
