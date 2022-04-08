@@ -26,27 +26,28 @@
 
   <!--Spawn Robot-->
   <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"  args="-urdf -param robot_description -model dual_viper
-                                                                        -J robot_a_elbow 1.55
+                                                                        -J robot_a_elbow 1.75
                                                                         -J robot_a_forearm_roll 0
-                                                                        -J robot_a_shoulder -1.76
+                                                                        -J robot_a_shoulder -1.7
                                                                         -J robot_a_waist 0
-                                                                        -J robot_a_wrist_angle 0.8
+                                                                        -J robot_a_wrist_angle 0.4
                                                                         -J robot_a_wrist_rotate 0
                                                                         
-                                                                        -J robot_b_elbow 1.55
+                                                                        -J robot_b_elbow 1.75
                                                                         -J robot_b_forearm_roll 0
-                                                                        -J robot_b_shoulder -1.76
+                                                                        -J robot_b_shoulder -1.7
                                                                         -J robot_b_waist 0
-                                                                        -J robot_b_wrist_angle 0.8
+                                                                        -J robot_b_wrist_angle 0.4
                                                                         -J robot_b_wrist_rotate 0" />
 
-
+<!--robot state pub-->
   <node
     name="robot_state_publisher"
     pkg="robot_state_publisher"
     type="robot_state_publisher">
   </node>
 
+<!--Launch controller manager-->
   <rosparam file="$(find dual_robot_gazebo)/config/dual_robot_trajectory_controllers.yaml" command="load"/>
 
     <node
@@ -56,5 +57,9 @@
       respawn="false"
       output="screen"
       args="spawn robot_a_/arm_controller robot_b_/arm_controller joint_state_controller"/>
+
+  <!--launch moveit-->
+  <include file="$(find dual_robot_moveit_config)/launch/dual_robot_moveit.launch"/> 
+
 
 </launch>

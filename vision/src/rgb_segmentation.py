@@ -107,7 +107,7 @@ class RGBSegmentation(object):
 
 def main():
     rospy.init_node("seg_node",anonymous=True)
-    rospy.sleep(10)
+    rospy.sleep(3)
     seg_object = RGBSegmentation()
     try:
         rospy.spin()

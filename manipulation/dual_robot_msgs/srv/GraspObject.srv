@@ -1,0 +1,4 @@
+string robot
+geometry_msgs/Pose object_grasp_pose 
+---
+bool status 

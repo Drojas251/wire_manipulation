@@ -20,14 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 
-
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES vision
-#  CATKIN_DEPENDS cv_bridge image_transport rospy sensor_msgs std_msgs
-#  DEPENDS system_lib
-)
-
+catkin_package()
 
 
 ## Specify additional locations of header files

@@ -1,30 +1,27 @@
 #!/usr/bin/env python3
 
-import numpy as np
-from wire_modeling.wire_sim import *
+#ROS
 import rospy
-from geometry_msgs.msg import PoseArray
 from sensor_msgs.msg import PointCloud2
+import geometry_msgs.msg
+
+# custom libs
+from wire_modeling.wire_sim import Collisions,TargetObject,WireModel,WireSim
 from wire_modeling_msgs.srv import *
 from dual_robot_msgs.srv import *
 from wire_modeling.wire_grasp_toolbox import WireGraspToolbox
+
+#python
+import numpy as np
 import math
-
-# Robot Control 
-import sys
-import copy
-import rospy
-import moveit_commander
-import moveit_msgs.msg
-import geometry_msgs.msg
-
-import colorama
 from colorama import Fore
 
+# returns a pointcloud instance
 def get_wire_pointcloud(topic):
     points = rospy.wait_for_message(topic, PointCloud2)
     return points
 
+# Client to call to get wire model 
 def process_point_cloud_client(points):
      rospy.wait_for_service('process_point_cloud')
      try:
@@ -34,11 +31,22 @@ def process_point_cloud_client(points):
      except rospy.ServiceException as e:
          print("Service call failed: %s"%e)
 
-def robot_control(wire_grasping_robot,wire_grasp_pose,pull_vec,object_grasp_pose):
-     rospy.wait_for_service('robot_control_service')
+# Client call to grasp and move wire 
+def grasp_wire(robot_,wire_grasp_pose,pull_vec):
+     rospy.wait_for_service('grasp_wire_service')
      try:
-         robot_control_input = rospy.ServiceProxy('robot_control_service', GraspWire)
-         response = robot_control_input(wire_grasping_robot,wire_grasp_pose,pull_vec,object_grasp_pose)
+         grasp_wire_input = rospy.ServiceProxy('grasp_wire_service', GraspWire)
+         response = grasp_wire_input(robot_,wire_grasp_pose,pull_vec)
+         return response
+     except rospy.ServiceException as e:
+         print("Service call failed: %s"%e)
+
+# Client call to grasp target object
+def grasp_target(robot_,object_grasp_pose):
+     rospy.wait_for_service('grasp_object_service')
+     try:
+         grasp_object_input = rospy.ServiceProxy('grasp_object_service', GraspObject)
+         response = grasp_object_input(robot_,object_grasp_pose)
          return response
      except rospy.ServiceException as e:
          print("Service call failed: %s"%e)
@@ -92,21 +100,20 @@ if __name__ == "__main__":
     rx = 0 # rot about x
     ry = 0 # rot about y
     rz = 3.14 # rot about z
-    grasp_object = GraspObject(gop,god,rx,ry,rz) # create grasp object, object 
+    target_object = TargetObject(gop,god,rx,ry,rz) # create grasp object, object 
 
-    #*** Define the Configuration of the Dual Arm Setup ***
-    left_robot_location = np.array([[0],[0.1778],[0]])
-    right_robot_location = np.array([[0],[-0.1778],[0]])
-    robot_reach = 0.7
-    distance_apart = 0.3556
-    robots = DualRobotConfig(left_robot_location, right_robot_location, robot_reach, distance_apart) # dual robot object
-
-    #*** Initialize grasp ***#
+    #*** Get bezier curve ***#
     curve = WireGraspToolbox(raw_data)
+
+    #*** Collision Object ***#
+    collisions = Collisions()
+    collisions.make_box_env_collision_obj(0.05,0.76,0.6,np.array([0.53,0,0.3])) # Front panel
+    collisions.make_box_env_collision_obj(0.457,0.05,0.6,np.array([0.3,-0.382,0.3])) # Side Panel
+    collisions.make_box_env_collision_obj(0.05,0.05,0.05,np.array([0.48,0.03,0.27])) # Target Object
 
     #*** Initialize the WireSim Object ***
     N = 20
-    wire_sim_ = WireSim(N,wire_model,grasp_object, robots, curve )
+    wire_sim_ = WireSim(N,wire_model,target_object, curve, collisions )
 
     print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Sending Wire Config to Simulator ")
     pick, pull , wire_grasping_robot = wire_sim_.simulate(wire)
@@ -122,13 +129,12 @@ if __name__ == "__main__":
         # Get grasp orientation as quaternion 
         grasp_rotm, grasp_quat = curve.get_wire_grasp_orientation(np.transpose(pick),np.transpose(pull))
 
-
         ###### Robot Control Setup ########
         # robot_b = left
         # robot_a = right
         print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Initiating Robots ")
 
-        # Initializing the Wire Grasp Pose
+        # Set the Wire Grasp Pose
         wire_grasp_pose = geometry_msgs.msg.Pose()
         wire_grasp_pose.orientation.w = grasp_quat[3]
         wire_grasp_pose.orientation.x = grasp_quat[0]
@@ -138,32 +144,31 @@ if __name__ == "__main__":
         wire_grasp_pose.position.y = float(pick[1])
         wire_grasp_pose.position.z = float(pick[2])
 
-        # Initializing Pull Vector
+        # Set Pull Vector
         pull_vec = geometry_msgs.msg.Vector3()
         pull_vec.x = float(pull[0])
         pull_vec.y = float(pull[1])
         pull_vec.z = float(pull[2])
 
+        # Set the target pose
         object_grasp_pose = geometry_msgs.msg.Pose()
         object_grasp_pose.orientation.w = 1.0
         object_grasp_pose.position.x = float(gop[0]) 
         object_grasp_pose.position.y = float(gop[1])
         object_grasp_pose.position.z = float(gop[2])
 
-        status = robot_control(wire_grasping_robot,wire_grasp_pose,pull_vec,object_grasp_pose)
-
-        if status == True:
-            print("SUCCESS")
+        #Task Executor
+        if(wire_grasping_robot == "left"):
+            object_grasping_robot = "right"
         else:
-            print("FAIL")
+            object_grasping_robot = "left"
+
+        #grasp wire
+        status = grasp_wire(wire_grasping_robot,wire_grasp_pose,pull_vec)
+
+        #grasp target
+        status = grasp_target(object_grasping_robot,object_grasp_pose)
         
-        
-
-
-
-        
-
-    moveit_commander.roscpp_shutdown()
 
 
     #rospy.spin()

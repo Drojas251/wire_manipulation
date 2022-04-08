@@ -87,8 +87,5 @@
       <child link="panel_1"/>
       <origin xyz="0.5334 -0.0381 0.3048" />
     </joint>
-    
-
-
 
 </robot>

@@ -1,26 +1,13 @@
 <launch>
 
-  <arg name="use_sim"                       default="false"/>
-  <arg name="use_actual"                       default="false"/>
-
   <include file="$(find realsense2_camera)/launch/rs_camera.launch">
     <arg name="filters"                        value="pointcloud"/>
     <arg name="align_depth"                      value="true"/>
   </include>
-  
-  <!--Launch Gazebo Robot-->
-  <include if="$(arg use_sim)" file="$(find dual_robot_gazebo)/launch/dual_robot_gazebo.launch"/>
-  
-  <!--Launch Real Robot-->
-  <include if="$(arg use_actual)" file="$(find dual_robot_control)/launch/dual_robot_bringup.launch"/>
-
 
   <!--Nodes involved with Segmentation of Wire-->
   <node pkg="vision" type="rgb_segmentation.py" name="rgb_segmentation" output="screen" />
   <node pkg="vision" type="process_point_cloud_server.py" name="process_point_cloud_server" output="screen" />
-
-  <!--Dual Robot control service-->
-  <node pkg="dual_robot_control" type="robot_control_server.py" name="robot_control_server" output="screen" />
 
   <!--Convert Segmented Depth image to PC-->
   <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />

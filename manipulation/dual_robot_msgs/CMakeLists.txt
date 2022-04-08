@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
   FILES
   GraspWire.srv
+  GraspObject.srv
 )
 
 generate_messages(
