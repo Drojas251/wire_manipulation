@@ -113,7 +113,7 @@ class WireSim:
     self.l = self.wire_model.L/(self.N - 1) # resting length between nodes
     self.actions = 8 # number of pull vectors to solve for 
     self.time_step = 0.001 # time step of the simulation 
-    self.max_iterations = 300 # max iterations in a simulation before timeout in enforced 
+    self.max_iterations = 500 # max iterations in a simulation before timeout in enforced 
     
 
   def internal_forces(self,wire,V):
