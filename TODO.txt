@@ -1,6 +1,0 @@
-# Grasp Orientation 
-
-1.) Use the tanget vector computed from the bezier class to get the reference vector in the wiresim
-    At the moment, we get the reference vector by finding the position vector from the nieghbor node
-    This is not accurate. Incorporate the bezier class in some how to do This
-2.) use cartesian controller to actually move the wire 
