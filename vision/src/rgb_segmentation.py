@@ -24,6 +24,8 @@ class RGBSegmentation(object):
         except CvBridgeError as e:
             print(e)
         rospy.sleep(0.01)
+
+        # Segment RGB by Coloe
         lower_color = np.array([ 124, 72, 47])
         upper_color = np.array([179, 255, 255])
         hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
@@ -43,32 +45,16 @@ class RGBSegmentation(object):
         filtered_wire = cv2.drawContours(mask2,[largest_area[-1]], 0, (255,255,255,255), -1)
 
         # erosion
-        new_img = cv2.erode(filtered_wire, kernel, iterations=2)
+        img_erosion = cv2.erode(filtered_wire, kernel, iterations=2)
 
-        depth_limit = 1000
-
-
+        # Get copy of depth image
         depth = self.depth_data
-        #print(depth[1,2])
         depth_copy = depth.copy()
 
-        for r in range(len(new_img)):
-            for c in range(len(new_img[0])):
-                if new_img[r,c].all() == 0:
-                    depth_copy[r,c] = 0
-                    
-                else:
-                    new_img[r,c] = 1
-                    if depth_copy[r,c] > depth_limit:
-                        depth_copy[r,c] = 0
+        # use segmented RGB image as mask for depth image
+        new_depth_img = cv2.bitwise_and(depth_copy, depth_copy, mask = img_erosion )
 
-        #segmented_img = self.bridge_object.cv2_to_imgmsg(new_img,"bgr8")
-        segmented_img = self.bridge_object.cv2_to_imgmsg(new_img,"passthrough")
-        segmented_img.header.frame_id = "camera_color_optical_frame"
-
-        
-
-
+        # Define Camera info for publish
         cam_info = CameraInfo()
         cam_info.header.stamp = rospy.Time.now()
         cam_info.header.frame_id = "camera_color_optical_frame"
@@ -83,27 +69,27 @@ class RGBSegmentation(object):
         cam_info.binning_y = 0
         cam_info.roi = self.depth_cam_info.roi
 
-        self.seg_depth_img = self.bridge_object.cv2_to_imgmsg(depth_copy)
+        # Segmented RGB Image
+        segmented_img = self.bridge_object.cv2_to_imgmsg(new_img,"passthrough")
+        segmented_img.header.frame_id = "camera_color_optical_frame"
+
+        # Segmneted Depth Image
+        self.seg_depth_img = self.bridge_object.cv2_to_imgmsg(new_depth_img)
         self.seg_depth_img.header.stamp = cam_info.header.stamp
         self.seg_depth_img.header.frame_id = "camera_color_optical_frame"
-        #self.seg_depth_img.height = 720
-        #self.seg_depth_img.height = 1280
     
+        # Publish
         self.image_pub.publish(segmented_img)
         self.depth_image_pub.publish(self.seg_depth_img)
         self.depth_img_cam_info_pub.publish(cam_info)
 
     def get_depth_data(self,data):
-        test = Image()
-        test = data
         cv_depth_image = self.bridge_object.imgmsg_to_cv2(data)
         self.depth_data = cv_depth_image
-        #print(len(self.depth_data))
-        #print(len(self.depth_data[0]))
+
     def depth_cam_info_callback( self,msg):
         self.depth_cam_info = msg
-        #self.depth_img_cam_info_pub.publish(msg)
-        #print(msg)
+
 
 def main():
     rospy.init_node("seg_node",anonymous=True)
