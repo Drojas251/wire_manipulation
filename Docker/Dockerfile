@@ -3,18 +3,39 @@ FROM ros:noetic
 
 # Make sure everything is up to date before building from source
 RUN apt-get update \
-  && apt-get upgrade -y \
-  && apt-get clean
+  && apt-get upgrade -y 
 
-RUN apt-get update && apt-get install -y \
+ENV DEBAIN_FRONTEND = noninteractive
+
+RUN apt-get install -y \
     ros-noetic-moveit  \
     ros-noetic-ros-control \
     ros-noetic-ros-controllers \
+    ros-noetic-ros-numpy \
+    ros-noetic-gazebo-ros \
+    ros-noetic-cv-bridge \
+    ros-noetic-depth-image-proc \
+    ros-noetic-realsense2-camera \
+    ros-noetic-pcl-ros \ 
     python3-rosdep \
-    ros-noetic-rviz \
-    git-all \
-    && apt-get clean
+    xauth \
+    git-all 
 
-RUN apt-get -y install xauth
-RUN apt-get -y install firefox
+
+###
+RUN apt-get -y install pip
+RUN pip install python-fcl numpy scipy -U scikit-learn
+
+WORKDIR /root/wire_ws/src
+RUN git clone https://github.com/Drojas251/interbotix_ros_toolboxes.git \
+  && git clone https://github.com/Drojas251/interbotix_ros_core.git \
+  && git clone https://github.com/ROBOTIS-GIT/DynamixelSDK.git \
+  && git clone https://github.com/Drojas251/wire_manipulation.git \
+  && git clone -b noetic https://github.com/Drojas251/interbotix_ros_manipulators
+
+
+WORKDIR /root/wire_ws
+RUN apt-get update -y \
+  && rosdep install --from-paths src --ignore-src -r -y \
+  && catkin_make 
 
