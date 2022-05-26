@@ -1,10 +1,10 @@
 # Wire Manipulation
 
 ## Prerequisites
-Ubuntu 20.04
-ROS Noetic
-Intel Realsense d435i
-Two ViperX 300s 6DOF arms
+- Ubuntu 20.04
+- ROS Noetic
+- Intel Realsense d435i
+- Two ViperX 300s 6DOF arms
 
 ## Docker Install
 ```
