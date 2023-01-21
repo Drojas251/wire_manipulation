@@ -29,7 +29,7 @@ class RobotControl:
 
         self.grasp_wire_service_ = rospy.Service("grasp_wire_service", GraspWire, self.grasp_wire_callback)
         self.grasp_object_service_ = rospy.Service("grasp_object_service", GraspObject, self.grasp_object_callback)
-        # self.sleep_right_arm_service = rospy.Service("sleep_right_arm_service", None, self.sleep_right_arm_callback)
+        self.sleep_right_arm_service = rospy.Service("sleep_right_arm_service", GraspObject, self.sleep_right_arm_callback)
 
         self.pre_grasp_offset = 0.05
         self.post_grasp_offset = 0.02
@@ -37,17 +37,17 @@ class RobotControl:
 
         self.grasp_object_name = ""
 
-    # def sleep_right_arm_callback(self) -> None:
+    def sleep_right_arm_callback(self, req) -> None:
         # if arm == "left":
         #     self.left_arm.set_named_target("sleep")
         #     l_error_code_val, l_plan, l_planning_time, l_error_code = self.left_arm.plan()
         #     if (l_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
         #         self.left_arm.execute(l_plan)
         # elif arm == "right":
-        # self.right_arm.set_named_target("sleep")
-        # r_error_code_val, r_plan, r_planning_time, r_error_code = self.right_arm.plan()
-        # if (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
-        #     self.right_arm.execute(r_plan)
+        self.right_arm.set_named_target("sleep")
+        r_error_code_val, r_plan, r_planning_time, r_error_code = self.right_arm.plan()
+        if (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
+            self.right_arm.execute(r_plan)
 
     def grasp_object_callback(self,req):
 
