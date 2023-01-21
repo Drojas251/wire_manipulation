@@ -1,2 +1,4 @@
 
 *.pyc
+wire_modeling/src/wire_modeling/__pycache__/wire_sim.cpython-38.pyc
+*.pyc

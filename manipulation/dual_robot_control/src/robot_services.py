@@ -24,6 +24,8 @@ class RobotControl:
 
         self.right_arm = moveit_commander.MoveGroupCommander("robot_a")
         self.left_arm = moveit_commander.MoveGroupCommander("robot_b")
+        # self.right_gripper = moveit_commander.MoveGroupCommander("a_bot_gripper")
+        # self.left_gripper = moveit_commander.MoveGroupCommander("b_bot_gripper")
 
         self.grasp_wire_service_ = rospy.Service("grasp_wire_service", GraspWire, self.grasp_wire_callback)
         self.grasp_object_service_ = rospy.Service("grasp_object_service", GraspObject, self.grasp_object_callback)
@@ -181,6 +183,11 @@ class RobotControl:
         plan1 = robot.go(wait=True)
         robot.stop()
 
+        # Close gripper around wire
+        # self.right_gripper.set_named_target("close")
+        # _, r_open_gripper, _, _ = self.right_gripper.plan()
+        # self.right_gripper.execute(r_open_gripper)
+
         # Cartesian move to move wire in the direction of the pull vector
         print("     Executing action: moving wire")
         pull_distance = 0.15
@@ -194,7 +201,6 @@ class RobotControl:
 
         (plan1, fraction) = robot.compute_cartesian_path(waypoints, 0.01, 0.0)  
         robot.execute(plan1, wait=True)
-
 
         return GraspWireResponse(status = True)
 
