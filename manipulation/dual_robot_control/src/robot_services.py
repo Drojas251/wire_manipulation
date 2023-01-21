@@ -135,6 +135,20 @@ class RobotControl:
         GraspObjectResponse(status = status)
         self.scene.remove_world_object(self.grasp_object_name)
 
+        # Close the gripper around the wire once point found
+        # self.right_gripper.set_named_target("close")
+        # _, l_open_gripper, _, _ = self.right_gripper.plan()
+        # self.right_gripper.execute(l_open_gripper)
+
+        # Sleep the arm after grabbing object
+        self.right_arm.set_named_target("sleep")
+        r_error_code_val, r_plan, r_planning_time, r_error_code = self.right_arm.plan()
+        r_success = (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS)
+        if (r_success):
+            self.right_arm.execute(r_plan)
+        else:
+            sys.exit()
+
 
     def grasp_wire_callback(self,req):
 
@@ -190,7 +204,7 @@ class RobotControl:
 
         # Cartesian move to move wire in the direction of the pull vector
         print("     Executing action: moving wire")
-        pull_distance = 0.15
+        pull_distance = 0.175
         waypoints = []
 
         wpose = robot.get_current_pose().pose

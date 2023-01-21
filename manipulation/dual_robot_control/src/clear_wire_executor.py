@@ -176,7 +176,7 @@ if __name__ == "__main__":
         status = grasp_wire(wire_grasping_robot,wire_grasp_pose,pull_vec)
 
         #grasp target
-        # status = grasp_target(object_grasping_robot,object_grasp_pose)
+        status = grasp_target(object_grasping_robot,object_grasp_pose)
         
         # sleep right arm after grasping object
         # status = sleep_right_arm()
