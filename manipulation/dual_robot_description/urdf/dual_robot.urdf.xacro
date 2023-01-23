@@ -6,22 +6,22 @@
   <xacro:include filename="$(find dual_robot_description)/urdf/robot.urdf.xacro" />
 
   <!-- arm -->
-  <xacro:vx300s prefix="robot_a_"/>
-  <xacro:vx300s prefix="robot_b_"/>
+  <xacro:vx300s prefix="a_bot_"/>
+  <xacro:vx300s prefix="b_bot_"/>
 
   <link name="world"/>
 
-    <joint name="robot_a_to_world" type="fixed">
-      <parent link="world"/>
-      <child link="robot_a_base_link"/>
-      <origin xyz="0 -0.1778 0" />
-    </joint>
+  <joint name="a_bot_to_world" type="fixed">
+    <parent link="world"/>
+    <child link="a_bot_base_link"/>
+    <origin xyz="0 -0.1778 0" />
+  </joint>
 
-    <joint name="robot_b_to_world" type="fixed">
-      <parent link="world"/>
-      <child link="robot_b_base_link"/>
-      <origin xyz="0 0.1778 0" />
-    </joint>
+  <joint name="b_bot_to_world" type="fixed">
+    <parent link="world"/>
+    <child link="b_bot_base_link"/>
+    <origin xyz="0 0.1778 0" />
+  </joint>
 
   <gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
@@ -29,63 +29,5 @@
       <legacyModeNS>true</legacyModeNS>
     </plugin>
   </gazebo>
-
-  <link name="panel_1">
-    <inertial>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
-    <mass value="1"/>
-      <inertia ixx="100"  ixy="0"  ixz="0" iyy="100" iyz="0" izz="100" />
-      </inertial>
-      <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
-        <geometry>
-          <box size="0.02 0.762 0.6096" />
-        </geometry>
-          <material name="Cyan">
-        <color rgba="0 1.0 1.0 1.0"/>
-          </material>
-      </visual>
-      <collision>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-          <geometry>
-            <box size="0.02 0.762 0.6096" />
-          </geometry>
-      </collision>
-    </link>
-
-    <link name="panel_2">
-    <inertial>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
-    <mass value="1"/>
-      <inertia ixx="100"  ixy="0"  ixz="0" iyy="100" iyz="0" izz="100" />
-      </inertial>
-      <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
-        <geometry>
-          <box size="0.4572 0.02 0.6096" />
-        </geometry>
-          <material name="Cyan">
-        <color rgba="0 1.0 1.0 1.0"/>
-          </material>
-      </visual>
-      <collision>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-          <geometry>
-            <box size="0.4572 0.02 0.6096" />
-          </geometry>
-      </collision>
-    </link>
-
-    <joint name="panel_joint" type="fixed">
-      <parent link="panel_1"/>
-      <child link="panel_2"/>
-      <origin xyz="-0.2286 -0.391 0" />
-    </joint>
-
-    <joint name="panel_to_world" type="fixed">
-      <parent link="world"/>
-      <child link="panel_1"/>
-      <origin xyz="0.5334 -0.0381 0.3048" />
-    </joint>
 
 </robot>

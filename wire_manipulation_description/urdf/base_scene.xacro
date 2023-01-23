@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro"
+  name="base_scene">
+
+  <!-- World link -->
+  <link name="world" />
+
+  <!-- Environment (two panels and ground) -->
+  <xacro:include filename="$(find wire_manipulation_description)/urdf/environment.xacro" />
+
+  <!-- VX300s macro -->
+  <xacro:include filename="$(find vx300s_description)/urdf/vx300s_macro.xacro" />
+
+  <!-- dual vx300s, a_bot and b_bot -->
+  <xacro:vx300s prefix="a_bot_" hw_interface="hardware_interface/EffortJointInterface" />
+  <xacro:vx300s prefix="b_bot_" hw_interface="hardware_interface/EffortJointInterface" />
+  <joint name="a_bot_to_world" type="fixed">
+    <parent link="world" />
+    <child link="a_bot_base_link" />
+    <origin xyz="0 -0.1778 0" />
+  </joint>
+  <joint name="b_bot_to_world" type="fixed">
+    <parent link="world" />
+    <child link="b_bot_base_link" />
+    <origin xyz="0 0.1778 0" />
+  </joint>
+
+  <!-- gazebo ros control plugin -->
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+      <legacyModeNS>true</legacyModeNS>
+    </plugin>
+  </gazebo>
+
+</robot>

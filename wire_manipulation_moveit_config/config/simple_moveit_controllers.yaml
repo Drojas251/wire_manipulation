@@ -1,0 +1,35 @@
+controller_list:
+  - name: a_bot/arm_controller
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: True
+    joints:
+      - a_bot_waist
+      - a_bot_shoulder
+      - a_bot_elbow
+      - a_bot_forearm_roll
+      - a_bot_wrist_angle
+      - a_bot_wrist_rotate
+  - name: b_bot/arm_controller
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: True
+    joints:
+      - b_bot_waist
+      - b_bot_shoulder
+      - b_bot_elbow
+      - b_bot_forearm_roll
+      - b_bot_wrist_angle
+      - b_bot_wrist_rotate
+  - name: a_bot/gripper_controller
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: True
+    joints:
+      - a_bot_left_finger
+  - name: b_bot/gripper_controller
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: True
+    joints:
+      - b_bot_left_finger
