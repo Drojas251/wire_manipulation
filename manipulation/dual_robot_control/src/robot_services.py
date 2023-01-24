@@ -22,10 +22,10 @@ class RobotControl:
         self.scene = moveit_commander.PlanningSceneInterface()
         self.robot = moveit_commander.RobotCommander()
 
-        self.right_arm = moveit_commander.MoveGroupCommander("robot_a")
-        self.left_arm = moveit_commander.MoveGroupCommander("robot_b")
-        # self.right_gripper = moveit_commander.MoveGroupCommander("a_bot_gripper")
-        # self.left_gripper = moveit_commander.MoveGroupCommander("b_bot_gripper")
+        self.right_arm = moveit_commander.MoveGroupCommander("a_bot_arm")
+        self.left_arm = moveit_commander.MoveGroupCommander("b_bot_arm")
+        self.right_gripper = moveit_commander.MoveGroupCommander("a_bot_gripper")
+        self.left_gripper = moveit_commander.MoveGroupCommander("b_bot_gripper")
 
         self.grasp_wire_service_ = rospy.Service("grasp_wire_service", GraspWire, self.grasp_wire_callback)
         self.grasp_object_service_ = rospy.Service("grasp_object_service", GraspObject, self.grasp_object_callback)
@@ -44,10 +44,11 @@ class RobotControl:
         #     if (l_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
         #         self.left_arm.execute(l_plan)
         # elif arm == "right":
-        self.right_arm.set_named_target("sleep")
-        r_error_code_val, r_plan, r_planning_time, r_error_code = self.right_arm.plan()
-        if (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
-            self.right_arm.execute(r_plan)
+        # self.right_arm.set_named_target("sleep")
+        # r_error_code_val, r_plan, r_planning_time, r_error_code = self.right_arm.plan()
+        # if (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
+        #     self.right_arm.execute(r_plan)
+        pass
 
     def grasp_object_callback(self,req):
 
@@ -193,9 +194,24 @@ class RobotControl:
         pose_target.position.y = req.wire_grasp_pose.position.y + float(grasp[1])
         pose_target.position.z = req.wire_grasp_pose.position.z + float(grasp[2])
 
-        robot.set_pose_target(pose_target)
-        plan1 = robot.go(wait=True)
-        robot.stop()
+        waypoints = []
+
+        wpose = robot.get_current_pose().pose
+        waypoints.append(pose_target)
+
+        (plan1, fraction) = robot.compute_cartesian_path(waypoints, 0.01, 0.0)  
+        
+        print('fraction 1', fraction)
+
+        if fraction < 1 :
+            return GraspWireResponse(status = False)
+
+
+        robot.execute(plan1, wait=True)
+
+        # robot.set_pose_target(pose_target)
+        # plan1 = robot.go(wait=True)
+        # robot.stop()
 
         # Close gripper around wire
         # self.right_gripper.set_named_target("close")
@@ -214,6 +230,12 @@ class RobotControl:
         waypoints.append(copy.deepcopy(wpose))
 
         (plan1, fraction) = robot.compute_cartesian_path(waypoints, 0.01, 0.0)  
+
+        print('fraction 2', fraction)
+
+        if fraction < 1 :
+            return GraspWireResponse(status = False)
+
         robot.execute(plan1, wait=True)
 
         return GraspWireResponse(status = True)

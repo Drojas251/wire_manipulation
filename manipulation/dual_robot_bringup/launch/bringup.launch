@@ -1,11 +1,8 @@
 <launch>
 
-  <arg name="use_sim"                       default="false"/>
-  <arg name="use_actual"                       default="false"/>
-  <arg name="launch_vision"                       default="true"/>
+
 
 <!-- Launch Vision-->
- <group if="$(arg launch_vision)">
     <include file="$(find realsense2_camera)/launch/rs_camera.launch">
       <arg name="filters"                        value="pointcloud"/>
       <arg name="align_depth"                      value="true"/>
@@ -26,14 +23,15 @@
 
     <!--Camera Transform-->
     <node pkg="tf2_ros" type="static_transform_publisher" name="camera_broadcaster" args="-0.3556 0.0 0.4064 0 0 0 1 world camera_link" />
-</group>
 
-  
-  <!--Launch Gazebo Robot-->
-  <include if="$(arg use_sim)" file="$(find dual_robot_gazebo)/launch/dual_robot_gazebo.launch"/>
-  
-  <!--Launch Real Robot-->
-  <include if="$(arg use_actual)" file="$(find dual_robot_control)/launch/dual_robot_bringup.launch"/>
+
+    <!-- Use of real robot -->
+    <include file="$(find wire_manipulation_moveit_config)/launch/wire_manipulation_moveit.launch">
+    </include>
+
+    <!-- Launch robot in demo -->
+    <!-- <include file="$(find wire_manipulation_moveit_config)/launch/demo.launch">
+    </include> -->
 
   <!--Dual Robot control service-->
   <node pkg="dual_robot_control" type="robot_services.py" name="robot_services" output="screen" />
