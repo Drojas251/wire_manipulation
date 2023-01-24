@@ -1,0 +1,27 @@
+<launch>
+  <arg name="a_bot_port"                              default="/dev/ttyUSB0"/>
+  <arg name="b_bot_port"                              default="/dev/ttyUSB1"/>
+  <arg name="urdf_path" default="$(find wire_manipulation_description)/urdf/base_scene.xacro"/>
+
+  <!-- send robot urdf to param server -->
+  <param name="robot_description" command="xacro '$(arg urdf_path)'" />
+
+  <include file="$(find vx300s_bringup)/launch/vx300s_bringup.launch" ns="a_bot">
+    <arg name="port"                            value="$(arg a_bot_port)"/>
+    <arg name="prefix"                          value="a_bot_"/>
+  </include>
+
+  <include file="$(find vx300s_bringup)/launch/vx300s_bringup.launch" ns="b_bot">
+    <arg name="port"                            value="$(arg b_bot_port)"/>
+    <arg name="prefix"                          value="b_bot_"/>
+  </include>
+
+  <rosparam file="$(find wire_manipulation_moveit_config)/config/joint_state_publisher.yaml" />
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+
+  <include file="$(find wire_manipulation_moveit_config)/launch/demo.launch">
+    <arg name="moveit_controller_manager"                 value="simple"/>
+  </include>
+
+
+</launch>

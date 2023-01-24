@@ -1,0 +1,36 @@
+controller_list:
+  - name: fake_a_bot_arm_controller
+    type: $(arg fake_execution_type)
+    joints:
+      - a_bot_waist
+      - a_bot_shoulder
+      - a_bot_elbow
+      - a_bot_forearm_roll
+      - a_bot_wrist_angle
+      - a_bot_wrist_rotate
+  - name: fake_b_bot_arm_controller
+    type: $(arg fake_execution_type)
+    joints:
+      - b_bot_waist
+      - b_bot_shoulder
+      - b_bot_elbow
+      - b_bot_forearm_roll
+      - b_bot_wrist_angle
+      - b_bot_wrist_rotate
+  - name: fake_a_bot_gripper_controller
+    type: $(arg fake_execution_type)
+    joints:
+      - a_bot_left_finger
+  - name: fake_b_bot_gripper_controller
+    type: $(arg fake_execution_type)
+    joints:
+      - b_bot_left_finger
+initial:  # Define initial robot poses per group
+  - group: a_bot_arm
+    pose: sleep
+  - group: b_bot_arm
+    pose: sleep
+  - group: a_bot_gripper
+    pose: open
+  - group: b_bot_gripper
+    pose: open

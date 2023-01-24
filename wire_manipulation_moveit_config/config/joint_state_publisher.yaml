@@ -1,0 +1,3 @@
+source_list:
+  - /a_bot/joint_states
+  - /b_bot/joint_states
