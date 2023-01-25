@@ -7,6 +7,7 @@ import moveit_msgs.msg
 import geometry_msgs.msg
 from dual_robot_msgs.srv import GraspWire, GraspWireResponse
 from dual_robot_msgs.srv import GraspObject, GraspObjectResponse
+from std_msgs.msg import String
 
 from colorama import Fore
 import copy
@@ -29,7 +30,8 @@ class RobotControl:
 
         self.grasp_wire_service_ = rospy.Service("grasp_wire_service", GraspWire, self.grasp_wire_callback)
         self.grasp_object_service_ = rospy.Service("grasp_object_service", GraspObject, self.grasp_object_callback)
-        self.sleep_right_arm_service = rospy.Service("sleep_right_arm_service", GraspObject, self.sleep_right_arm_callback)
+        # self.sleep_arm_service = rospy.Service("sleep_arm_service", String, self.sleep_arm_callback)
+        # self.grasp_prep_service = rospy.Service("grasp_prep_service", String, self.grasp_prep_callback)
 
         self.pre_grasp_offset = 0.05
         self.post_grasp_offset = 0.02
@@ -37,18 +39,71 @@ class RobotControl:
 
         self.grasp_object_name = ""
 
-    def sleep_right_arm_callback(self, req) -> None:
-        # if arm == "left":
-        #     self.left_arm.set_named_target("sleep")
-        #     l_error_code_val, l_plan, l_planning_time, l_error_code = self.left_arm.plan()
-        #     if (l_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
-        #         self.left_arm.execute(l_plan)
-        # elif arm == "right":
-        # self.right_arm.set_named_target("sleep")
-        # r_error_code_val, r_plan, r_planning_time, r_error_code = self.right_arm.plan()
-        # if (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
-        #     self.right_arm.execute(r_plan)
-        pass
+    def sleep_arm_callback(self, arm) -> None:
+        if arm == "left":
+            self.left_arm.set_named_target("sleep")
+            l_error_code_val, l_plan, l_planning_time, l_error_code = self.left_arm.plan()
+            if (l_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
+                self.left_arm.execute(l_plan)
+            else:
+                sys.exit()
+        elif arm == "right":
+            self.right_arm.set_named_target("sleep")
+            r_error_code_val, r_plan, r_planning_time, r_error_code = self.right_arm.plan()
+            if (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
+                self.right_arm.execute(r_plan)
+            else:
+                sys.exit()
+
+    def grasp_prep_callback(self,req):
+         # Get robot move_group
+        if(req.robot == "left"):
+            robot = self.left_arm
+        else:
+            robot = self.right_arm
+
+        # Set planning time
+        robot.set_planning_time(5.0)
+
+        # Set pre-grasp position
+        # grasp_target.position.x = req.object_grasp_pose.position.x - float(pre_grasp[0])
+        # grasp_target.position.y = req.object_grasp_pose.position.y - float(pre_grasp[1])
+        # grasp_target.position.z = req.object_grasp_pose.position.z - float(pre_grasp[2])
+
+        # print("x", grasp_target.position.x)
+        # print("y", grasp_target.position.y)
+        # print("z", grasp_target.position.z)
+
+        # # Find valid grasp pose
+        # print("     Checking Grasp Orientaiton #" + str(i+1))
+        # robot.set_pose_target(grasp_target)
+        # error_code_val, plan1, planning_time, error_code = robot.plan()
+        # success = (error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS) # returns True if grasp plan is success
+        
+        # if success == True:
+        #     print(Fore.GREEN + "     Valid Grasp Found")
+        #     print(grasp_target.orientation)
+
+        #     print(Fore.WHITE + "     Executing action: grasping object")
+        #     robot.execute(plan1) # execute grasp when a valid solution is found
+        #     robot.clear_pose_targets()
+
+        #     # Going in for Grasps
+        #     grasp = self.post_grasp_offset*2*grasp_obj_rotm[:,[0]] # get pre-grasp offset
+        #     grasp_target.position.x = req.object_grasp_pose.position.x + float(grasp[0])
+        #     grasp_target.position.y = req.object_grasp_pose.position.y + float(grasp[1])
+        #     grasp_target.position.z = req.object_grasp_pose.position.z + float(grasp[2])
+
+        #     print("x", grasp_target.position.x)
+        #     print("y", grasp_target.position.y)
+        #     print("z", grasp_target.position.z)
+
+
+        #     robot.set_pose_target(grasp_target)
+        #     robot.go(wait=True)
+        #     robot.stop()
+        #     robot.clear_pose_targets()
+        #     status = True
 
     def grasp_object_callback(self,req):
 
@@ -142,13 +197,7 @@ class RobotControl:
         # self.right_gripper.execute(l_open_gripper)
 
         # Sleep the arm after grabbing object
-        self.right_arm.set_named_target("sleep")
-        r_error_code_val, r_plan, r_planning_time, r_error_code = self.right_arm.plan()
-        r_success = (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS)
-        if (r_success):
-            self.right_arm.execute(r_plan)
-        else:
-            sys.exit()
+        # self.sleep_arm_callback(robot)
 
 
     def grasp_wire_callback(self,req):
