@@ -52,6 +52,22 @@
     <group_state name="close" group="b_bot_gripper">
         <joint name="b_bot_left_finger" value="0.021"/>
     </group_state>
+    <group_state name="ready" group="a_bot_arm">
+        <joint name="a_bot_elbow" value="1.4"/>
+        <joint name="a_bot_forearm_roll" value="0"/>
+        <joint name="a_bot_shoulder" value="-1.4"/>
+        <joint name="a_bot_waist" value="0"/>
+        <joint name="a_bot_wrist_angle" value="0.8"/>
+        <joint name="a_bot_wrist_rotate" value="0"/>
+    </group_state>
+    <group_state name="ready" group="b_bot_arm">
+        <joint name="b_bot_elbow" value="1.4"/>
+        <joint name="b_bot_forearm_roll" value="0"/>
+        <joint name="b_bot_shoulder" value="-1.4"/>
+        <joint name="b_bot_waist" value="0"/>
+        <joint name="b_bot_wrist_angle" value="0.8"/>
+        <joint name="b_bot_wrist_rotate" value="0"/>
+    </group_state>
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
     <end_effector name="a_bot_end_effector" parent_link="a_bot_ee_gripper_link" group="a_bot_arm"/>
     <end_effector name="b_bot_end_effector" parent_link="b_bot_ee_gripper_link" group="b_bot_arm"/>
