@@ -10,7 +10,7 @@
 
   <!-- Launch JSON -->
   <group if="$(arg use_json)">
-    <node pkg="wire_modeling" type="json_output.py" name="json_output" output="screen" />
+    <!-- <node pkg="wire_modeling" type="json_output.py" name="json_output" output="screen" /> -->
   </group>
 
   <!--Nodes involved with Segmentation of Wire-->

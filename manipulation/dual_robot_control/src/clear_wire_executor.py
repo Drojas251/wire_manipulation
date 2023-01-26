@@ -54,22 +54,26 @@ def grasp_target(robot_,object_grasp_pose):
 # Client call to sleep specified arm
 def sleep_arm(robot_):
     rospy.wait_for_service('sleep_arm_service')
-    try:
-        sleep_arm_input = rospy.ServiceProxy('sleep_arm_service', robot_)
-        response = sleep_arm_input(robot_)
-        return response
-    except rospy.ServiceException as e:
-        print("Service call failed: %s"%e)
+    
+    sleep_arm_input = rospy.ServiceProxy('/sleep_arm_service', GraspObject)
+    req = GraspObjectRequest()
+    pose = geometry_msgs.msg.Pose()
+    pose.position = geometry_msgs.msg.Point(0,0,0)
+    pose.orientation = geometry_msgs.msg.Quaternion(0,0,0,0)
+    req.robot = 'left'
+    req.object_grasp_pose = pose
+    response = sleep_arm_input(req)
+    
 
 # Client call to prep grasp
-def sleep_arm(robot_):
-    rospy.wait_for_service('grasp_prep_service')
-    try:
-        sleep_arm_input = rospy.ServiceProxy('grasp_prep_service', robot_)
-        response = sleep_arm_input(robot_)
-        return response
-    except rospy.ServiceException as e:
-        print("Service call failed: %s"%e)
+# def sleep_arm(robot_):
+#     rospy.wait_for_service('grasp_prep_service')
+#     try:
+#         sleep_arm_input = rospy.ServiceProxy('grasp_prep_service', robot_)
+#         response = sleep_arm_input(robot_)
+#         return response
+#     except rospy.ServiceException as e:
+#         print("Service call failed: %s"%e)
 
 #*** Node Starts Here ***#
 if __name__ == "__main__":
@@ -186,9 +190,10 @@ if __name__ == "__main__":
         # status = grasp_wire(wire_grasping_robot,wire_grasp_pose,pull_vec)
 
         #grasp target
-        status = grasp_target(object_grasping_robot,object_grasp_pose)
+        # status = grasp_target(object_grasping_robot,object_grasp_pose)
         
         # sleep right arm after grasping object
+
         status = sleep_arm(object_grasping_robot, )
 
     #rospy.spin()

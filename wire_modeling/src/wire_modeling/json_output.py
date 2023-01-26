@@ -113,6 +113,9 @@ if __name__ == "__main__":
     try:
         rospy.spin()
         # Thread(target=json_exporter.export_json()).start()
-        json_exporter.export_json() # This must happen at very end
+         # This must happen at very end
     except KeyboardInterrupt:
         print("shut down")
+
+    print("end of program")
+    json_exporter.export_json()
