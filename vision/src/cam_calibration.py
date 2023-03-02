@@ -6,7 +6,7 @@ import cv2
 import numpy as np 
 import glob
 
-class CameraCalibration(object):
+class CameraCalibration:
     def __init__(self):
         # Termination criteria
         self.criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -41,6 +41,13 @@ class CameraCalibration(object):
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.points_3d, self.points_2d, gray.shape[::-1], None, None)
         return [ret, mtx, dist, rvecs, tvecs]
     
+    ## Getters and setters
+    def get_points_3d(self):
+        return self.points_3d
+    
+    def get_points_2d(self):
+            return self.points_2d
+    
     ## Helpful functions for image calibration
     def save_coefficients(mtx, dist, path):
         """
@@ -66,14 +73,20 @@ class CameraCalibration(object):
     
 
 def main():
-    # rospy.init_node("camera_calibration")
-    # rospy.sleep(3)
-    calibration = CameraCalibration()
-    # try:
-    #     rospy.spin()
-    # except KeyboardInterrupt:
-    #     print("shut down")
-    cv2.destroyAllWindows()
+    # Define calibration object to hold and store points
+    cam_calibration = CameraCalibration()
+
+    # Defiine arguments to pass to calibrate() parameters
+    directory_path = ""
+    img_file_prefix = "image"
+    img_format = ".jpg"
+    square_size = 0.015 # meters
+    height = 20 # squares high
+    width = 20 # squares across
+
+    calibration_matrices = cam_calibration.calibrate(directory_path, img_file_prefix, img_format, square_size, height, width)
+
+    # cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main()
