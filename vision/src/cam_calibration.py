@@ -86,6 +86,8 @@ def main():
 
     calibration_matrices = cam_calibration.calibrate(directory_path, img_file_prefix, img_format, square_size, height, width)
 
+    points_2d = cam_calibration.get_points_2d()
+    points_2d = cam_calibration.get_points_3d()
     # cv2.destroyAllWindows()
 
 if __name__ == '__main__':
