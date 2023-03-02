@@ -8,8 +8,11 @@ import geometry_msgs.msg
 # custom libs
 from wire_modeling.wire_sim import Collisions,TargetObject,WireModel,WireSim
 from wire_modeling_msgs.srv import *
-from dual_robot_msgs.srv import *
+# from dual_robot_msgs.srv import *
 from wire_modeling.wire_grasp_toolbox import WireGraspToolbox
+from time import sleep
+
+from robot_services import RobotControl
 
 #python
 import numpy as np
@@ -63,22 +66,13 @@ def sleep_arm(robot_):
     req.robot = 'left'
     req.object_grasp_pose = pose
     response = sleep_arm_input(req)
-    
-
-# Client call to prep grasp
-# def sleep_arm(robot_):
-#     rospy.wait_for_service('grasp_prep_service')
-#     try:
-#         sleep_arm_input = rospy.ServiceProxy('grasp_prep_service', robot_)
-#         response = sleep_arm_input(robot_)
-#         return response
-#     except rospy.ServiceException as e:
-#         print("Service call failed: %s"%e)
 
 #*** Node Starts Here ***#
 if __name__ == "__main__":
     rospy.init_node('listener', anonymous=True)
     topic = "/rscamera/depth/points"
+
+    robot_control = RobotControl()
 
     # Get segmented pointcloud data
     print("STATUS: Getting PointCloud Instance")
@@ -186,14 +180,40 @@ if __name__ == "__main__":
         else:
             object_grasping_robot = "left"
 
+        # BEGIN ROUTINE
+        # print(wire_grasping_robot, object_grasping_robot)
+        # Begin both arms in sleep
+        status = robot_control.move_to_target(wire_grasping_robot, 'sleep')
+        status = robot_control.move_to_target(object_grasping_robot, 'sleep')
+
+        # Set both arms to a ready state
+        status = robot_control.move_to_target(wire_grasping_robot, 'ready')
+        status = robot_control.move_to_target(object_grasping_robot, 'ready')
+        # Open grippers on both arms
+        status = robot_control.set_gripper(wire_grasping_robot, "open")
+        status = robot_control.set_gripper(object_grasping_robot, "open")
+
+        # Send object grasp robot to pre-grasp, encountering wire
+        joint_goal = [62, -30, 57, 77, -64, -59]
+        joint_goal = [x * np.pi / 180 for x in joint_goal]
+        status = robot_control.move_to_joint_goal(object_grasping_robot, joint_goal)
+        sleep(3)
+        status = robot_control.move_to_target(object_grasping_robot, 'ready')
+
         #grasp wire
-        # status = grasp_wire(wire_grasping_robot,wire_grasp_pose,pull_vec)
+        status = robot_control.grasp_wire(wire_grasping_robot,wire_grasp_pose,pull_vec)
+        status = robot_control.set_gripper(wire_grasping_robot, "close")
 
         #grasp target
-        # status = grasp_target(object_grasping_robot,object_grasp_pose)
+        status = robot_control.grasp_object(object_grasping_robot,object_grasp_pose)
+        status = robot_control.set_gripper(object_grasping_robot, "close")
         
         # sleep right arm after grasping object
+        status = robot_control.move_to_target(object_grasping_robot, 'ready')
 
-        status = sleep_arm(object_grasping_robot, )
-
+        # sleep left arm after brushing wire
+        status = robot_control.set_gripper(wire_grasping_robot, "open")
+        status = robot_control.move_to_target(wire_grasping_robot, 'ready')
+        
     #rospy.spin()
+    

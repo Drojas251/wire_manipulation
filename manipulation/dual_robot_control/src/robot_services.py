@@ -13,13 +13,11 @@ from colorama import Fore
 import copy
 from scipy.spatial.transform import Rotation as R
 
-
 class RobotControl:
     def __init__(self):
         super(RobotControl, self).__init__()
 
         moveit_commander.roscpp_initialize(sys.argv)
-        rospy.init_node('robot_control_server')
         self.scene = moveit_commander.PlanningSceneInterface()
         self.robot = moveit_commander.RobotCommander()
 
@@ -28,10 +26,9 @@ class RobotControl:
         self.right_gripper = moveit_commander.MoveGroupCommander("a_bot_gripper")
         self.left_gripper = moveit_commander.MoveGroupCommander("b_bot_gripper")
 
-        self.grasp_wire_service_ = rospy.Service("grasp_wire_service", GraspWire, self.grasp_wire_callback)
-        self.grasp_object_service_ = rospy.Service("grasp_object_service", GraspObject, self.grasp_object_callback)
-        self.sleep_arm_service = rospy.Service("sleep_arm_service", GraspObject, self.sleep_arm_callback)
-        # self.grasp_prep_service = rospy.Service("grasp_prep_service", String, self.grasp_prep_callback)
+        # self.grasp_wire_service_ = rospy.Service("grasp_wire_service", GraspWire, self.grasp_wire_callback)
+        # self.grasp_object_service_ = rospy.Service("grasp_object_service", GraspObject, self.grasp_object_callback)
+        # self.sleep_arm_service = rospy.Service("sleep_arm_service", GraspObject, self.sleep_arm_callback)
 
         self.pre_grasp_offset = 0.05
         self.post_grasp_offset = 0.02
@@ -39,89 +36,69 @@ class RobotControl:
 
         self.grasp_object_name = ""
 
-    def sleep_arm_callback(self, req):
+    def set_gripper(self, robot_id, pos):
+        if robot_id == "left":
+            self.left_gripper.set_named_target(pos)
+            _, l_pos_gripper, _, _ = self.left_gripper.plan()
+            self.left_gripper.execute(l_pos_gripper)
+        elif robot_id == "right":
+            self.right_gripper.set_named_target(pos)
+            _, r_pos_gripper, _, _ = self.right_gripper.plan()
+            self.right_gripper.execute(r_pos_gripper)
 
-        res = GraspObjectResponse()
-        res.status = True
-
-        if req.robot == "left":
-            self.left_arm.set_named_target("sleep")
+    def move_to_target(self, robot_id, target):
+        if robot_id == "left":
+            self.left_arm.set_named_target(target)
             l_error_code_val, l_plan, l_planning_time, l_error_code = self.left_arm.plan()
             if (l_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
                 self.left_arm.execute(l_plan)
 
-        elif req.robot == "right":
-            self.right_arm.set_named_target("sleep")
+        elif robot_id == "right":
+            self.right_arm.set_named_target(target)
             r_error_code_val, r_plan, r_planning_time, r_error_code = self.right_arm.plan()
             if (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
                 self.right_arm.execute(r_plan)
 
-        return res
+    def move_to_pose(self, robot_id, pose):
+        if robot_id == "left":
+            self.left_arm.set_pose_target(pose)
+            l_error_code_val, l_plan, l_planning_time, l_error_code = self.left_arm.plan()
+            if (l_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
+                self.left_arm.execute(l_plan)
 
-    def grasp_prep_callback(self,req):
-         # Get robot move_group
-        if(req.robot == "left"):
-            robot = self.left_arm
-        else:
-            robot = self.right_arm
+        elif robot_id == "right":
+            self.right_arm.set_pose_target(pose)
+            r_error_code_val, r_plan, r_planning_time, r_error_code = self.right_arm.plan()
+            if (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
+                self.right_arm.execute(r_plan)
 
-        # Set planning time
-        robot.set_planning_time(5.0)
+    def move_to_joint_goal(self, robot_id, joint_goal):
+        if robot_id == "left":
+            self.left_arm.set_joint_value_target(joint_goal)
+            l_error_code_val, l_plan, l_planning_time, l_error_code = self.left_arm.plan()
+            if (l_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
+                self.left_arm.execute(l_plan)
 
-        # Set pre-grasp position
-        # grasp_target.position.x = req.object_grasp_pose.position.x - float(pre_grasp[0])
-        # grasp_target.position.y = req.object_grasp_pose.position.y - float(pre_grasp[1])
-        # grasp_target.position.z = req.object_grasp_pose.position.z - float(pre_grasp[2])
+        elif robot_id == "right":
+            self.right_arm.set_joint_value_target(joint_goal)
+            r_error_code_val, r_plan, r_planning_time, r_error_code = self.right_arm.plan()
+            if (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
+                self.right_arm.execute(r_plan)
 
-        # print("x", grasp_target.position.x)
-        # print("y", grasp_target.position.y)
-        # print("z", grasp_target.position.z)
-
-        # # Find valid grasp pose
-        # print("     Checking Grasp Orientaiton #" + str(i+1))
-        # robot.set_pose_target(grasp_target)
-        # error_code_val, plan1, planning_time, error_code = robot.plan()
-        # success = (error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS) # returns True if grasp plan is success
-        
-        # if success == True:
-        #     print(Fore.GREEN + "     Valid Grasp Found")
-        #     print(grasp_target.orientation)
-
-        #     print(Fore.WHITE + "     Executing action: grasping object")
-        #     robot.execute(plan1) # execute grasp when a valid solution is found
-        #     robot.clear_pose_targets()
-
-        #     # Going in for Grasps
-        #     grasp = self.post_grasp_offset*2*grasp_obj_rotm[:,[0]] # get pre-grasp offset
-        #     grasp_target.position.x = req.object_grasp_pose.position.x + float(grasp[0])
-        #     grasp_target.position.y = req.object_grasp_pose.position.y + float(grasp[1])
-        #     grasp_target.position.z = req.object_grasp_pose.position.z + float(grasp[2])
-
-        #     print("x", grasp_target.position.x)
-        #     print("y", grasp_target.position.y)
-        #     print("z", grasp_target.position.z)
-
-
-        #     robot.set_pose_target(grasp_target)
-        #     robot.go(wait=True)
-        #     robot.stop()
-        #     robot.clear_pose_targets()
-        #     status = True
-
-    def grasp_object_callback(self,req):
+    def grasp_object(self, robot_id, object_grasp_pose):
 
         # insert Grasp Object in Scene 
         self.grasp_object_name = "grasp_object"
         box_pose = geometry_msgs.msg.PoseStamped()
         box_pose.header.frame_id = "world"
         box_pose.pose.orientation.w = 1.0
-        box_pose.pose.position.x = req.object_grasp_pose.position.x  
-        box_pose.pose.position.y = req.object_grasp_pose.position.y  
-        box_pose.pose.position.z = req.object_grasp_pose.position.z  
+        box_pose.pose.position.x = object_grasp_pose.position.x  
+        box_pose.pose.position.y = object_grasp_pose.position.y  
+        box_pose.pose.position.z = object_grasp_pose.position.z  
         self.scene.add_box(self.grasp_object_name, box_pose, size=(0.025, 0.025, 0.025))
 
         # Get robot move_group
-        if(req.robot == "left"):
+        if(robot_id == "left"):
             robot = self.left_arm
         else:
             robot = self.right_arm
@@ -133,7 +110,7 @@ class RobotControl:
         status = False
 
         # Get possible grasp
-        object_grasp_poses = self.create_grasp_repo(req.object_grasp_pose)
+        object_grasp_poses = self.create_grasp_repo(object_grasp_pose)
 
         # Test potential grasps until a valid motion plan is found
         for i in range(self.num_of_grasp):
@@ -146,9 +123,9 @@ class RobotControl:
             pre_grasp = self.pre_grasp_offset*grasp_obj_rotm[:,[0]] # get pre-grasp offset
 
             # Set pre-grasp position
-            grasp_target.position.x = req.object_grasp_pose.position.x - float(pre_grasp[0])
-            grasp_target.position.y = req.object_grasp_pose.position.y - float(pre_grasp[1])
-            grasp_target.position.z = req.object_grasp_pose.position.z - float(pre_grasp[2])
+            grasp_target.position.x = object_grasp_pose.position.x - float(pre_grasp[0])
+            grasp_target.position.y = object_grasp_pose.position.y - float(pre_grasp[1])
+            grasp_target.position.z = object_grasp_pose.position.z - float(pre_grasp[2])
 
             print("x", grasp_target.position.x)
             print("y", grasp_target.position.y)
@@ -170,9 +147,9 @@ class RobotControl:
 
                 # Going in for Grasps
                 grasp = self.post_grasp_offset*2*grasp_obj_rotm[:,[0]] # get pre-grasp offset
-                grasp_target.position.x = req.object_grasp_pose.position.x + float(grasp[0])
-                grasp_target.position.y = req.object_grasp_pose.position.y + float(grasp[1])
-                grasp_target.position.z = req.object_grasp_pose.position.z + float(grasp[2])
+                grasp_target.position.x = object_grasp_pose.position.x + float(grasp[0])
+                grasp_target.position.y = object_grasp_pose.position.y + float(grasp[1])
+                grasp_target.position.z = object_grasp_pose.position.z + float(grasp[2])
 
                 print("x", grasp_target.position.x)
                 print("y", grasp_target.position.y)
@@ -194,19 +171,10 @@ class RobotControl:
         GraspObjectResponse(status = status)
         self.scene.remove_world_object(self.grasp_object_name)
 
-        # Close the gripper around the wire once point found
-        # self.right_gripper.set_named_target("close")
-        # _, l_open_gripper, _, _ = self.right_gripper.plan()
-        # self.right_gripper.execute(l_open_gripper)
-
-        # Sleep the arm after grabbing object
-        # self.sleep_arm_callback(robot)
-
-
-    def grasp_wire_callback(self,req):
+    def grasp_wire(self, robot_id, wire_grasp_pose, pull_vec):
 
         # Determining which Robot will Grasp wire
-        if(req.robot == "left"):
+        if(robot_id == "left"):
             robot = self.left_arm
         else:
             robot = self.right_arm
@@ -216,10 +184,10 @@ class RobotControl:
 
         ## Move to the Computed Grasp Pose to grasp the wire 
         pose_target = geometry_msgs.msg.Pose()
-        pose_target.orientation.w = req.wire_grasp_pose.orientation.w
-        pose_target.orientation.x = req.wire_grasp_pose.orientation.x
-        pose_target.orientation.y = req.wire_grasp_pose.orientation.y
-        pose_target.orientation.z = req.wire_grasp_pose.orientation.z
+        pose_target.orientation.w = wire_grasp_pose.orientation.w
+        pose_target.orientation.x = wire_grasp_pose.orientation.x
+        pose_target.orientation.y = wire_grasp_pose.orientation.y
+        pose_target.orientation.z = wire_grasp_pose.orientation.z
 
         # determine pre-grasp pose
         print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Execute Robot Control")
@@ -230,9 +198,9 @@ class RobotControl:
         grasp_obj_rotm = grasp_obj_rotm.as_matrix()
         pre_grasp = self.pre_grasp_offset*grasp_obj_rotm[:,[0]]
 
-        pose_target.position.x = req.wire_grasp_pose.position.x - float(pre_grasp[0])
-        pose_target.position.y = req.wire_grasp_pose.position.y - float(pre_grasp[1])
-        pose_target.position.z = req.wire_grasp_pose.position.z - float(pre_grasp[2])
+        pose_target.position.x = wire_grasp_pose.position.x - float(pre_grasp[0])
+        pose_target.position.y = wire_grasp_pose.position.y - float(pre_grasp[1])
+        pose_target.position.z = wire_grasp_pose.position.z - float(pre_grasp[2])
 
         robot.set_pose_target(pose_target)
         plan1 = robot.go(wait=True)
@@ -242,9 +210,9 @@ class RobotControl:
         print("     Executing action: grasping wire")
 
         grasp = self.post_grasp_offset*1.5*grasp_obj_rotm[:,[0]] # get pre-grasp offset
-        pose_target.position.x = req.wire_grasp_pose.position.x + float(grasp[0])
-        pose_target.position.y = req.wire_grasp_pose.position.y + float(grasp[1])
-        pose_target.position.z = req.wire_grasp_pose.position.z + float(grasp[2])
+        pose_target.position.x = wire_grasp_pose.position.x + float(grasp[0])
+        pose_target.position.y = wire_grasp_pose.position.y + float(grasp[1])
+        pose_target.position.z = wire_grasp_pose.position.z + float(grasp[2])
 
         waypoints = []
 
@@ -276,9 +244,9 @@ class RobotControl:
         waypoints = []
 
         wpose = robot.get_current_pose().pose
-        wpose.position.x += pull_distance*req.pull_vec.x  
-        wpose.position.y += pull_distance*req.pull_vec.y 
-        wpose.position.z += pull_distance*req.pull_vec.z
+        wpose.position.x += pull_distance*pull_vec.x  
+        wpose.position.y += pull_distance*pull_vec.y 
+        wpose.position.z += pull_distance*pull_vec.z
         waypoints.append(copy.deepcopy(wpose))
 
         (plan1, fraction) = robot.compute_cartesian_path(waypoints, 0.01, 0.0)  
@@ -291,7 +259,6 @@ class RobotControl:
         robot.execute(plan1, wait=True)
 
         return GraspWireResponse(status = True)
-
 
     def create_grasp_repo(self,object_grasp_pose):
 
@@ -358,8 +325,8 @@ class RobotControl:
 
         return object_grasp_poses 
 
-
 if __name__ == "__main__":
+    rospy.init_node('robot_control_server')
     robot_control = RobotControl()
     print(Fore.GREEN + "Robot Control Server is now running")
     rospy.spin()
