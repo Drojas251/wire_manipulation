@@ -78,16 +78,19 @@ def main():
 
     # Defiine arguments to pass to calibrate() parameters
     directory_path = ""
-    img_file_prefix = "image"
+    img_file_prefix = "img_"
     img_format = ".jpg"
-    square_size = 0.015 # meters
+    square_size = 0.127 # in meters; each square is 0.5inch
     height = 20 # squares high
     width = 20 # squares across
 
     calibration_matrices = cam_calibration.calibrate(directory_path, img_file_prefix, img_format, square_size, height, width)
 
     points_2d = cam_calibration.get_points_2d()
-    points_2d = cam_calibration.get_points_3d()
+    points_3d = cam_calibration.get_points_3d()
+    
+    print(points_2d)
+    print(points_3d)
     # cv2.destroyAllWindows()
 
 if __name__ == '__main__':
