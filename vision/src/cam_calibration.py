@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-# import rospy
-# from sensor_msgs.msg import Image, CameraInfo
-# from cv_bridge import CvBridge,CvBridgeError
 import cv2
 import numpy as np 
 import glob
@@ -22,12 +19,14 @@ class CameraCalibration:
         object_point *= square_size
 
         # Define images and loop to find corners on board
-        images = glob.glob(directory_path + '/' + img_file_prefix + "*."  + img_format)
+        images = glob.glob(directory_path)
+
         for i in images:
             image = cv2.imread(i)
             gray  = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) # Process for gray because B/W board
-            # Finding corners
-            ret, corners = cv2.findChessboardCorners(gray, (width, height), None)
+        
+            ret, corners = cv2.findChessboardCorners(gray, (width, height), flags=cv2.CALIB_CB_EXHAUSTIVE)
+
             # If corners found, add and store to our result
             if ret:
                 self.points_3d.append(object_point)
@@ -36,6 +35,9 @@ class CameraCalibration:
 
                 # Draw and display the found corners for verification
                 preview = cv2.drawChessboardCorners(image, (width, height), processed_corners, ret)
+                resized_preview = cv2.resize(preview, (720, 480))
+                cv2.imshow("preview", resized_preview)
+                cv2.waitKey(0)
 
         # Finally, calibrate and return matrices of image
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.points_3d, self.points_2d, gray.shape[::-1], None, None)
@@ -77,21 +79,17 @@ def main():
     cam_calibration = CameraCalibration()
 
     # Defiine arguments to pass to calibrate() parameters
-    directory_path = ""
+    directory_path = "vision/resources/calibration/*"
     img_file_prefix = "img_"
     img_format = ".jpg"
     square_size = 0.127 # in meters; each square is 0.5inch
-    height = 20 # squares high
-    width = 20 # squares across
+    height = 20-1 # squares high
+    width = 20-1 # squares across
 
     calibration_matrices = cam_calibration.calibrate(directory_path, img_file_prefix, img_format, square_size, height, width)
 
     points_2d = cam_calibration.get_points_2d()
     points_3d = cam_calibration.get_points_3d()
-    
-    print(points_2d)
-    print(points_3d)
-    # cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main()
