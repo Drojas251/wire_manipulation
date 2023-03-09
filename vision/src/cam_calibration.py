@@ -34,10 +34,10 @@ class CameraCalibration:
                 self.points_2d.append(processed_corners)
 
                 # Draw and display the found corners for verification
-                preview = cv2.drawChessboardCorners(image, (width, height), processed_corners, ret)
-                resized_preview = cv2.resize(preview, (720, 480))
-                cv2.imshow("preview", resized_preview)
-                cv2.waitKey(0)
+                # preview = cv2.drawChessboardCorners(image, (width, height), processed_corners, ret)
+                # resized_preview = cv2.resize(preview, (720, 480))
+                # cv2.imshow("preview", resized_preview)
+                # cv2.waitKey(0)
 
         # Finally, calibrate and return matrices of image
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.points_3d, self.points_2d, gray.shape[::-1], None, None)
