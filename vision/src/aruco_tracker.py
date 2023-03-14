@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
+#!/usr/bin/env python3
+import rospy
+from sensor_msgs.msg import Image, CameraInfo
+from cv_bridge import CvBridge,CvBridgeError
 
 import cv2
 import numpy as np 
-import glob
 import cam_calibration
 
 CAMERA_SRC = cv2.VideoCapture(4) # Depth cam device index 4
@@ -10,9 +13,13 @@ print(CAMERA_SRC)
 
 class ArucoTracker:
     def __init__(self):
+        # Subscribers to Camera
+        # self.aligned_depth_rgb_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_depth_data,queue_size=1)
+        # self.rgb_img_sub = rospy.Subscriber("/camera/color/image_raw",Image, self.rgb_callback,queue_size=1)
+        # self.depth_img_camera_info = rospy.Subscriber("/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback,queue_size=1)
         pass
 
-    def track(self, matrix_coefficients, distortion_coefficients):
+    def track_callback(self, matrix_coefficients, distortion_coefficients):
         while True:
             ret, frame = CAMERA_SRC.read()
             # operations on the frame come here
@@ -61,7 +68,7 @@ def main():
     calibration_matrices = calibration.calibrate(directory_path, img_file_prefix, img_format, square_size, height, width)
 
     tracker = ArucoTracker()
-    tracker.track(calibration_matrices[1], calibration_matrices[2])
+    tracker.track_callback(calibration_matrices[1], calibration_matrices[2])
 
 if __name__ == '__main__':
     main()
