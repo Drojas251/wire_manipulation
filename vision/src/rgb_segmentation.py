@@ -17,7 +17,7 @@ class RGBSegmentation(object):
         self.depth_image_pub = rospy.Publisher("/seg_depth/image_raw", Image, queue_size=1)
         self.depth_img_cam_info_pub = rospy.Publisher("/seg_depth/camera_info", CameraInfo, queue_size=1)
         
-        # Segmented image member variables
+        # Image member variables
         self.bridge_object = CvBridge()
         self.depth_data = []
         self.depth_cam_info = CameraInfo()
