@@ -64,5 +64,4 @@ def main():
     tracker.track(calibration_matrices[1], calibration_matrices[2])
 
 if __name__ == '__main__':
-    cv2.aruco
     main()
