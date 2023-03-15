@@ -23,8 +23,6 @@ class RGBSegmentation(object):
         self.depth_cam_info = CameraInfo()
         self.seg_depth_img = Image()
 
-        # AruCo Tracking and Coordinate member variables
-
     def rgb_callback(self,data):
         try:
             cv_image = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")

@@ -3,6 +3,7 @@
 import rospy
 from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge,CvBridgeError
+from collections import defaultdict
 
 import cv2
 import numpy as np 
@@ -27,6 +28,11 @@ class ArucoTracker:
         self.matrix_coefficients = matrix_coefficients
         self.distortion_coefficients = distortion_coefficients
 
+        # Track result vectors for each id tag found
+        self.marker_dict = defaultdict(dict)
+        # tvec is 3d position difference between the camera and the marker
+        # rvec is Rodriguez's angles between the camera and marker center
+
     def track_callback(self, data):
         try:
             frame = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
@@ -46,13 +52,15 @@ class ArucoTracker:
             corners, ids, rejected_img_points = cv2.aruco.detectMarkers(gray, aruco_dict,
                                                                     parameters=parameters)
             
-            
             if np.all(ids is not None):  # If there are markers found by detector
                 for i in range(0, len(ids)):  # Iterate in markers
                     # Estimate pose of each marker and return the values rvec and tvec---different from camera coefficients
                     rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.127, self.matrix_coefficients,
                                                                             self.distortion_coefficients)
                     (rvec - tvec).any()  # Remove numpy value array error
+                    self.marker_dict[i]["tvec"] = tvec
+                    self.marker_dict[i]["rvec"] = rvec
+                    
                     cv2.aruco.drawDetectedMarkers(frame, corners)  # Draw A square around the markers
                     cv2.drawFrameAxes(frame, self.matrix_coefficients, self.distortion_coefficients, rvec, tvec, .2) 
 
