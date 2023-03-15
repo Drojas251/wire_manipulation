@@ -8,8 +8,7 @@ import cv2
 import numpy as np 
 import cam_calibration
 
-CAMERA_SRC = cv2.VideoCapture(4) # Depth cam device index 4
-print(CAMERA_SRC)
+# CAMERA_SRC = cv2.VideoCapture(4) # Depth cam device index 4; use when running without ROS
 
 class ArucoTracker:
     def __init__(self, matrix_coefficients, distortion_coefficients):
@@ -19,6 +18,8 @@ class ArucoTracker:
         self.depth_img_camera_info = rospy.Subscriber("/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback,queue_size=1)
         
         # Image member variables
+        self.bridge_object = CvBridge()
+        self.seg_depth_img = Image()
         self.depth_data = []
         self.depth_cam_info = CameraInfo()
 
@@ -27,13 +28,17 @@ class ArucoTracker:
         self.distortion_coefficients = distortion_coefficients
 
     def track_callback(self, data):
+        try:
+            frame = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
+        except CvBridgeError as e:
+            print(e)
+        rospy.sleep(0.01)
+
         while True:
-            ret, frame = CAMERA_SRC.read()
-            # operations on the frame come here
+            # ret, frame = CAMERA_SRC.read() # If not using ROS
+            # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Change grayscale
+
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Change grayscale
-            # cv2.imshow('frame',frame)
-            # if cv2.waitKey(1) & 0xFF == ord('q'):
-            #     break
 
             aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
             parameters =  cv2.aruco.DetectorParameters()
@@ -47,16 +52,15 @@ class ArucoTracker:
                     # Estimate pose of each marker and return the values rvec and tvec---different from camera coefficients
                     rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.127, self.matrix_coefficients,
                                                                             self.distortion_coefficients)
-                    (rvec - tvec).any()  # get rid of that nasty numpy value array error
+                    (rvec - tvec).any()  # Remove numpy value array error
                     cv2.aruco.drawDetectedMarkers(frame, corners)  # Draw A square around the markers
-                    # cv2.aruco.drawAxis(frame, matrix_coefficients, distortion_coefficients, rvec, tvec, 0.01)  # Draw Axis
                     cv2.drawFrameAxes(frame, self.matrix_coefficients, self.distortion_coefficients, rvec, tvec, .2) 
 
             # Display the resulting frame
             cv2.imshow('frame', frame)
             # Wait 3 milisecoonds for an interaction. Check the key and do the corresponding job.
             key = cv2.waitKey(3) & 0xFF
-            if key == ord('q'):  # Quit
+            if key == ord('q'): # Quit
                 break
 
     def get_depth_data(self,data):
@@ -66,12 +70,20 @@ class ArucoTracker:
     def depth_cam_info_callback( self,msg):
         self.depth_cam_info = msg
 
+    def rescale(frame, percent=50):
+        width  = int(frame.shape[1] * percent/100)
+        height = int(frame.shape[0] * percent/100)
+        return cv2.resize(frame, (width,height), interpolation = cv2.INTER_AREA)
+
 def main():
+    rospy.init_node("aruco_tracking",anonymous=True)
+    rospy.sleep(3)
+
     # Define calibration object to hold and store points
     calibration = cam_calibration.CameraCalibration()
 
     # Defiine arguments to pass to calibrate() parameters
-    directory_path = "vision/resources/calibration/*"
+    directory_path = "/home/drojas/dlo_ws/src/wire_manipulation/vision/resources/calibration/*"
     img_file_prefix = "img_"
     img_format = ".jpg"
     square_size = 0.127 # in meters; each square is 0.5inch
@@ -79,11 +91,6 @@ def main():
     width = 20-1 # squares across
 
     calibration_matrices = calibration.calibrate(directory_path, img_file_prefix, img_format, square_size, height, width)
-
-    # tracker.track_callback(None)
-
-    rospy.init_node("tracking_node",anonymous=True)
-    rospy.sleep(3)
     tracker = ArucoTracker(calibration_matrices[1], calibration_matrices[2])
     try:
         rospy.spin()
