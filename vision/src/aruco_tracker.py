@@ -33,6 +33,9 @@ class ArucoTracker:
         # tvec is 3d position difference between the camera and the marker
         # rvec is Rodriguez's angles between the camera and marker center
 
+        # Publishers for returned ArUco information
+        # self.aruco_pub = rospy.Publisher("/aruco_position", Image, queue_size=1)
+
     def track_callback(self, data):
         try:
             frame = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
