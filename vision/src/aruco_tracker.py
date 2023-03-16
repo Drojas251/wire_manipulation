@@ -35,7 +35,7 @@ class ArucoTracker:
         # rvec is Rodriguez's angles between the camera and marker center
 
         # Publishers for returned ArUco information
-        self.aruco_pub = rospy.Publisher("/aruco_position", Float32MultiArray, queue_size=1)
+        # self.aruco_pub = rospy.Publisher("/aruco_position", Float32MultiArray, queue_size=1)
 
     def next_img(self):
         self.rgb_img_sub = rospy.Subscriber("/camera/color/image_raw",Image, self.track_callback,queue_size=1)
