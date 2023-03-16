@@ -37,6 +37,10 @@ class ArucoTracker:
         # Publishers for returned ArUco information
         self.aruco_pub = rospy.Publisher("/aruco_position", Float32MultiArray, queue_size=1)
 
+    def next_img(self):
+        self.rgb_img_sub = rospy.Subscriber("/camera/color/image_raw",Image, self.track_callback,queue_size=1)
+        print(self.marker_dict)
+
     def track_callback(self, data):
         try:
             frame = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
@@ -64,6 +68,7 @@ class ArucoTracker:
                     (rvec - tvec).any()  # Remove numpy value array error
                     self.marker_dict[i]["tvec"] = tvec
                     self.marker_dict[i]["rvec"] = rvec
+                    print(tvec)
                     
                     # Publish this?
                     # tvec_pub = FloatLis
@@ -72,12 +77,12 @@ class ArucoTracker:
                     cv2.aruco.drawDetectedMarkers(frame, corners)  # Draw A square around the markers
                     cv2.drawFrameAxes(frame, self.matrix_coefficients, self.distortion_coefficients, rvec, tvec, .2) 
 
-            # Display the resulting frame
-            cv2.imshow('frame', frame) # 
-            # Wait 3 milisecoonds for an interaction. Check the key and do the corresponding job.
-            key = cv2.waitKey(3) & 0xFF
-            if key == ord('q'): # Quit
-                break
+            # # Display the resulting frame
+            # cv2.imshow('frame', frame) # 
+            # # Wait 3 milisecoonds for an interaction. Check the key and do the corresponding job.
+            # key = cv2.waitKey(3) & 0xFF
+            # if key == ord('q'): # Quit
+            #     break
 
     def get_depth_data(self,data):
         cv_depth_image = self.bridge_object.imgmsg_to_cv2(data)
@@ -108,7 +113,9 @@ def main():
 
     calibration_matrices = calibration.calibrate(directory_path, img_file_prefix, img_format, square_size, height, width)
     tracker = ArucoTracker(calibration_matrices[1], calibration_matrices[2])
+
     try:
+        # tracker.next_img()
         rospy.spin()
     except KeyboardInterrupt:
         print("shut down")
