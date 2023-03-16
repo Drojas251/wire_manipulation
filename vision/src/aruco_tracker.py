@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 #!/usr/bin/env python3
 import rospy
-from std_msgs.msg import Float32MultiArray
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose # USE THIS
 from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge,CvBridgeError
 from collections import defaultdict
@@ -71,7 +70,6 @@ class ArucoTracker:
                 print("tvec:",tvec)
                 
                 # Publish this?
-                # tvec_pub = FloatLis
                 # print(list(tvec[0][0]))
                 
                 cv2.aruco.drawDetectedMarkers(frame, corners)  # Draw A square around the markers

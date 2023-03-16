@@ -30,7 +30,6 @@
   <!--Camera Transform-->
   <node pkg="tf2_ros" type="static_transform_publisher" name="camera_broadcaster" args="-0.3556 0.0 0.4064 0 0 0 1 world camera_link" />
 
-
   <!-- Use of real robot -->
   <!-- <include file="$(find wire_manipulation_moveit_config)/launch/wire_manipulation_moveit.launch"> </include> -->
 
