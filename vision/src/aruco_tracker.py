@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 #!/usr/bin/env python3
 import rospy
+from std_msgs.msg import Float32MultiArray
 from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge,CvBridgeError
 from collections import defaultdict
@@ -34,7 +35,7 @@ class ArucoTracker:
         # rvec is Rodriguez's angles between the camera and marker center
 
         # Publishers for returned ArUco information
-        # self.aruco_pub = rospy.Publisher("/aruco_position", Image, queue_size=1)
+        self.aruco_pub = rospy.Publisher("/aruco_position", Float32MultiArray, queue_size=1)
 
     def track_callback(self, data):
         try:
@@ -64,11 +65,15 @@ class ArucoTracker:
                     self.marker_dict[i]["tvec"] = tvec
                     self.marker_dict[i]["rvec"] = rvec
                     
+                    # Publish this?
+                    # tvec_pub = FloatLis
+                    # print(list(tvec[0][0]))
+                    
                     cv2.aruco.drawDetectedMarkers(frame, corners)  # Draw A square around the markers
                     cv2.drawFrameAxes(frame, self.matrix_coefficients, self.distortion_coefficients, rvec, tvec, .2) 
 
             # Display the resulting frame
-            cv2.imshow('frame', frame)
+            cv2.imshow('frame', frame) # 
             # Wait 3 milisecoonds for an interaction. Check the key and do the corresponding job.
             key = cv2.waitKey(3) & 0xFF
             if key == ord('q'): # Quit
