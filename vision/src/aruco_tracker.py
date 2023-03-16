@@ -2,6 +2,7 @@
 #!/usr/bin/env python3
 import rospy
 from std_msgs.msg import Float32MultiArray
+from geometry_msgs.msg import Pose
 from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge,CvBridgeError
 from collections import defaultdict
@@ -48,41 +49,37 @@ class ArucoTracker:
             print(e)
         rospy.sleep(0.01)
 
-        while True:
-            # ret, frame = CAMERA_SRC.read() # If not using ROS
-            # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Change grayscale
+        # ret, frame = CAMERA_SRC.read() # If not using ROS
+        # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Change grayscale
 
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Change grayscale
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Change grayscale
 
-            aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
-            parameters =  cv2.aruco.DetectorParameters()
-            # lists of ids and the corners beloning to each id
-            corners, ids, rejected_img_points = cv2.aruco.detectMarkers(gray, aruco_dict,
-                                                                    parameters=parameters)
-            
-            if np.all(ids is not None):  # If there are markers found by detector
-                for i in range(0, len(ids)):  # Iterate in markers
-                    # Estimate pose of each marker and return the values rvec and tvec---different from camera coefficients
-                    rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.127, self.matrix_coefficients,
-                                                                            self.distortion_coefficients)
-                    (rvec - tvec).any()  # Remove numpy value array error
-                    self.marker_dict[i]["tvec"] = tvec
-                    self.marker_dict[i]["rvec"] = rvec
-                    print(tvec)
-                    
-                    # Publish this?
-                    # tvec_pub = FloatLis
-                    # print(list(tvec[0][0]))
-                    
-                    cv2.aruco.drawDetectedMarkers(frame, corners)  # Draw A square around the markers
-                    cv2.drawFrameAxes(frame, self.matrix_coefficients, self.distortion_coefficients, rvec, tvec, .2) 
+        aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
+        parameters =  cv2.aruco.DetectorParameters()
+        # lists of ids and the corners beloning to each id
+        corners, ids, rejected_img_points = cv2.aruco.detectMarkers(gray, aruco_dict,
+                                                                parameters=parameters)
+        
+        if np.all(ids is not None):  # If there are markers found by detector
+            for i in range(0, len(ids)):  # Iterate in markers
+                # Estimate pose of each marker and return the values rvec and tvec---different from camera coefficients
+                rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.127, self.matrix_coefficients,
+                                                                        self.distortion_coefficients)
+                (rvec - tvec).any()  # Remove numpy value array error
+                self.marker_dict[i]["tvec"] = tvec
+                self.marker_dict[i]["rvec"] = rvec
+                print("tvec:",tvec)
+                
+                # Publish this?
+                # tvec_pub = FloatLis
+                # print(list(tvec[0][0]))
+                
+                cv2.aruco.drawDetectedMarkers(frame, corners)  # Draw A square around the markers
+                cv2.drawFrameAxes(frame, self.matrix_coefficients, self.distortion_coefficients, rvec, tvec, .2) 
 
-            # # Display the resulting frame
-            # cv2.imshow('frame', frame) # 
-            # # Wait 3 milisecoonds for an interaction. Check the key and do the corresponding job.
-            # key = cv2.waitKey(3) & 0xFF
-            # if key == ord('q'): # Quit
-            #     break
+        # # Display the resulting frame
+        cv2.imshow('frame', frame) # 
+        cv2.waitKey(1)
 
     def get_depth_data(self,data):
         cv_depth_image = self.bridge_object.imgmsg_to_cv2(data)
@@ -114,12 +111,7 @@ def main():
     calibration_matrices = calibration.calibrate(directory_path, img_file_prefix, img_format, square_size, height, width)
     tracker = ArucoTracker(calibration_matrices[1], calibration_matrices[2])
 
-    try:
-        # tracker.next_img()
-        rospy.spin()
-    except KeyboardInterrupt:
-        print("shut down")
-    cv2.destroyAllWindows()
+    rospy.spin()
 
 if __name__ == '__main__':
     main()
