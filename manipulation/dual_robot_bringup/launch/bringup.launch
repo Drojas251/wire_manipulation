@@ -34,9 +34,9 @@
   <!-- <include file="$(find wire_manipulation_moveit_config)/launch/wire_manipulation_moveit.launch"> </include> -->
 
   <!-- Launch robot in demo -->
-  <!-- <include file="$(find wire_manipulation_moveit_config)/launch/demo.launch"> </include> -->
+  <include file="$(find wire_manipulation_moveit_config)/launch/demo.launch"> </include>
 
   <!--Dual Robot control service-->
-  <!-- <node pkg="dual_robot_control" type="robot_services.py" name="robot_services" output="screen" /> -->
+  <node pkg="dual_robot_control" type="robot_services.py" name="robot_services" output="screen" />
 
 </launch>

@@ -65,12 +65,16 @@ class RobotControl:
             l_error_code_val, l_plan, l_planning_time, l_error_code = self.left_arm.plan()
             if (l_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
                 self.left_arm.execute(l_plan)
+            else:
+                print("Error code:", l_error_code_val)
 
         elif robot_id == "right":
             self.right_arm.set_pose_target(pose)
             r_error_code_val, r_plan, r_planning_time, r_error_code = self.right_arm.plan()
             if (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
                 self.right_arm.execute(r_plan)
+            else:
+                print("Error code:", r_error_code_val)
 
     def move_to_joint_goal(self, robot_id, joint_goal):
         if robot_id == "left":

@@ -67,10 +67,11 @@ class ArucoTracker:
                 (rvec - tvec).any()  # Remove numpy value array error
                 self.marker_dict[i]["tvec"] = tvec
                 self.marker_dict[i]["rvec"] = rvec
-                print("tvec:",tvec)
+                # print("tvec:",tvec)
                 
                 # Publish this?
-                # print(list(tvec[0][0]))
+                print("tvec:",list(tvec[0][0]))
+                print("rvec:",list(rvec[0][0]))
                 
                 cv2.aruco.drawDetectedMarkers(frame, corners)  # Draw A square around the markers
                 cv2.drawFrameAxes(frame, self.matrix_coefficients, self.distortion_coefficients, rvec, tvec, .2) 

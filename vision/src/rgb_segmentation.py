@@ -4,6 +4,7 @@ from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge,CvBridgeError
 import cv2
 import numpy as np 
+from geometry_msgs.msg import Pose
 
 class RGBSegmentation(object):
     def __init__(self):
