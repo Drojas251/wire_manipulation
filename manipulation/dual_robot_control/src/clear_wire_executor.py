@@ -92,6 +92,8 @@ if __name__ == "__main__":
     test_pose.position.z = 0.693415
     test_pose.orientation.w = 1.0
     status = robot_control.move_to_pose(wire_grasping_robot, test_pose)
+    # [-0.00960011726688565, 0.6074498236341491, 2.160895746853068]
+    # "-0.3556 0.0 0.4064 0 0 0 1 world camera_link"
 
     # # Get segmented pointcloud data
     # print("STATUS: Getting PointCloud Instance")

@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-#!/usr/bin/env python3
 import rospy
-from geometry_msgs.msg import Pose # USE THIS
+
+# tf2 and Transformations
+import tf2_ros
+import tf_conversions
+from geometry_msgs.msg import TransformStamped
 from sensor_msgs.msg import Image, CameraInfo
+
+# Camera capture
 from cv_bridge import CvBridge,CvBridgeError
 from collections import defaultdict
 
@@ -49,7 +54,6 @@ class ArucoTracker:
         rospy.sleep(0.01)
 
         # ret, frame = CAMERA_SRC.read() # If not using ROS
-        # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Change grayscale
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Change grayscale
 
@@ -65,9 +69,9 @@ class ArucoTracker:
                 rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.127, self.matrix_coefficients,
                                                                         self.distortion_coefficients)
                 (rvec - tvec).any()  # Remove numpy value array error
-                self.marker_dict[i]["tvec"] = tvec
-                self.marker_dict[i]["rvec"] = rvec
-                # print("tvec:",tvec)
+                # args="-0.3556 0.0 0.4064 0 0 0 1 world camera_link"
+                self.marker_dict[i]["tvec"] = self.apply_transformation(tvec, [-0.3556, 0.0, 0.4064])
+                self.marker_dict[i]["rvec"] = self.apply_transformation(rvec, [0, 0, 0, 1])
                 
                 # Publish this?
                 print("tvec:",list(tvec[0][0]))
@@ -84,13 +88,24 @@ class ArucoTracker:
         cv_depth_image = self.bridge_object.imgmsg_to_cv2(data)
         self.depth_data = cv_depth_image
 
-    def depth_cam_info_callback( self,msg):
+    def depth_cam_info_callback(self, msg):
         self.depth_cam_info = msg
 
-    def rescale(frame, percent=50):
+    def rescale(self, frame, percent=50):
         width  = int(frame.shape[1] * percent/100)
         height = int(frame.shape[0] * percent/100)
         return cv2.resize(frame, (width,height), interpolation = cv2.INTER_AREA)
+    
+    def apply_transformation(self, l, t):
+        result = l.copy()
+        for i in range(len(result)):
+            result[i] += t[i]
+        return result
+    
+    # def handle_aruco_pose(self, aruco_name):
+    #     broadcaster = tf2_ros.TransformBroadcaster()
+    #     transform   = TransformStamped()
+
 
 def main():
     rospy.init_node("aruco_tracking",anonymous=True)
