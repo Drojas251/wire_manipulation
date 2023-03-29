@@ -74,8 +74,8 @@ class ArucoTracker:
                 self.marker_dict[i]["rvec"] = self.apply_transformation(rvec, [0, 0, 0, 1])
                 
                 # Publish this?
-                print("tvec:",list(tvec[0][0]))
-                print("rvec:",list(rvec[0][0]))
+                print("tvec:",self.marker_dict[i]["tvec"])
+                print("rvec:",self.marker_dict[i]["rvec"])
                 
                 cv2.aruco.drawDetectedMarkers(frame, corners)  # Draw A square around the markers
                 cv2.drawFrameAxes(frame, self.matrix_coefficients, self.distortion_coefficients, rvec, tvec, .2) 
