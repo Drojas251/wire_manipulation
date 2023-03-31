@@ -9,7 +9,7 @@ import geometry_msgs.msg
 from wire_modeling.wire_sim import Collisions,TargetObject,WireModel,WireSim
 from wire_modeling_msgs.srv import *
 # from dual_robot_msgs.srv import *
-from wire_modeling.wire_grasp_toolbox import WireGraspToolbox
+from wire_modeling.wire_grasp_toolbox import WireGraspToolbox, rotm
 from time import sleep
 
 from robot_services import RobotControl
@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
     wire_grasping_robot = "left"
     object_grasping_robot = "right"
-    status = robot_control.move_to_target(wire_grasping_robot, 'sleep')
+    # status = robot_control.move_to_target(wire_grasping_robot, 'sleep')
     # status = robot_control.move_to_target(object_grasping_robot, 'sleep')
 
     # Open grippers on both arms
@@ -87,13 +87,19 @@ if __name__ == "__main__":
     # status = robot_control.set_gripper(object_grasping_robot, "open")
 
     test_pose = geometry_msgs.msg.Pose()
-    test_pose.position.x = 0.27949722
-    test_pose.position.y = -0.01215921  
-    test_pose.position.z = 0.693415
+    # np.transpose(ROT@np.transpose(new_points[[i],:])) + np.array((-0.3556,0.015,0.4064))
+    angle = math.pi/2
+    ROT = rotm(-angle,angle,0)
+    test_pos = np.transpose(ROT@np.transpose([[-0.0090795,0.61558303,2.18333005]])) + np.array((-0.3556,0.015,0.4064))
+    # aruco in camera frame to world frame
+    test_pose.position.x = test_pos[0,0]
+    test_pose.position.y = test_pos[0,1]
+    test_pose.position.z = test_pos[0,2]
     test_pose.orientation.w = 1.0
     status = robot_control.move_to_pose(wire_grasping_robot, test_pose)
     # [-0.00960011726688565, 0.6074498236341491, 2.160895746853068]
     # "-0.3556 0.0 0.4064 0 0 0 1 world camera_link"
+    
 
     # # Get segmented pointcloud data
     # print("STATUS: Getting PointCloud Instance")

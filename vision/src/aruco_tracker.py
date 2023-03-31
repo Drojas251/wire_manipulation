@@ -70,12 +70,14 @@ class ArucoTracker:
                                                                         self.distortion_coefficients)
                 (rvec - tvec).any()  # Remove numpy value array error
                 # args="-0.3556 0.0 0.4064 0 0 0 1 world camera_link"
-                self.marker_dict[i]["tvec"] = self.apply_transformation(tvec, [-0.3556, 0.0, 0.4064])
-                self.marker_dict[i]["rvec"] = self.apply_transformation(rvec, [0, 0, 0, 1])
+                self.marker_dict[i]["tvec"] = tvec #self.apply_transformation(tvec, [-0.3556, 0.0, 0.4064])
+                self.marker_dict[i]["rvec"] = rvec #self.apply_transformation(rvec, [0, 0, 0, 1])
+                # tvec: [[[-0.36519873  0.25416163  1.80538023]]]
+                # rvec: [[[-3.08384975 -0.02781645  0.05220745]]]
                 
                 # Publish this?
-                print("tvec:",self.marker_dict[i]["tvec"])
-                print("rvec:",self.marker_dict[i]["rvec"])
+                # print("tvec:",self.marker_dict[i]["tvec"])
+                # print("rvec:",self.marker_dict[i]["rvec"])
                 
                 cv2.aruco.drawDetectedMarkers(frame, corners)  # Draw A square around the markers
                 cv2.drawFrameAxes(frame, self.matrix_coefficients, self.distortion_coefficients, rvec, tvec, .2) 
