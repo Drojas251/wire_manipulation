@@ -11,6 +11,7 @@ from wire_modeling_msgs.srv import *
 # from dual_robot_msgs.srv import *
 from wire_modeling.wire_grasp_toolbox import WireGraspToolbox, rotm
 from time import sleep
+import tf2_ros
 
 from robot_services import RobotControl
 
@@ -79,27 +80,12 @@ if __name__ == "__main__":
 
     wire_grasping_robot = "left"
     object_grasping_robot = "right"
-    # status = robot_control.move_to_target(wire_grasping_robot, 'sleep')
+    status = robot_control.move_to_target(wire_grasping_robot, 'sleep')
     # status = robot_control.move_to_target(object_grasping_robot, 'sleep')
 
     # Open grippers on both arms
     # status = robot_control.set_gripper(wire_grasping_robot, "open")
     # status = robot_control.set_gripper(object_grasping_robot, "open")
-
-    test_pose = geometry_msgs.msg.Pose()
-    # np.transpose(ROT@np.transpose(new_points[[i],:])) + np.array((-0.3556,0.015,0.4064))
-    angle = math.pi/2
-    ROT = rotm(-angle,angle,0)
-    test_pos = np.transpose(ROT@np.transpose([[-0.0090795,0.61558303,2.18333005]])) + np.array((-0.3556,0.015,0.4064))
-    # aruco in camera frame to world frame
-    test_pose.position.x = test_pos[0,0]
-    test_pose.position.y = test_pos[0,1]
-    test_pose.position.z = test_pos[0,2]
-    test_pose.orientation.w = 1.0
-    status = robot_control.move_to_pose(wire_grasping_robot, test_pose)
-    # [-0.00960011726688565, 0.6074498236341491, 2.160895746853068]
-    # "-0.3556 0.0 0.4064 0 0 0 1 world camera_link"
-    
 
     # # Get segmented pointcloud data
     # print("STATUS: Getting PointCloud Instance")
@@ -108,6 +94,43 @@ if __name__ == "__main__":
     # # Process PC data to get estimated nodes on wire
     # print("STATUS: Processing Pc with process_point_cloud_server")
     # wire_nodes = process_point_cloud_client(points) # output data structure is a posearray
+
+## MY TESTING
+    test_pose = geometry_msgs.msg.Pose()
+    # angle = math.pi/2
+    # ROT = rotm(-angle,angle,0)
+    
+    # np.transpose(ROT@np.transpose(new_points[[i],:])) + np.array((-0.3556,0.015,0.4064))
+    # test_pos = np.transpose(ROT@np.transpose([[-0.0908239, 0.61091098, 2.18313417]])) + np.array((-0.3556,0.015,0.4064)) + np.array((0, -0.1778,0))# transform aruco tvec in camera frame to world
+    # test_pos = np.transpose(ROT@np.transpose(test_pos) + np.array((0,-0.1778,0)))
+    # show to test in world frame?0 -0.1778 0
+
+    print("STATUS: Transforming ArUco Position")
+    ### Buffer to find transform
+    # tfBuffer = tf2_ros.Buffer()
+    # listener = tf2_ros.TransformListener(tfBuffer)
+    # rate = rospy.Rate(10.0)
+    # while not rospy.is_shutdown():
+    #     rate.sleep()
+    #     try:
+    #         trans = tfBuffer.lookup_transform("world", "aruco",rospy.Time())
+    #         print(trans)
+    #     except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+    #         print("error")
+    #         continue
+
+
+    # Diego's pick point: [ 0.28267142 -0.00679812  0.29379862]
+    test_pose.position.x = 0.5238098264109586
+    test_pose.position.y = 0.0018454038466918302
+    test_pose.position.z = 0.1731949099694735
+    
+    test_pose.orientation.w = 1.0
+    status = robot_control.move_to_pose(wire_grasping_robot, test_pose)
+    # status = robot_control.grasp_object(wire_grasping_robot, test_pose)
+    # [-0.00960011726688565, 0.6074498236341491, 2.160895746853068]
+    # "-0.3556 0.0 0.4064 0 0 0 1 world camera_link"
+## END
 
     # # Convert PoseArray into Numpy Array
     # wire = np.zeros((3,20))

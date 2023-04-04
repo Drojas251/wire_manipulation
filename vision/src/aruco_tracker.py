@@ -47,6 +47,9 @@ class ArucoTracker:
         print(self.marker_dict)
 
     def track_callback(self, data):
+        br = tf2_ros.TransformBroadcaster()
+        t = TransformStamped()
+
         try:
             frame = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
         except CvBridgeError as e:
@@ -66,7 +69,7 @@ class ArucoTracker:
         if np.all(ids is not None):  # If there are markers found by detector
             for i in range(0, len(ids)):  # Iterate in markers
                 # Estimate pose of each marker and return the values rvec and tvec---different from camera coefficients
-                rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.127, self.matrix_coefficients,
+                rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.0508, self.matrix_coefficients,
                                                                         self.distortion_coefficients)
                 (rvec - tvec).any()  # Remove numpy value array error
                 # args="-0.3556 0.0 0.4064 0 0 0 1 world camera_link"
@@ -74,10 +77,28 @@ class ArucoTracker:
                 self.marker_dict[i]["rvec"] = rvec #self.apply_transformation(rvec, [0, 0, 0, 1])
                 # tvec: [[[-0.36519873  0.25416163  1.80538023]]]
                 # rvec: [[[-3.08384975 -0.02781645  0.05220745]]]
+
+                t.header.stamp = rospy.Time.now()
+                t.header.frame_id = "camera_color_optical_frame"
+                t.child_frame_id = "aruco"
+                t.transform.translation.x = tvec.reshape(3)[0]
+                t.transform.translation.y = tvec.reshape(3)[1]
+                t.transform.translation.z = tvec.reshape(3)[2]
                 
-                # Publish this?
-                # print("tvec:",self.marker_dict[i]["tvec"])
-                # print("rvec:",self.marker_dict[i]["rvec"])
+                rot_mat = np.array([[0, 0, 0, 0],
+                            [0, 0, 0, 0],
+                            [0, 0, 0, 0],
+                            [0, 0, 0, 1]],
+                            dtype=float)
+                rot_mat[:3, :3], _ = cv2.Rodrigues(rvec)
+                q = tf_conversions.transformations.quaternion_from_matrix(rot_mat)
+
+                t.transform.rotation.x = q[0]
+                t.transform.rotation.y = q[1]
+                t.transform.rotation.z = q[2]
+                t.transform.rotation.w = q[3]
+
+                br.sendTransform(t)
                 
                 cv2.aruco.drawDetectedMarkers(frame, corners)  # Draw A square around the markers
                 cv2.drawFrameAxes(frame, self.matrix_coefficients, self.distortion_coefficients, rvec, tvec, .2) 
@@ -120,7 +141,7 @@ def main():
     directory_path = "/home/drojas/dlo_ws/src/wire_manipulation/vision/resources/calibration/*"
     img_file_prefix = "img_"
     img_format = ".jpg"
-    square_size = 0.127 # in meters; each square is 0.5inch
+    square_size = 0.0127 # in meters; each square is 0.5inch
     height = 20-1 # squares high
     width = 20-1 # squares across
 
