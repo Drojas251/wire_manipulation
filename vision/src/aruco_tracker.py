@@ -39,13 +39,6 @@ class ArucoTracker:
         # tvec is 3d position difference between the camera and the marker
         # rvec is Rodriguez's angles between the camera and marker center
 
-        # Publishers for returned ArUco information
-        # self.aruco_pub = rospy.Publisher("/aruco_position", Float32MultiArray, queue_size=1)
-
-    def next_img(self):
-        self.rgb_img_sub = rospy.Subscriber("/camera/color/image_raw",Image, self.track_callback,queue_size=1)
-        print(self.marker_dict)
-
     def track_callback(self, data):
         br = tf2_ros.TransformBroadcaster()
         t = TransformStamped()
@@ -62,7 +55,7 @@ class ArucoTracker:
 
         aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
         parameters =  cv2.aruco.DetectorParameters()
-        # lists of ids and the corners beloning to each id
+        # lists of ids and the corners belonging to each id
         corners, ids, rejected_img_points = cv2.aruco.detectMarkers(gray, aruco_dict,
                                                                 parameters=parameters)
         
@@ -72,11 +65,8 @@ class ArucoTracker:
                 rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.0508, self.matrix_coefficients,
                                                                         self.distortion_coefficients)
                 (rvec - tvec).any()  # Remove numpy value array error
-                # args="-0.3556 0.0 0.4064 0 0 0 1 world camera_link"
-                self.marker_dict[i]["tvec"] = tvec #self.apply_transformation(tvec, [-0.3556, 0.0, 0.4064])
-                self.marker_dict[i]["rvec"] = rvec #self.apply_transformation(rvec, [0, 0, 0, 1])
-                # tvec: [[[-0.36519873  0.25416163  1.80538023]]]
-                # rvec: [[[-3.08384975 -0.02781645  0.05220745]]]
+                self.marker_dict[i]["tvec"] = tvec
+                self.marker_dict[i]["rvec"] = rvec
 
                 t.header.stamp = rospy.Time.now()
                 t.header.frame_id = "camera_color_optical_frame"
@@ -103,8 +93,8 @@ class ArucoTracker:
                 cv2.aruco.drawDetectedMarkers(frame, corners)  # Draw A square around the markers
                 cv2.drawFrameAxes(frame, self.matrix_coefficients, self.distortion_coefficients, rvec, tvec, .2) 
 
-        # # Display the resulting frame
-        cv2.imshow('frame', frame) # 
+        # Display the resulting frame
+        cv2.imshow('frame', frame) 
         cv2.waitKey(1)
 
     def get_depth_data(self,data):
@@ -114,21 +104,9 @@ class ArucoTracker:
     def depth_cam_info_callback(self, msg):
         self.depth_cam_info = msg
 
-    def rescale(self, frame, percent=50):
-        width  = int(frame.shape[1] * percent/100)
-        height = int(frame.shape[0] * percent/100)
-        return cv2.resize(frame, (width,height), interpolation = cv2.INTER_AREA)
-    
-    def apply_transformation(self, l, t):
-        result = l.copy()
-        for i in range(len(result)):
-            result[i] += t[i]
-        return result
-    
     # def handle_aruco_pose(self, aruco_name):
     #     broadcaster = tf2_ros.TransformBroadcaster()
     #     transform   = TransformStamped()
-
 
 def main():
     rospy.init_node("aruco_tracking",anonymous=True)
