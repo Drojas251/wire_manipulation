@@ -2,14 +2,9 @@
 
 #ROS
 import rospy
-from sensor_msgs.msg import PointCloud2
 import geometry_msgs.msg
 
-# custom libs
-from wire_modeling.wire_sim import Collisions,TargetObject,WireModel,WireSim
-from wire_modeling_msgs.srv import *
 # from dual_robot_msgs.srv import *
-from wire_modeling.wire_grasp_toolbox import WireGraspToolbox, rotm
 from time import sleep
 import tf2_ros
 
