@@ -70,7 +70,7 @@ class ArucoTracker:
 
                 t.header.stamp = rospy.Time.now()
                 t.header.frame_id = "camera_color_optical_frame"
-                t.child_frame_id = "aruco"
+                t.child_frame_id = "aruco_{}".format(i)
                 t.transform.translation.x = tvec.reshape(3)[0]
                 t.transform.translation.y = tvec.reshape(3)[1]
                 t.transform.translation.z = tvec.reshape(3)[2]

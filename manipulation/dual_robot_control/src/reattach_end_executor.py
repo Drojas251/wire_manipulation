@@ -72,7 +72,7 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():
         rate.sleep()
         try:
-            trans = tfBuffer.lookup_transform("world", "aruco",rospy.Time())
+            trans = tfBuffer.lookup_transform("world", "aruco_1",rospy.Time())
             print(trans)
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             print("error")
