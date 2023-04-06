@@ -9,8 +9,9 @@ import geometry_msgs.msg
 from wire_modeling.wire_sim import Collisions,TargetObject,WireModel,WireSim
 from wire_modeling_msgs.srv import *
 # from dual_robot_msgs.srv import *
-from wire_modeling.wire_grasp_toolbox import WireGraspToolbox
+from wire_modeling.wire_grasp_toolbox import WireGraspToolbox, rotm
 from time import sleep
+import tf2_ros
 
 from robot_services import RobotControl
 
@@ -66,13 +67,22 @@ def sleep_arm(robot_):
     req.robot = 'left'
     req.object_grasp_pose = pose
     response = sleep_arm_input(req)
-
+    
 #*** Node Starts Here ***#
 if __name__ == "__main__":
     rospy.init_node('listener', anonymous=True)
     topic = "/rscamera/depth/points"
 
     robot_control = RobotControl()
+
+    wire_grasping_robot = "left"
+    object_grasping_robot = "right"
+    status = robot_control.move_to_target(wire_grasping_robot, 'sleep')
+    status = robot_control.move_to_target(object_grasping_robot, 'sleep')
+
+    # Open grippers on both arms
+    status = robot_control.set_gripper(wire_grasping_robot, "open")
+    status = robot_control.set_gripper(object_grasping_robot, "open")
 
     # Get segmented pointcloud data
     print("STATUS: Getting PointCloud Instance")
@@ -181,7 +191,6 @@ if __name__ == "__main__":
             object_grasping_robot = "left"
 
         # BEGIN ROUTINE
-        # print(wire_grasping_robot, object_grasping_robot)
         # Begin both arms in sleep
         status = robot_control.move_to_target(wire_grasping_robot, 'sleep')
         status = robot_control.move_to_target(object_grasping_robot, 'sleep')
