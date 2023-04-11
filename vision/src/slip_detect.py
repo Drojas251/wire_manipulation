@@ -3,8 +3,10 @@
 #ROS
 import rospy
 import geometry_msgs.msg
+import sys
+import moveit_commander
+import math
 
-# from dual_robot_msgs.srv import *
 from time import sleep
 import tf2_ros
 
@@ -12,31 +14,37 @@ class SlipDetect:
     def __init__(self, slip_delta):
         # Distance in meters of how far cable end ArUco must move to quantify as slip
         self.slip_delta = slip_delta 
+        # Robot services to get poses
+        moveit_commander.roscpp_initialize(sys.argv)
+        self.right_arm = moveit_commander.MoveGroupCommander("a_bot_arm")
+        self.left_arm = moveit_commander.MoveGroupCommander("b_bot_arm")
 
-    def get_transforms(self, rate_input: float, wire_grasping_arm: str):
+    def monitor_dist(self, rate_input: float, end_grasping_arm: str):
         tfBuffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tfBuffer)
-        arm = "a_bot_base_link" if wire_grasping_arm == "left" else "b_bot_base_link"
         rate = rospy.Rate(rate_input)
         while not rospy.is_shutdown():
             rate.sleep()
             try:
                 end_pose = tfBuffer.lookup_transform("world", "aruco_0", rospy.Time())
-                arm_pose = tfBuffer.lookup_transform("world", arm, rospy.Time())
-                # print(end_pose)
+                arm_pose = self.get_current_pose(end_grasping_arm)
+                print(self.calc_dist(end_pose, arm_pose))
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-                # print("error")
                 continue
 
-    def monitor_aruco(self, rate_input):
-        self.get_transforms(rate_input, "left")
-        
+    def calc_dist(self, end_pose, arm_pose):
+        end_pose = end_pose.transform.translation
+        arm_pose = arm_pose.pose.position
+        return math.sqrt(math.pow(end_pose.x - arm_pose.x, 2) + math.pow(end_pose.y - arm_pose.y, 2) + math.pow(end_pose.z - arm_pose.z, 2))
 
+    def get_current_pose(self, robot_id:str):
+        return self.left_arm.get_current_pose() if robot_id == "left" else self.right_arm.get_current_pose()
+        
 def main():
     rospy.init_node('slip_detect', anonymous=True)
 
     slip_detector = SlipDetect(0)
-    slip_detector.monitor_aruco(10.0)
+    slip_detector.monitor_dist(10.0, "left")
 
     rospy.spin()
 

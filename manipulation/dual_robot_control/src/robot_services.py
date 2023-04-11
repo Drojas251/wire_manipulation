@@ -332,6 +332,7 @@ class RobotControl:
 if __name__ == "__main__":
     rospy.init_node('robot_control_server')
     robot_control = RobotControl()
+
     print(Fore.GREEN + "Robot Control Server is now running")
     rospy.spin()
     moveit_commander.roscpp_shutdown()

@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     wire_grasping_robot = "left"
     object_grasping_robot = "right"
-    status = robot_control.move_to_target(wire_grasping_robot, 'sleep')
+    # status = robot_control.move_to_target(wire_grasping_robot, 'sleep')
     # status = robot_control.move_to_target(object_grasping_robot, 'sleep')
 
     # Open grippers on both arms
@@ -78,16 +78,18 @@ if __name__ == "__main__":
     #         print("error")
     #         continue
 
-    test_pose = geometry_msgs.msg.Pose()
-    test_pose.position.x = 0.5238098264109586
-    test_pose.position.y = 0.0018454038466918302
-    test_pose.position.z = 0.1731949099694735
+    # print(robot_control.get_current_pose("right"))
 
-    # test_pose.orientation.x = -0.024497958183917437
-    # test_pose.orientation.y = -0.5027194392028799
-    # test_pose.orientation.z = -0.01977282161260653
-    # test_pose.orientation.w = 0.8638761683642447
-    status = robot_control.move_to_pose(wire_grasping_robot, test_pose)
+    # test_pose = geometry_msgs.msg.Pose()
+    # test_pose.position.x = 0.5238098264109586
+    # test_pose.position.y = 0.0018454038466918302
+    # test_pose.position.z = 0.1731949099694735
+
+    # # test_pose.orientation.x = -0.024497958183917437
+    # # test_pose.orientation.y = -0.5027194392028799
+    # # test_pose.orientation.z = -0.01977282161260653
+    # # test_pose.orientation.w = 0.8638761683642447
+    # status = robot_control.move_to_pose(wire_grasping_robot, test_pose)
 
 ## END
 
