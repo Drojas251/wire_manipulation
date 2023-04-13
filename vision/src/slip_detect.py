@@ -42,7 +42,7 @@ class SlipDetect:
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 continue
                 
-            rate.sleep()
+            # rate.sleep()
             # end = time.time()
             # print("{} - {} = {}".format(end, start, end - start))
 
@@ -58,7 +58,7 @@ def main():
     rospy.init_node('slip_detect', anonymous=True)
 
     slip_detector = SlipDetect(0)
-    slip_detector.monitor_dist(0.4, "right", .25) # 0.4hz ~ 2.5 seconds
+    slip_detector.monitor_dist(0.4, "right", .20) # 0.4hz ~ 2.5 seconds
 
     rospy.spin()
 
