@@ -79,17 +79,37 @@ if __name__ == "__main__":
     #         continue
 
     # print(robot_control.get_current_pose("right"))
+    ARUCO_ARM_CALIBRATION = {"right": {"x":-0.05, "y":-0.035, "z":0.05}, 
+                             "left": {"x":-0.025, "y":0.075, "z":0.05}}
+    GRASPING_ARM = "right"
 
-    # test_pose = geometry_msgs.msg.Pose()
-    # test_pose.position.x = 0.5238098264109586
-    # test_pose.position.y = 0.0018454038466918302
-    # test_pose.position.z = 0.1731949099694735
+    test_pose = geometry_msgs.msg.Pose()
+    test_pose.position.x = 0.5253404602310361 + ARUCO_ARM_CALIBRATION[GRASPING_ARM]["x"]
+    test_pose.position.y = 0.0032666579449751078 + ARUCO_ARM_CALIBRATION[GRASPING_ARM]["y"] + -0.1
+    test_pose.position.z = 0.1704561037414934 + ARUCO_ARM_CALIBRATION[GRASPING_ARM]["z"]
 
-    # # test_pose.orientation.x = -0.024497958183917437
-    # # test_pose.orientation.y = -0.5027194392028799
-    # # test_pose.orientation.z = -0.01977282161260653
-    # # test_pose.orientation.w = 0.8638761683642447
-    # status = robot_control.move_to_pose(wire_grasping_robot, test_pose)
+    # test_pose.orientation.x = -0.024497958183917437
+    # test_pose.orientation.y = -0.5027194392028799
+    # test_pose.orientation.z = -0.01977282161260653
+    # test_pose.orientation.w = 0.8638761683642447
+
+    # test_pose.orientation.x = 0
+    # test_pose.orientation.y = 0
+    # test_pose.orientation.z = 0
+    # test_pose.orientation.w = 0.5
+
+    print("\n---")
+    print("Moving {} arm to offset pose =\nx: {}\ny: {}\nz: {}\n".format(GRASPING_ARM,
+                                                                  test_pose.position.x,
+                                                                  test_pose.position.y,
+                                                                  test_pose.position.z))
+
+    status = robot_control.move_to_pose(GRASPING_ARM, test_pose)
+
+    # status = robot_control.set_gripper(wire_grasping_robot, "open")
+    # joint_goal = [-27, 23, 21, -36, -50, -64]
+    # joint_goal = [x * np.pi / 180 for x in joint_goal]
+    # status = robot_control.move_to_joint_goal(wire_grasping_robot, joint_goal)
 
 ## END
 

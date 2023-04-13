@@ -62,7 +62,7 @@ class ArucoTracker:
         if np.all(ids is not None):  # If there are markers found by detector
             for i in range(0, len(ids)):  # Iterate in markers
                 # Estimate pose of each marker and return the values rvec and tvec---different from camera coefficients
-                rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.0508, self.matrix_coefficients,
+                rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.0508, self.matrix_coefficients, # this marker is 2 inches; conv to meters
                                                                         self.distortion_coefficients)
                 (rvec - tvec).any()  # Remove numpy value array error
                 self.marker_dict[i]["tvec"] = tvec
