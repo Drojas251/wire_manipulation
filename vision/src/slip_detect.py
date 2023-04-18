@@ -20,31 +20,29 @@ class SlipDetect:
         moveit_commander.roscpp_initialize(sys.argv)
         self.right_arm = moveit_commander.MoveGroupCommander("a_bot_arm")
         self.left_arm = moveit_commander.MoveGroupCommander("b_bot_arm")
+        self.end_pose = {}
 
     def monitor_dist(self, rate_input: float, end_grasping_arm: str, slip_delta: float):
         tfBuffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tfBuffer)
         rate = rospy.Rate(rate_input)
         while not rospy.is_shutdown(): # loop takes ~0.099 - 0.1 seconds; 99.5ms
-            # start = time.time()
             try:
-                end_pose = tfBuffer.lookup_transform("world", "aruco_0", rospy.Time())
+                self.end_pose = tfBuffer.lookup_transform("world", "aruco_0", rospy.Time())
                 arm_pose = self.get_current_pose(end_grasping_arm)
-                euclidean_dist = self.calc_dist(end_pose, arm_pose)
-
-                print("\n---")
-                print("ArUco Pose =\nx: {}\ny: {}\nz: {}".format(end_pose.transform.translation.x, end_pose.transform.translation.y, end_pose.transform.translation.z))
-                print("\nArm Pose =\nx: {}\ny: {}\nz: {}".format(arm_pose.pose.position.x, arm_pose.pose.position.y, arm_pose.pose.position.z))
-                print("\nEuclidean Distance =\n{}\n".format(self.calc_dist(end_pose, arm_pose)))
-                
-                if euclidean_dist > slip_delta:
-                    print("\n********************\nDISTANCE SURPASSED =\nDistance Limit: {}\nLive distance: {}\n".format(slip_delta, euclidean_dist))
+                euclidean_dist = self.calc_dist(self.end_pose, arm_pose)
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+                print("ERROR")
                 continue
                 
+            print("\n---")
+            print("ArUco Pose =\nx: {}\ny: {}\nz: {}".format(self.end_pose.transform.translation.x, self.end_pose.transform.translation.y, self.end_pose.transform.translation.z))
+            print("\nArm Pose =\nx: {}\ny: {}\nz: {}".format(arm_pose.pose.position.x, arm_pose.pose.position.y, arm_pose.pose.position.z))
+            print("\nEuclidean Distance =\n{}\n".format(self.calc_dist(self.end_pose, arm_pose)))
+            
+            if euclidean_dist > slip_delta:
+                print("\n********************\nDISTANCE SURPASSED =\nDistance Limit: {}\nLive distance: {}\n".format(slip_delta, euclidean_dist))
             # rate.sleep()
-            # end = time.time()
-            # print("{} - {} = {}".format(end, start, end - start))
 
     def calc_dist(self, end_pose, arm_pose):
         end_pose = end_pose.transform.translation
