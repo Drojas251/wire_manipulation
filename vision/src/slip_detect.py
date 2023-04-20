@@ -3,6 +3,7 @@
 #ROS
 import rospy
 import geometry_msgs.msg
+from std_msgs.msg import Bool
 import sys
 import moveit_commander
 import math
@@ -22,7 +23,16 @@ class SlipDetect:
         self.left_arm = moveit_commander.MoveGroupCommander("b_bot_arm")
         self.end_pose = {}
 
+        # Publisher for delta surpassed
+        self.marker_delta_flag_pub = rospy.Publisher("/marker_delta_flag", Bool, queue_size=1)
+
     def monitor_dist(self, rate_input: float, end_grasping_arm: str, slip_delta: float):
+        """
+        Parameters:
+            rate_input (float): hertz for rate to check Euclidean distance between marker and executing arm
+            end_grasping_arm (str): string specifying whether left or right arm attempted at wire and slipped from
+            slip_delta (float): distance in meters of how far marker and arm must be to quantify flag raise
+        """
         tfBuffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tfBuffer)
         rate = rospy.Rate(rate_input)
@@ -40,9 +50,12 @@ class SlipDetect:
             print("\nArm Pose =\nx: {}\ny: {}\nz: {}".format(arm_pose.pose.position.x, arm_pose.pose.position.y, arm_pose.pose.position.z))
             print("\nEuclidean Distance =\n{}\n".format(self.calc_dist(self.end_pose, arm_pose)))
             
-            if euclidean_dist > slip_delta:
+            marker_delta_flag = euclidean_dist > slip_delta
+            if marker_delta_flag:
                 print("\n********************\nDISTANCE SURPASSED =\nDistance Limit: {}\nLive distance: {}\n".format(slip_delta, euclidean_dist))
-            # rate.sleep()
+            
+            self.marker_delta_flag_pub.publish(marker_delta_flag)
+            rate.sleep()
 
     def calc_dist(self, end_pose, arm_pose):
         end_pose = end_pose.transform.translation
