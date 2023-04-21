@@ -104,10 +104,6 @@ class ArucoTracker:
     def depth_cam_info_callback(self, msg):
         self.depth_cam_info = msg
 
-    # def handle_aruco_pose(self, aruco_name):
-    #     broadcaster = tf2_ros.TransformBroadcaster()
-    #     transform   = TransformStamped()
-
 def main():
     rospy.init_node("aruco_tracking",anonymous=True)
     rospy.sleep(3)

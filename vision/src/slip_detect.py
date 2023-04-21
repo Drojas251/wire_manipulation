@@ -14,19 +14,19 @@ import tf2_ros
 import time
 
 class SlipDetect:
-    def __init__(self, slip_delta):
+    def __init__(self, tracking_arm: str):
         # Distance in meters of how far cable end ArUco must move to quantify as slip
-        self.slip_delta = slip_delta 
         # Robot services to get poses
         moveit_commander.roscpp_initialize(sys.argv)
-        self.right_arm = moveit_commander.MoveGroupCommander("a_bot_arm")
-        self.left_arm = moveit_commander.MoveGroupCommander("b_bot_arm")
+        self.test = tracking_arm
+        self.tracking_arm = "a_bot_arm" if tracking_arm == "right" else "b_bot_arm"
+        self.tracking_arm_command = moveit_commander.MoveGroupCommander(self.tracking_arm)
         self.end_pose = {}
 
         # Publisher for delta surpassed
-        self.marker_delta_flag_pub = rospy.Publisher("/marker_delta_flag", Bool, queue_size=1)
+        self.marker_delta_flag_pub = rospy.Publisher("/{}_marker_delta_flag".format(self.tracking_arm), Bool, queue_size=1)
 
-    def monitor_dist(self, rate_input: float, end_grasping_arm: str, slip_delta: float):
+    def monitor_dist(self, rate_input: float, slip_delta: float):
         """
         Parameters:
             rate_input (float): hertz for rate to check Euclidean distance between marker and executing arm
@@ -36,18 +36,18 @@ class SlipDetect:
         tfBuffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tfBuffer)
         rate = rospy.Rate(rate_input)
+
         while not rospy.is_shutdown(): # loop takes ~0.099 - 0.1 seconds; 99.5ms
             try:
                 self.end_pose = tfBuffer.lookup_transform("world", "aruco_0", rospy.Time())
-                arm_pose = self.get_current_pose(end_grasping_arm)
+                arm_pose = self.get_current_pose(self.tracking_arm)
                 euclidean_dist = self.calc_dist(self.end_pose, arm_pose)
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-                print("ERROR")
                 continue
                 
             print("\n---")
             print("ArUco Pose =\nx: {}\ny: {}\nz: {}".format(self.end_pose.transform.translation.x, self.end_pose.transform.translation.y, self.end_pose.transform.translation.z))
-            print("\nArm Pose =\nx: {}\ny: {}\nz: {}".format(arm_pose.pose.position.x, arm_pose.pose.position.y, arm_pose.pose.position.z))
+            print("\n{} Arm Pose =\nx: {}\ny: {}\nz: {}".format(self.tracking_arm, arm_pose.pose.position.x, arm_pose.pose.position.y, arm_pose.pose.position.z))
             print("\nEuclidean Distance =\n{}\n".format(self.calc_dist(self.end_pose, arm_pose)))
             
             marker_delta_flag = euclidean_dist > slip_delta
@@ -63,13 +63,16 @@ class SlipDetect:
         return math.sqrt(math.pow(end_pose.x - arm_pose.x, 2) + math.pow(end_pose.y - arm_pose.y, 2) + math.pow(end_pose.z - arm_pose.z, 2))
 
     def get_current_pose(self, robot_id:str):
-        return self.left_arm.get_current_pose() if robot_id == "left" else self.right_arm.get_current_pose()
+        return self.tracking_arm_command.get_current_pose()
         
 def main():
-    rospy.init_node('slip_detect', anonymous=True)
+    tracking_arm =  rospy.get_param(rospy.search_param('node_arm'))
+    print("huh",type(tracking_arm))
+    rospy.init_node('slip_detect', anonymous=True) #not getting param right here
 
-    slip_detector = SlipDetect(0)
-    slip_detector.monitor_dist(0.4, "right", .20) # 0.4hz ~ 2.5 seconds
+    
+    slip_detector = SlipDetect(tracking_arm)
+    slip_detector.monitor_dist(0.4, .20) # 0.4hz ~ 2.5 seconds
 
     rospy.spin()
 
