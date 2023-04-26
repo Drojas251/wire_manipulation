@@ -1,0 +1,6 @@
+sensor_msgs/PointCloud2 pointcloud
+---
+geometry_msgs/PoseArray pose 
+float64 wire_length
+geometry_msgs/PoseArray raw_points
+string wire_class

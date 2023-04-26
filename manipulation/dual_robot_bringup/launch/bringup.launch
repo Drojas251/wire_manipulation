@@ -20,12 +20,8 @@
   <!--Nodes involved with ArUco marker and coordinate monitoring-->
   <node pkg="vision" type="aruco_tracker.py" name="aruco_tracker" output="screen" />
 
-  <node pkg="vision" type="slip_detect.py" name="left_slip_detect" output="screen" clear_params="true">
-    <param name="node_arm" value="right"/>
-  </node>
-  <!-- <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true">
-    <param name="~SSnode_arm" value="right"/>
-  </node> -->
+  <node pkg="vision" type="slip_detect.py" name="left_slip_detect" output="screen" clear_params="true"/>
+  <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/>
 
   <!--Convert Segmented Depth image to PC-->
   <!-- <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />
