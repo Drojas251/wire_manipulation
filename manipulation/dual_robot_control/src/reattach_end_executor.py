@@ -2,18 +2,13 @@
 
 #ROS
 import rospy
+import tf2_ros
 import geometry_msgs.msg
+from std_msgs.msg import Bool
 
 # from dual_robot_msgs.srv import *
 from time import sleep
-import tf2_ros
-
 from robot_services import RobotControl
-
-#python
-import numpy as np
-import math
-from colorama import Fore
 
 # Client call to grasp and move wire 
 def grasp_wire(robot_,wire_grasp_pose,pull_vec):
@@ -51,86 +46,52 @@ def sleep_arm(robot_):
 #*** Node Starts Here ***#
 if __name__ == "__main__":
     rospy.init_node('listener', anonymous=True)
-
     robot_control = RobotControl()
 
-    wire_grasping_robot = "left"
-    object_grasping_robot = "right"
-    # status = robot_control.move_to_target(wire_grasping_robot, 'sleep')
-    # status = robot_control.move_to_target(object_grasping_robot, 'sleep')
+    GRASPING_ARM    = "right"
+    GRASPING_ARM_ID = "a_bot_arm" if GRASPING_ARM == "right" else "b_bot_arm"
+    arm_ids = ["left","right"]
+    
+    ### START ROUTINE
+    ##  Initialize arms; Sleep, open grippers, and ready pose
+    for arm in arm_ids: 
+        status = robot_control.move_to_target(arm, 'sleep')
+        status = robot_control.set_gripper(arm, "open")
+        status = robot_control.move_to_target(arm, 'ready')
 
-    # Open grippers on both arms
-    # status = robot_control.set_gripper(wire_grasping_robot, "open")
-    # status = robot_control.set_gripper(object_grasping_robot, "open")
-
-## MY TESTING
-    print("STATUS: Transforming ArUco Position")
-    ### Buffer to find transform
-    # tfBuffer = tf2_ros.Buffer()
-    # listener = tf2_ros.TransformListener(tfBuffer)
-    # rate = rospy.Rate(10.0)
-    # while not rospy.is_shutdown():
-    #     rate.sleep()
-    #     try:
-    #         trans = tfBuffer.lookup_transform("world", "aruco_1",rospy.Time())
-    #         print(trans)
-    #     except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-    #         print("error")
-    #         continue
-
-    # print(robot_control.get_current_pose("right"))
-    ARUCO_ARM_CALIBRATION = {"right": {"x":-0.05, "y":-0.035, "z":0.05}, 
-                             "left": {"x":-0.025, "y":0.075, "z":0.05}}
-    GRASPING_ARM = "right"
-
-    test_pose = geometry_msgs.msg.Pose()
-    test_pose.position.x = 0.5253404602310361 + ARUCO_ARM_CALIBRATION[GRASPING_ARM]["x"]
-    test_pose.position.y = 0.0032666579449751078 + ARUCO_ARM_CALIBRATION[GRASPING_ARM]["y"] + -0.1
-    test_pose.position.z = 0.1704561037414934 + ARUCO_ARM_CALIBRATION[GRASPING_ARM]["z"]
-
-    # test_pose.orientation.x = -0.024497958183917437
-    # test_pose.orientation.y = -0.5027194392028799
-    # test_pose.orientation.z = -0.01977282161260653
-    # test_pose.orientation.w = 0.8638761683642447
-
-    # test_pose.orientation.x = 0
-    # test_pose.orientation.y = 0
-    # test_pose.orientation.z = 0
-    # test_pose.orientation.w = 0.5
-
-    print("\n---")
-    print("Moving {} arm to offset pose =\nx: {}\ny: {}\nz: {}\n".format(GRASPING_ARM,
-                                                                  test_pose.position.x,
-                                                                  test_pose.position.y,
-                                                                  test_pose.position.z))
-
-    status = robot_control.move_to_pose(GRASPING_ARM, test_pose)
-
-    # status = robot_control.set_gripper(wire_grasping_robot, "open")
-    # joint_goal = [-27, 23, 21, -36, -50, -64]
+    ##  Move grasping arm to wire end
+    #   Rotate gripper to accomodate wire
+    # joint_goal = [0, -75, 78, 0, 43, 90]
     # joint_goal = [x * np.pi / 180 for x in joint_goal]
-    # status = robot_control.move_to_joint_goal(wire_grasping_robot, joint_goal)
+    # status = robot_control.move_to_joint_goal(GRASPING_ARM, joint_goal)
+    #   Move grasping arm to ArUco marker
+    status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_0")
+    #   Close gripper of grasping arm around wire
+    status = robot_control.set_gripper(GRASPING_ARM, "close")
+                                         
+    ## START SCENARIO C4 as soon as wire is grasped, earliest wire could slip
+    print("STATUS: Begin Scenario C4")
 
-## END
+    dummy_move = geometry_msgs.msg.Pose()
+    dummy_move.position.x =  0.4751494271654885
+    dummy_move.position.y = -0.07983718963975926
+    dummy_move.position.z =  0.17235676317975507 + 0.2
 
-    #     #Task Executor
-    #     if(wire_grasping_robot == "left"):
-    #         object_grasping_robot = "right"
-    #     else:
-    #         object_grasping_robot = "left"
+    a1_commands = [ # Commands from A1
+        # Send to dummy plate
+        "status = robot_control.move_to_pose(GRASPING_ARM, dummy_move)",
+    ]
+    for command in a1_commands:
+        exec(command)
+        slip_flag = rospy.wait_for_message("{}_marker_delta_flag".format(GRASPING_ARM_ID), Bool)
+        if (slip_flag): # If slip detected, move arm to retrieve wire
+            print("STATUS: Slip detected, initiate retrieval")
+            status = robot_control.set_gripper(GRASPING_ARM, "open")
+            sleep(5) # wait 5 real time seconds for slipped wire to settle
 
-    #     # BEGIN ROUTINE
-    #     # print(wire_grasping_robot, object_grasping_robot)
-    #     # Begin both arms in sleep
-    #     status = robot_control.move_to_target(wire_grasping_robot, 'sleep')
-    #     status = robot_control.move_to_target(object_grasping_robot, 'sleep')
+            status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_0")
+            status = robot_control.set_gripper(GRASPING_ARM, "close")
+    ## END SCENARIO C4
 
-    #     # Set both arms to a ready state
-    #     status = robot_control.move_to_target(wire_grasping_robot, 'ready')
-    #     status = robot_control.move_to_target(object_grasping_robot, 'ready')
-    #     # Open grippers on both arms
-    #     status = robot_control.set_gripper(wire_grasping_robot, "open")
-    #     status = robot_control.set_gripper(object_grasping_robot, "open")
-        
-    #rospy.spin()
+    # rospy.spin()
     

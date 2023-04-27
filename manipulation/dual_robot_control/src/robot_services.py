@@ -12,6 +12,7 @@ from std_msgs.msg import String
 from colorama import Fore
 import copy
 from scipy.spatial.transform import Rotation as R
+import tf2_ros
 
 class RobotControl:
     def __init__(self):
@@ -35,6 +36,13 @@ class RobotControl:
         self.num_of_grasp = 0
 
         self.grasp_object_name = ""
+
+        # REAL
+        self.LIVE_ARM_CALIBRATION = {"right": {"x":-0.05, "y":-0.035, "z":0.05}, 
+                                 "left": {"x":-0.025, "y":0.075, "z":0.05}}
+        # DEMO
+        self.DEMO_ARM_CALIBRATION = {"right": {"x":-0.05, "y":-0.085, "z":0.00}, 
+                                "left": {"x":-0.025, "y":0.075, "z":0.05}}
 
     def set_gripper(self, robot_id, pos):
         if robot_id == "left":
@@ -88,6 +96,25 @@ class RobotControl:
             r_error_code_val, r_plan, r_planning_time, r_error_code = self.right_arm.plan()
             if (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
                 self.right_arm.execute(r_plan)
+
+    def move_to_aruco(self, robot_id: str, aruco_id: str):
+        tfBuffer = tf2_ros.Buffer()
+        listener = tf2_ros.TransformListener(tfBuffer)
+        end_pose = None
+        while not end_pose:
+            try:
+                end_pose = tfBuffer.lookup_transform("world", aruco_id, rospy.Time()).transform.translation
+            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+                continue
+
+        demo = True
+        ARM_ADJUSTMENTS = self.DEMO_ARM_CALIBRATION if demo else self.LIVE_ARM_CALIBRATION
+        target_pose = geometry_msgs.msg.Pose()
+        target_pose.position.x = end_pose.x + ARM_ADJUSTMENTS[robot_id]["x"]
+        target_pose.position.y = end_pose.y + ARM_ADJUSTMENTS[robot_id]["y"]
+        target_pose.position.z = end_pose.z + ARM_ADJUSTMENTS[robot_id]["z"]
+
+        self.move_to_pose(robot_id, target_pose)
 
     def grasp_object(self, robot_id, object_grasp_pose):
 
