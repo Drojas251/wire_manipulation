@@ -52,6 +52,8 @@ if __name__ == "__main__":
     GRASPING_ARM_ID = "a_bot_arm" if GRASPING_ARM == "right" else "b_bot_arm"
     arm_ids = ["left","right"]
     
+    status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_0")
+    """
     ### START ROUTINE
     ##  Initialize arms; Sleep, open grippers, and ready pose
     for arm in arm_ids: 
@@ -92,6 +94,7 @@ if __name__ == "__main__":
             status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_0")
             status = robot_control.set_gripper(GRASPING_ARM, "close")
     ## END SCENARIO C4
+    """
 
     # rospy.spin()
     

@@ -103,16 +103,23 @@ class RobotControl:
         end_pose = None
         while not end_pose:
             try:
-                end_pose = tfBuffer.lookup_transform("world", aruco_id, rospy.Time()).transform.translation
+                end_pose = tfBuffer.lookup_transform("world", "aruco_wire_rotation_0", rospy.Time()).transform
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 continue
 
         demo = True
         ARM_ADJUSTMENTS = self.DEMO_ARM_CALIBRATION if demo else self.LIVE_ARM_CALIBRATION
         target_pose = geometry_msgs.msg.Pose()
-        target_pose.position.x = end_pose.x + ARM_ADJUSTMENTS[robot_id]["x"]
-        target_pose.position.y = end_pose.y + ARM_ADJUSTMENTS[robot_id]["y"]
-        target_pose.position.z = end_pose.z + ARM_ADJUSTMENTS[robot_id]["z"]
+        # Set position
+        target_pose.position.x = end_pose.translation.x + ARM_ADJUSTMENTS[robot_id]["x"]
+        target_pose.position.y = end_pose.translation.y + ARM_ADJUSTMENTS[robot_id]["y"]
+        target_pose.position.z = end_pose.translation.z + ARM_ADJUSTMENTS[robot_id]["z"]
+        
+        # Set orientation
+        target_pose.orientation.x = end_pose.rotation.x
+        target_pose.orientation.y = end_pose.rotation.y
+        target_pose.orientation.z = end_pose.rotation.z
+        target_pose.orientation.w = end_pose.rotation.w
 
         self.move_to_pose(robot_id, target_pose)
 

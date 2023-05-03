@@ -87,6 +87,7 @@ class ArucoTracker:
                 t.transform.rotation.y = q[1]
                 t.transform.rotation.z = q[2]
                 t.transform.rotation.w = q[3]
+                # print("\n", t.transform.rotation)
 
                 br.sendTransform(t)
                 
