@@ -13,16 +13,15 @@
     <!-- <node pkg="wire_modeling" type="json_output.py" name="json_output" output="screen" /> -->
   </group>
 
-  <!--Nodes involved with Segmentation of Wire-->
-  <!-- <node pkg="vision" type="rgb_segmentation.py" name="rgb_segmentation" output="screen" />
-  <node pkg="vision" type="process_point_cloud_server.py" name="process_point_cloud_server" output="screen" /> -->
   
   <!--Nodes involved with ArUco marker and coordinate monitoring-->
   <node pkg="vision" type="aruco_tracker.py" name="aruco_tracker" output="screen" />
-
   <node pkg="vision" type="slip_detect.py" name="left_slip_detect" output="screen" clear_params="true"/>
   <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/>
 
+  <!--Nodes involved with Segmentation of Wire-->
+  <!-- <node pkg="vision" type="rgb_segmentation.py" name="rgb_segmentation" output="screen" />
+  <node pkg="vision" type="process_point_cloud_server.py" name="process_point_cloud_server" output="screen" /> -->
   <!--Convert Segmented Depth image to PC-->
   <!-- <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />
   <node pkg="nodelet" type="nodelet" name="nodelet1"
