@@ -32,7 +32,8 @@ def transform_aruco_rotation(aruco_id):
     t.transform.translation.y = 0
     t.transform.translation.z = 0
 
-    q = quaternion_from_euler(-math.pi/2,math.pi/2,0)
+    q = quaternion_from_euler(0,math.pi/2,0) # do rotation in transform?
+    # q = quaternion_from_euler(-math.pi/2,math.pi/2,0) # no rotation
 
     t.transform.rotation.x = q[0]
     t.transform.rotation.y = q[1]
