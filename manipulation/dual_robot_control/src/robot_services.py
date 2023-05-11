@@ -41,7 +41,7 @@ class RobotControl:
         self.LIVE_ARM_CALIBRATION = {"right": {"x":-0.05, "y":-0.035, "z":0.05}, 
                                  "left": {"x":-0.025, "y":0.075, "z":0.05}}
         # DEMO
-        self.DEMO_ARM_CALIBRATION = {"right": {"x":-0.05, "y":-0.085, "z":0.00}, 
+        self.DEMO_ARM_CALIBRATION = {"right": {"x":-0.075, "y":-0.085, "z":0.00}, 
                                 "left": {"x":-0.025, "y":0.075, "z":0.05}}
 
     def set_gripper(self, robot_id, pos):
@@ -111,9 +111,9 @@ class RobotControl:
         ARM_ADJUSTMENTS = self.DEMO_ARM_CALIBRATION if demo else self.LIVE_ARM_CALIBRATION
         target_pose = geometry_msgs.msg.Pose()
         # Set position
-        target_pose.position.x = end_pose.translation.x + ARM_ADJUSTMENTS[robot_id]["x"]
-        target_pose.position.y = end_pose.translation.y + ARM_ADJUSTMENTS[robot_id]["y"]
-        target_pose.position.z = end_pose.translation.z + ARM_ADJUSTMENTS[robot_id]["z"]
+        target_pose.position.x = end_pose.translation.x # front back
+        target_pose.position.y = end_pose.translation.y # left right
+        target_pose.position.z = end_pose.translation.z # up down
         
         # Set orientation
         target_pose.orientation.x = end_pose.rotation.x
