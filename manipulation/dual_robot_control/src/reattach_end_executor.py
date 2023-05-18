@@ -52,6 +52,7 @@ if __name__ == "__main__":
     GRASPING_ARM_ID = "a_bot_arm" if GRASPING_ARM == "right" else "b_bot_arm"
     arm_ids = ["left","right"]
     
+    sleep(10)
     status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_0")
     """
     ### START ROUTINE

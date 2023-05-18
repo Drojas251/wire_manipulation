@@ -13,7 +13,6 @@
     <!-- <node pkg="wire_modeling" type="json_output.py" name="json_output" output="screen" /> -->
   </group>
 
-  
   <!--Nodes involved with ArUco marker and coordinate monitoring-->
   <node pkg="vision" type="aruco_tracker.py" name="aruco_tracker" output="screen" />
   <node pkg="vision" type="slip_detect.py" name="left_slip_detect" output="screen" clear_params="true"/>
