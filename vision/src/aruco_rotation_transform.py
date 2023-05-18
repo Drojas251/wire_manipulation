@@ -18,7 +18,7 @@ import cam_calibration
 
 import math
 
-WIRE_OFFSET = 0.1
+WIRE_OFFSET = 0.125
 
 def transform_aruco_rotation(aruco_id: int, wire_offset: float) -> None:
     br = tf2_ros.TransformBroadcaster()
@@ -28,9 +28,9 @@ def transform_aruco_rotation(aruco_id: int, wire_offset: float) -> None:
     t.header.frame_id = "aruco_{}".format(aruco_id)
     t.child_frame_id = "aruco_wire_rotation_{}".format(aruco_id)
 
-    t.transform.translation.x = wire_offset
+    t.transform.translation.x = wire_offset # Offset arm to right by value meters
     t.transform.translation.y = 0 
-    t.transform.translation.z = 0.125
+    t.transform.translation.z = 0.05 # Too close to wall, move back .05m
 
     q = quaternion_from_euler(0,math.pi/2,0) # do rotation in transform?
     # q = quaternion_from_euler(-math.pi/2,math.pi/2,0) # match rotation of bot grippers
