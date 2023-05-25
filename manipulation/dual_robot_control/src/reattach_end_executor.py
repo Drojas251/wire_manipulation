@@ -52,10 +52,15 @@ if __name__ == "__main__":
     GRASPING_ARM_ID = "a_bot_arm" if GRASPING_ARM == "right" else "b_bot_arm"
     arm_ids = ["left","right"]
     
+
     sleep(10)
-    status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_0")
+    status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_wire_rotation_0")
+    sleep(5)
+    status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_wire_rotation_1")
+    # print(status)
+    
     """
-    ### START ROUTINE
+    ### START ROUTINE for full demonstration at annual review
     ##  Initialize arms; Sleep, open grippers, and ready pose
     for arm in arm_ids: 
         status = robot_control.move_to_target(arm, 'sleep')

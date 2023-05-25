@@ -68,10 +68,12 @@ class RobotControl:
                 self.right_arm.execute(r_plan)
 
     def move_to_pose(self, robot_id, pose):
+        result_plan = None
         if robot_id == "left":
             self.left_arm.set_pose_target(pose)
             l_error_code_val, l_plan, l_planning_time, l_error_code = self.left_arm.plan()
             if (l_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
+                result_plan = l_plan
                 self.left_arm.execute(l_plan)
             else:
                 print("Error code:", l_error_code_val)
@@ -81,8 +83,10 @@ class RobotControl:
             r_error_code_val, r_plan, r_planning_time, r_error_code = self.right_arm.plan()
             if (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
                 self.right_arm.execute(r_plan)
+                result_plan = r_plan
             else:
                 print("Error code:", r_error_code_val)
+        return result_plan
 
     def move_to_joint_goal(self, robot_id, joint_goal):
         if robot_id == "left":
@@ -97,13 +101,13 @@ class RobotControl:
             if (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
                 self.right_arm.execute(r_plan)
 
-    def move_to_aruco(self, robot_id: str, aruco_id: str):
+    def move_to_aruco(self, robot_id: str, aruco_target: str):
         tfBuffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tfBuffer)
         end_pose = None
         while not end_pose:
             try:
-                end_pose = tfBuffer.lookup_transform("world", "aruco_wire_rotation_0", rospy.Time()).transform
+                end_pose = tfBuffer.lookup_transform("world", aruco_target, rospy.Time()).transform
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 continue
 
@@ -121,7 +125,7 @@ class RobotControl:
         target_pose.orientation.z = end_pose.rotation.z
         target_pose.orientation.w = end_pose.rotation.w
 
-        self.move_to_pose(robot_id, target_pose)
+        return self.move_to_pose(robot_id, target_pose)
 
     def grasp_object(self, robot_id, object_grasp_pose):
 

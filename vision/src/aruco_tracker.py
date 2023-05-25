@@ -87,12 +87,14 @@ class ArucoTracker:
                 t.transform.rotation.y = q[1]
                 t.transform.rotation.z = q[2]
                 t.transform.rotation.w = q[3]
-                # print("\n", t.transform.rotation)
-
+                
                 br.sendTransform(t)
                 
                 cv2.aruco.drawDetectedMarkers(frame, corners)  # Draw A square around the markers
                 cv2.drawFrameAxes(frame, self.matrix_coefficients, self.distortion_coefficients, rvec, tvec, .2) 
+        # else:
+        #     print("ARUCO NO LONGER VISIBLE")
+
 
         # Display the resulting frame
         cv2.imshow('frame', frame) 

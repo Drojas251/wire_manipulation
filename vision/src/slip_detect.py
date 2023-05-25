@@ -52,7 +52,10 @@ class SlipDetect:
             # print("\n{} Arm Pose =\nx: {}\ny: {}\nz: {}".format(self.tracking_arm, arm_pose.pose.position.x, arm_pose.pose.position.y, arm_pose.pose.position.z))
             # print("\nEuclidean Distance =\n{}\n".format(self.calc_dist(self.end_pose, arm_pose)))
             # if marker_delta_flag:
-            #     print("\n********************\nDISTANCE SURPASSED =\nDistance Limit: {}\nLive distance: {}\n".format(slip_delta, euclidean_dist))
+
+            print("\n*********************\n**** WIRE STATUS ****")
+            print("Distance Limit: {}\nLive distance: {}".format(slip_delta, euclidean_dist))
+            print("DISTANCE SURPASSED" if euclidean_dist > slip_delta else "WITHIN THRESHOLD")
             
             self.marker_delta_flag_pub.publish(marker_delta_flag)
             rate.sleep()

@@ -18,9 +18,9 @@ import cam_calibration
 
 import math
 
-WIRE_OFFSET = 0.10
+WIRE_OFFSET = 0.125
 
-def transform_aruco_rotation(aruco_id: int, wire_offset: float) -> None:
+def transform_aruco_rotation(aruco_id: int, pos_adj, ori_adj) -> None:
     br = tf2_ros.TransformBroadcaster()
     t = TransformStamped()
 
@@ -28,11 +28,11 @@ def transform_aruco_rotation(aruco_id: int, wire_offset: float) -> None:
     t.header.frame_id = "aruco_{}".format(aruco_id)
     t.child_frame_id = "aruco_wire_rotation_{}".format(aruco_id)
 
-    t.transform.translation.x = wire_offset # Offset arm to right by value meters
-    t.transform.translation.y = 0
-    t.transform.translation.z = 0.05 # Too close to wall, move back .05m
+    t.transform.translation.x = ori_adj[0] # Offset arm to right by value meters
+    t.transform.translation.y = ori_adj[1]
+    t.transform.translation.z = ori_adj[2] # Too close to wall, move back .05m
 
-    q = quaternion_from_euler(0,math.pi/2,0) # do rotation in transform?
+    q = quaternion_from_euler(pos_adj[0], pos_adj[1], pos_adj[2]) # pos_adj
     # q = quaternion_from_euler(-math.pi/2,math.pi/2,0) # match rotation of bot grippers
 
     t.transform.rotation.x = q[0]
@@ -48,7 +48,8 @@ def main():
     # print("Aruco Pose Server is now running")
     rate = rospy.Rate(60)
     while not rospy.is_shutdown():
-        transform_aruco_rotation(0, WIRE_OFFSET)
+        transform_aruco_rotation(0, [0, math.pi/2, 0], [WIRE_OFFSET, 0, 0.05])
+        transform_aruco_rotation(1, [0, math.pi/2, 0], [-.05, 0.1, 0.1])
         rate.sleep()
 
 
