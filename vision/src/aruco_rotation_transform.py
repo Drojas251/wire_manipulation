@@ -49,7 +49,8 @@ def main():
     rate = rospy.Rate(60)
     while not rospy.is_shutdown():
         transform_aruco_rotation(0, [0, math.pi/2, 0], [WIRE_OFFSET, 0, 0.05])
-        transform_aruco_rotation(1, [0, math.pi/2, 0], [-.05, 0.1, 0.1])
+        # transform_aruco_rotation(1, [0, math.pi/2, 0], [-.05, 0.1, 0.1])
+        transform_aruco_rotation(1, [math.pi/2, math.pi/2 + math.pi/4, math.pi/2], [-.05, -0.1, 0.1]) # hold at downward angle
         rate.sleep()
 
 

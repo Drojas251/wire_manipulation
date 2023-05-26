@@ -53,9 +53,9 @@ if __name__ == "__main__":
     arm_ids = ["left","right"]
     
 
-    sleep(10)
-    status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_wire_rotation_0")
-    sleep(5)
+    # sleep(10)
+    # status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_wire_rotation_0")
+    # sleep(5)
     status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_wire_rotation_1")
     # print(status)
     
