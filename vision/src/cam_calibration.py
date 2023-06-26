@@ -79,7 +79,7 @@ def main():
     cam_calibration = CameraCalibration()
 
     # Defiine arguments to pass to calibrate() parameters
-    directory_path = "vision/resources/calibration/*"
+    directory_path = "vision/resources/calibration/mounted_cam/*"
     img_file_prefix = "img_"
     img_format = ".jpg"
     square_size = 0.127 # in meters; each square is 0.5inch
