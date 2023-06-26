@@ -101,6 +101,12 @@ class RobotControl:
             if (r_error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
                 self.right_arm.execute(r_plan)
 
+    def move_to_plan(self, robot_id, plan):
+        if robot_id == "left":
+            self.left_arm.execute(plan)
+        elif robot_id == "right":
+            self.right_arm.execute(plan)
+
     def move_to_aruco(self, robot_id: str, aruco_target: str):
         tfBuffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tfBuffer)

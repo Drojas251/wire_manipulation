@@ -453,65 +453,17 @@ Visualization Manager:
         All Enabled: false
         a_bot_base_link:
           Value: false
-        a_bot_ee_arm_link:
-          Value: false
-        a_bot_ee_gripper_link:
-          Value: false
-        a_bot_fingers_link:
-          Value: false
-        a_bot_gripper_bar_link:
-          Value: false
-        a_bot_gripper_link:
-          Value: false
-        a_bot_left_finger_link:
-          Value: false
-        a_bot_lower_forearm_link:
-          Value: false
-        a_bot_right_finger_link:
-          Value: false
-        a_bot_shoulder_link:
-          Value: false
-        a_bot_upper_arm_link:
-          Value: false
-        a_bot_upper_forearm_link:
-          Value: false
-        a_bot_wrist_link:
-          Value: false
         aruco_0:
           Value: true
         aruco_1:
           Value: true
         aruco_2:
           Value: false
-        aruco_wire_rotation_0:
-          Value: true
-        aruco_wire_rotation_1:
+        aruco_init_0:
+          Value: false
+        aruco_retrieval_0:
           Value: true
         b_bot_base_link:
-          Value: false
-        b_bot_ee_arm_link:
-          Value: false
-        b_bot_ee_gripper_link:
-          Value: false
-        b_bot_fingers_link:
-          Value: false
-        b_bot_gripper_bar_link:
-          Value: false
-        b_bot_gripper_link:
-          Value: false
-        b_bot_left_finger_link:
-          Value: false
-        b_bot_lower_forearm_link:
-          Value: false
-        b_bot_right_finger_link:
-          Value: false
-        b_bot_shoulder_link:
-          Value: false
-        b_bot_upper_arm_link:
-          Value: false
-        b_bot_upper_forearm_link:
-          Value: false
-        b_bot_wrist_link:
           Value: false
         camera_aligned_depth_to_color_frame:
           Value: false
@@ -525,11 +477,7 @@ Visualization Manager:
           Value: false
         camera_link:
           Value: false
-        ground:
-          Value: false
-        panel_1:
-          Value: false
-        panel_2:
+        slip_enroute_1:
           Value: false
         world:
           Value: false
@@ -542,45 +490,19 @@ Visualization Manager:
       Tree:
         world:
           a_bot_base_link:
-            a_bot_shoulder_link:
-              a_bot_upper_arm_link:
-                a_bot_upper_forearm_link:
-                  a_bot_lower_forearm_link:
-                    a_bot_wrist_link:
-                      a_bot_gripper_link:
-                        a_bot_ee_arm_link:
-                          a_bot_gripper_bar_link:
-                            a_bot_fingers_link:
-                              a_bot_ee_gripper_link:
-                                {}
-                              a_bot_left_finger_link:
-                                {}
-                              a_bot_right_finger_link:
-                                {}
+            {}
           b_bot_base_link:
-            b_bot_shoulder_link:
-              b_bot_upper_arm_link:
-                b_bot_upper_forearm_link:
-                  b_bot_lower_forearm_link:
-                    b_bot_wrist_link:
-                      b_bot_gripper_link:
-                        b_bot_ee_arm_link:
-                          b_bot_gripper_bar_link:
-                            b_bot_fingers_link:
-                              b_bot_ee_gripper_link:
-                                {}
-                              b_bot_left_finger_link:
-                                {}
-                              b_bot_right_finger_link:
-                                {}
+            {}
           camera_link:
             camera_aligned_depth_to_color_frame:
               camera_color_optical_frame:
                 aruco_0:
-                  aruco_wire_rotation_0:
+                  aruco_init_0:
+                    {}
+                  aruco_retrieval_0:
                     {}
                 aruco_1:
-                  aruco_wire_rotation_1:
+                  slip_enroute_1:
                     {}
                 aruco_2:
                   {}
@@ -589,11 +511,6 @@ Visualization Manager:
             camera_depth_frame:
               camera_depth_optical_frame:
                 {}
-          ground:
-            {}
-          panel_1:
-            panel_2:
-              {}
       Update Interval: 0
       Value: true
   Enabled: true
@@ -630,12 +547,12 @@ Visualization Manager:
       Near Clip Distance: 0.009999999776482582
       Pitch: 0.4749997854232788
       Target Frame: world
-      Yaw: 2.561750888824463
+      Yaw: 2.556750774383545
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: true
-  Height: 1016
+  Height: 499
   Help:
     collapsed: false
   Hide Left Dock: true
@@ -644,9 +561,9 @@ Window Geometry:
     collapsed: true
   MotionPlanning - Trajectory Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000002520000039efc0200000007fb000000100044006900730070006c006100790073000000003d00000172000000c900fffffffb0000000800480065006c00700000000342000000bb0000006e00fffffffb0000000a00560069006500770073000000010c000000a4000000a400fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670100000374000001890000000000000000fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000001600000016fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e006700000001b5000002260000017d00ffffff000003420000039e00000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000002520000039efc0200000007fb000000100044006900730070006c006100790073000000003d00000172000000c900fffffffb0000000800480065006c00700000000342000000bb0000006e00fffffffb0000000a00560069006500770073000000010c000000a4000000a400fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670100000374000001890000000000000000fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000001600000016fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e006700000001b5000002260000017d00ffffff0000035c0000019900000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
-  Width: 834
+  Width: 860
   X: 72
-  Y: 27
+  Y: 544

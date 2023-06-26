@@ -18,15 +18,15 @@ import cam_calibration
 
 import math
 
-WIRE_OFFSET = 0.125
+WIRE_OFFSET = 0.125#75
 
-def transform_aruco_rotation(aruco_id: int, pos_adj, ori_adj) -> None:
+def transform_aruco_rotation(child_name: str, aruco_id: int, pos_adj, ori_adj) -> None:
     br = tf2_ros.TransformBroadcaster()
     t = TransformStamped()
 
     t.header.stamp = rospy.Time.now()
     t.header.frame_id = "aruco_{}".format(aruco_id)
-    t.child_frame_id = "aruco_wire_rotation_{}".format(aruco_id)
+    t.child_frame_id = "{}_{}".format(child_name, aruco_id)
 
     t.transform.translation.x = ori_adj[0] # Offset arm to right by value meters
     t.transform.translation.y = ori_adj[1]
@@ -48,9 +48,18 @@ def main():
     # print("Aruco Pose Server is now running")
     rate = rospy.Rate(60)
     while not rospy.is_shutdown():
-        transform_aruco_rotation(0, [0, math.pi/2, 0], [WIRE_OFFSET, 0, 0.05])
-        # transform_aruco_rotation(1, [0, math.pi/2, 0], [-.05, 0.1, 0.1])
-        transform_aruco_rotation(1, [math.pi/2, math.pi/2 + math.pi/4, math.pi/2], [-.05, -0.1, 0.1]) # hold at downward angle
+        transform_aruco_rotation("aruco_init", 0, [0, math.pi/2, 0], [WIRE_OFFSET, +0.05, 0.05]) # initial grasp parallel to marker, transform moved slightly up
+        
+        transform_aruco_rotation("aruco_retrieval", 0, [0, math.pi/2, 0], [WIRE_OFFSET, 0, 0.05])
+
+        # transform_aruco_rotation("unplug_end", 0, [0, math.pi/2, 0], [WIRE_OFFSET+0.1, +0.05, 0.075])
+        # transform_aruco_rotation("slip_enroute", 1, [math.pi/2, math.pi/2 + math.pi/6, math.pi/2], 
+                                    # [-0.05, -0.075, 0.15]) # hold at downward angle
+        transform_aruco_rotation("slip_enroute", 1, [math.pi/2, math.pi/2 + math.pi/4, math.pi/2], [-.05, -0.125, 0.15]) # hold at downward angle
+        # transform_aruco_rotation(1, [0, math.pi/2, 0], [-.05, 0.1, 0.1]) # no downward angle
+
+        
+        # OFFSETS: [-left/+right, -down/+up, -forward/+backward]
         rate.sleep()
 
 

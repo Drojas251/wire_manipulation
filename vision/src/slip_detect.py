@@ -58,7 +58,7 @@ class SlipDetect:
             print("DISTANCE SURPASSED" if euclidean_dist > slip_delta else "WITHIN THRESHOLD")
             
             self.marker_delta_flag_pub.publish(marker_delta_flag)
-            rate.sleep()
+            # rate.sleep()
 
     def calc_dist(self, end_pose, arm_pose):
         end_pose = end_pose.transform.translation
@@ -73,7 +73,7 @@ def main():
 
     
     slip_detector = SlipDetect()
-    slip_detector.monitor_dist(0.4, .20) # 0.4hz ~ 2.5 seconds, .20 meter slip delta
+    slip_detector.monitor_dist(0.4, .25) # 0.4hz ~ 2.5 seconds, .20 meter slip delta
 
     rospy.spin()
 
