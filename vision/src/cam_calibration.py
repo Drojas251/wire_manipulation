@@ -75,6 +75,7 @@ class CameraCalibration:
     
 
 def main():
+    ## main() for testing ONLY 
     # Define calibration object to hold and store points
     cam_calibration = CameraCalibration()
 
