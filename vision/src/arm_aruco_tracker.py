@@ -15,10 +15,10 @@ import cv2
 import numpy as np 
 import cam_calibration
 
-class ArmCamera:
+class ArmArucoTracker:
     def __init__(self, matrix_coefficients, distortion_coefficients):
         # Subscribers to Camera
-        self.rgb_img_sub = rospy.Subscriber("/camera/color/image_raw",Image, self.track_callback,queue_size=1)
+        self.rgb_img_sub = rospy.Subscriber("/arm_camera_images", Image, self.track_callback,queue_size=1)
         
         # Image member variables
         self.bridge_object = CvBridge()
@@ -45,8 +45,6 @@ class ArmCamera:
             print(e)
         rospy.sleep(0.01)
 
-        # ret, frame = CAMERA_SRC.read() # If not using ROS
-
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Change grayscale
 
         aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
@@ -65,8 +63,8 @@ class ArmCamera:
                 self.marker_dict[i]["rvec"] = rvec
 
                 t.header.stamp = rospy.Time.now()
-                t.header.frame_id = "camera_color_optical_frame"
-                t.child_frame_id = "aruco_{}".format(i)
+                t.header.frame_id = "arm_camera_link"
+                t.child_frame_id = "arm_aruco_{}".format(i)
                 t.transform.translation.x = tvec.reshape(3)[0]
                 t.transform.translation.y = tvec.reshape(3)[1]
                 t.transform.translation.z = tvec.reshape(3)[2]
@@ -93,7 +91,7 @@ class ArmCamera:
 
 
         # Display the resulting frame
-        # cv2.imshow('frame', frame) 
+        cv2.imshow('frame', frame) 
         cv2.waitKey(1)
 
     def get_depth_data(self,data):
@@ -119,7 +117,7 @@ def main():
     width = 20-1 # squares across
 
     calibration_matrices = calibration.calibrate(directory_path, img_file_prefix, img_format, square_size, height, width)
-    tracker = ArmCamera(calibration_matrices[1], calibration_matrices[2])
+    tracker = ArmArucoTracker(calibration_matrices[1], calibration_matrices[2])
 
     rospy.spin()
 

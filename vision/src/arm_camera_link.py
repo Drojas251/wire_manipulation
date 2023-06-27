@@ -48,9 +48,9 @@ def main():
         
         ret, frame = camera_src.read()
         if ret == True:
-            camera_pub.publish(img_bridge.cv2_to_imgmsg(frame))
-            cv2.imshow('frame', frame) 
-            cv2.waitKey(1)
+            camera_pub.publish(img_bridge.cv2_to_imgmsg(frame, encoding='rgb8'))
+            # cv2.imshow('frame', frame) 
+            # cv2.waitKey(1)
                         
         rate.sleep()
 
