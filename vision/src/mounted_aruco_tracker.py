@@ -17,7 +17,7 @@ import cam_calibration
 
 # CAMERA_SRC = cv2.VideoCapture(4) # Depth cam device index 4; use when running without ROS
 
-class ArucoTracker:
+class MountedArucoTracker:
     def __init__(self, matrix_coefficients, distortion_coefficients):
         # Subscribers to Camera
         self.aligned_depth_rgb_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_depth_data,queue_size=1)
@@ -108,7 +108,7 @@ class ArucoTracker:
         self.depth_cam_info = msg
 
 def main():
-    rospy.init_node("aruco_tracking",anonymous=True)
+    rospy.init_node("mounted_aruco_tracker",anonymous=True)
     rospy.sleep(3)
 
     # Define calibration object to hold and store points
@@ -123,7 +123,7 @@ def main():
     width = 20-1 # squares across
 
     calibration_matrices = calibration.calibrate(directory_path, img_file_prefix, img_format, square_size, height, width)
-    tracker = ArucoTracker(calibration_matrices[1], calibration_matrices[2])
+    tracker = MountedArucoTracker(calibration_matrices[1], calibration_matrices[2])
 
     rospy.spin()
 

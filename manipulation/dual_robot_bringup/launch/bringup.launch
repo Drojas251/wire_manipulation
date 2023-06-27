@@ -14,7 +14,9 @@
   </group>
 
   <!--Nodes involved with ArUco marker and coordinate monitoring-->
-  <node pkg="vision" type="aruco_tracker.py" name="aruco_tracker" output="screen" />
+  <node pkg="vision" type="arm_camera_link.py" name="arm_camera_link" output="screen" /> 
+
+  <node pkg="vision" type="mounted_aruco_tracker.py" name="mounted_aruco_tracker" output="screen" />
   <!-- <node pkg="vision" type="slip_detect.py" name="left_slip_detect" output="screen" clear_params="true"/> -->
   <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/>
 
