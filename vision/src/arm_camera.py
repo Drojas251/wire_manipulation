@@ -18,8 +18,6 @@ import cam_calibration
 CAMERA_SRC = cv2.VideoCapture(6) # Depth cam device index 4; use when running without ROS
 
 class ArmCamera:
-    # start here
-    # https://automaticaddison.com/working-with-ros-and-opencv-in-ros-noetic/
     def __init__(self, matrix_coefficients, distortion_coefficients):
         # Subscribers to Camera
         self.aligned_depth_rgb_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_depth_data,queue_size=1)
