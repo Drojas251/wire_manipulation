@@ -2,6 +2,7 @@
 import rospy
 
 # tf2 and Transformations
+import math
 import tf2_ros
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import TransformStamped
@@ -44,13 +45,11 @@ def main():
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
         # OFFSETS: [+forward/-backward, +left/-right, +up/-down]
-        transform_arm_camera_frame(mounted_arm, [0, 0, 0], [0, (0.1778 if mounted_arm == "b" else -0.1778), 0.0575])
+        transform_arm_camera_frame(mounted_arm, [0, math.pi/2, 0], [0, (0.1778 if mounted_arm == "b" else -0.1778), 0.0575])
         
         ret, frame = camera_src.read()
         if ret == True:
             camera_pub.publish(img_bridge.cv2_to_imgmsg(frame, encoding='rgb8'))
-            # cv2.imshow('frame', frame) 
-            # cv2.waitKey(1)
                         
         rate.sleep()
 

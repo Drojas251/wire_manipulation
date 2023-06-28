@@ -2,6 +2,7 @@
 import rospy
 
 # tf2 and Transformations
+import math
 import tf2_ros
 import tf_conversions
 from geometry_msgs.msg import TransformStamped
@@ -75,7 +76,9 @@ class ArmArucoTracker:
                             [0, 0, 0, 1]],
                             dtype=float)
                 rot_mat[:3, :3], _ = cv2.Rodrigues(rvec)
-                q = tf_conversions.transformations.quaternion_from_matrix(rot_mat)
+                # q = tf_conversions.transformations.quaternion_from_matrix(rot_mat)
+                e = tf_conversions.transformations.euler_from_matrix(rot_mat)
+                q = tf_conversions.transformations.quaternion_from_euler(e[0], e[1], e[2]-math.pi/2)
 
                 t.transform.rotation.x = q[0]
                 t.transform.rotation.y = q[1]
@@ -102,7 +105,7 @@ class ArmArucoTracker:
         self.depth_cam_info = msg
 
 def main():
-    rospy.init_node("arm_camera",anonymous=True)
+    rospy.init_node("arm_aruco_tracker",anonymous=True)
     rospy.sleep(3)
     
     # Define calibration object to hold and store points
