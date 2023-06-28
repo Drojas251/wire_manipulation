@@ -66,9 +66,9 @@ class ArmArucoTracker:
                 t.header.stamp = rospy.Time.now()
                 t.header.frame_id = "arm_camera_link"
                 t.child_frame_id = "arm_aruco_{}".format(i)
-                t.transform.translation.x = tvec.reshape(3)[0]
-                t.transform.translation.y = tvec.reshape(3)[1]
-                t.transform.translation.z = tvec.reshape(3)[2]
+                t.transform.translation.x = tvec.reshape(3)[1]
+                t.transform.translation.y = tvec.reshape(3)[2]
+                t.transform.translation.z = tvec.reshape(3)[0]
                 
                 rot_mat = np.array([[0, 0, 0, 0],
                             [0, 0, 0, 0],
@@ -78,7 +78,7 @@ class ArmArucoTracker:
                 rot_mat[:3, :3], _ = cv2.Rodrigues(rvec)
                 # q = tf_conversions.transformations.quaternion_from_matrix(rot_mat)
                 e = tf_conversions.transformations.euler_from_matrix(rot_mat)
-                q = tf_conversions.transformations.quaternion_from_euler(e[0], e[1], e[2]-math.pi/2)
+                q = tf_conversions.transformations.quaternion_from_euler(e[0]-math.pi/2, e[1]-math.pi/2, e[2])
 
                 t.transform.rotation.x = q[0]
                 t.transform.rotation.y = q[1]

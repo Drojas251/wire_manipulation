@@ -3,23 +3,23 @@
   <arg name="use_json" default="true"/>
 
   <!-- Launch Vision-->
-  <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+  <!-- <include file="$(find realsense2_camera)/launch/rs_camera.launch">
     <arg name="filters"                        value="pointcloud"/>
     <arg name="align_depth"                      value="true"/>
-  </include>
+  </include> -->
 
   <!-- Launch JSON -->
-  <group if="$(arg use_json)">
-    <!-- <node pkg="wire_modeling" type="json_output.py" name="json_output" output="screen" /> -->
-  </group>
+  <!-- <group if="$(arg use_json)">
+    <node pkg="wire_modeling" type="json_output.py" name="json_output" output="screen" />
+  </group> -->
 
   <!--Nodes involved with ArUco marker and coordinate monitoring-->
   <!-- <node pkg="vision" type="arm_camera_link.py" name="arm_camera_link" output="screen" /> 
   <node pkg="vision" type="arm_aruco_tracker.py" name="arm_aruco_tracker" output="screen" />  -->
 
-  <node pkg="vision" type="mounted_aruco_tracker.py" name="mounted_aruco_tracker" output="screen" />
+  <!-- <node pkg="vision" type="mounted_aruco_tracker.py" name="mounted_aruco_tracker" output="screen" /> -->
   <!-- <node pkg="vision" type="slip_detect.py" name="left_slip_detect" output="screen" clear_params="true"/> -->
-  <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/>
+  <!-- <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/> -->
 
   <!--Nodes involved with Segmentation of Wire-->
   <!-- <node pkg="vision" type="rgb_segmentation.py" name="rgb_segmentation" output="screen" />
@@ -34,7 +34,7 @@
   </node> -->
 
   <!--Camera Transform-->
-  <node pkg="tf2_ros" type="static_transform_publisher" name="camera_broadcaster" args="-0.3556 0.0 0.4064 0 0 0 1 world camera_link" />
+  <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="camera_broadcaster" args="-0.3556 0.0 0.4064 0 0 0 1 world camera_link" /> -->
   <!--Aruco Marker Rotation Transform-->
   <!-- <node pkg="vision" type="aruco_rotation_transform.py" name="aruco_rotation_transform" output="screen"/> -->
 
