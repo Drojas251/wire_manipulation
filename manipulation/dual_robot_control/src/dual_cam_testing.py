@@ -52,9 +52,18 @@ if __name__ == "__main__":
     GRASPING_ARM    = "right"
     GRASPING_ARM_ID = "a_bot_arm" if GRASPING_ARM == "right" else "b_bot_arm"
 
-    # sleep(5)
+    sleep(2)
     ##  Move grasping arm to wire end found via a_bot mounted cam
-    status = robot_control.move_to_aruco(GRASPING_ARM, "mounted_aruco_0")
-                       
+    print("STATUS: Move to arm camera aruco pose")
+    status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_retrieval_arm_aruco_0")
+    print(status)
+    sleep(5)
+    print("STATUS: Sleep reset")
+    status = robot_control.move_to_target(GRASPING_ARM, 'sleep')
+    print("STATUS: Move to mounted camera aruco pose")
+    status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_retrieval_mounted_aruco_0")
+    print(status)
+    sleep(5)
+    status = robot_control.move_to_target(GRASPING_ARM, 'sleep')
     # rospy.spin()
     
