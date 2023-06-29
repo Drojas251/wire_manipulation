@@ -19,7 +19,7 @@
 
   <node pkg="vision" type="mounted_aruco_tracker.py" name="mounted_aruco_tracker" output="screen" />
   <!-- <node pkg="vision" type="slip_detect.py" name="left_slip_detect" output="screen" clear_params="true"/> -->
-  <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/>
+  <!-- <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/> -->
 
   <!--Nodes involved with Segmentation of Wire-->
   <!-- <node pkg="vision" type="rgb_segmentation.py" name="rgb_segmentation" output="screen" />

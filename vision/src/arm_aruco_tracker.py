@@ -66,9 +66,9 @@ class ArmArucoTracker:
                 t.header.stamp = rospy.Time.now()
                 t.header.frame_id = "arm_camera_link"
                 t.child_frame_id = "arm_aruco_{}".format(i)
-                t.transform.translation.x = tvec.reshape(3)[1]
-                t.transform.translation.y = tvec.reshape(3)[2]
-                t.transform.translation.z = tvec.reshape(3)[0]
+                t.transform.translation.x = tvec.reshape(3)[1]-0.1
+                t.transform.translation.y = tvec.reshape(3)[2]-0.275
+                t.transform.translation.z = tvec.reshape(3)[0]+0.1275
                 
                 rot_mat = np.array([[0, 0, 0, 0],
                             [0, 0, 0, 0],

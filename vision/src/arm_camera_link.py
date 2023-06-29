@@ -45,8 +45,9 @@ def main():
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
         # OFFSETS: [+forward/-backward, +left/-right, +up/-down]
-        transform_arm_camera_frame(mounted_arm, [math.pi/2, math.pi/2, 0], [0, (0.1778 if mounted_arm == "b" else -0.1778), 0.05])
-        
+        # transform_arm_camera_frame(mounted_arm, [math.pi/2, math.pi/2, 0], [0, (0.1778 if mounted_arm == "b" else -0.1778), 0.05])
+        transform_arm_camera_frame(mounted_arm, [math.pi/2, math.pi/2, 0], [-0.06, 0, 0.05])
+
         ret, frame = camera_src.read()
         if ret == True:
             camera_pub.publish(img_bridge.cv2_to_imgmsg(frame, encoding='rgb8'))
