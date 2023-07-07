@@ -16,12 +16,25 @@
     <arg name="prefix"                          value="b_bot_"/>
   </include>
 
-  <rosparam file="$(find wire_manipulation_moveit_config)/config/joint_state_publisher.yaml" />
-  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+  
 
   <include file="$(find wire_manipulation_moveit_config)/launch/demo.launch">
     <arg name="moveit_controller_manager"                 value="simple"/>
   </include>
+
+
+  <!-- <rosparam file="$(find wire_manipulation_moveit_config)/config/joint_state_publisher.yaml" />
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/> -->
+
+  <node name="a_bot_joint_state_relay" 
+  pkg="topic_tools" 
+  type="relay" 
+  args="/a_bot/joint_states /joint_states"/>
+
+  <node name="b_bot_joint_state_relay" 
+  pkg="topic_tools" 
+  type="relay" 
+  args="/b_bot/joint_states /joint_states"/>
 
 
 </launch>

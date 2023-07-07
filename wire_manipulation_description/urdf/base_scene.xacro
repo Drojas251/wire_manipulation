@@ -11,6 +11,15 @@
   <!-- VX300s macro -->
   <xacro:include filename="$(find vx300s_description)/urdf/vx300s_macro.xacro" />
 
+  <!-- realsense macro -->
+  <xacro:include filename="$(find realsense2_description)/urdf/_d415.urdf.xacro" />
+
+  <!-- realsense d415 -->
+  <xacro:sensor_d415 name="b_bot" parent="b_bot_ee_arm_link" use_nominal_extrinsics="true">
+    <origin xyz="-0.05 0 0.05" />
+  </xacro:sensor_d415>
+
+
   <!-- dual vx300s, a_bot and b_bot -->
   <xacro:vx300s prefix="a_bot_" hw_interface="hardware_interface/EffortJointInterface" />
   <xacro:vx300s prefix="b_bot_" hw_interface="hardware_interface/EffortJointInterface" />

@@ -5,6 +5,7 @@
   <!-- Robot -->
   <xacro:include filename="$(find dual_robot_description)/urdf/robot.urdf.xacro" />
 
+  
   <!-- arm -->
   <xacro:vx300s prefix="a_bot_"/>
   <xacro:vx300s prefix="b_bot_"/>

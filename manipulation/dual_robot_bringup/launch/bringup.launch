@@ -3,9 +3,15 @@
   <arg name="use_json" default="true"/>
 
   <!-- Launch Vision-->
-  <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+  <!-- Rear Mounted Camera -->
+  <include file="$(find realsense2_camera)/launch/rs_camera.launch" ns="mounted_cam">
     <arg name="filters"                        value="pointcloud"/>
-    <arg name="align_depth"                      value="true"/>
+    <arg name="align_depth"                    value="true"/>
+    <arg name="serial_no"                      value="109122071019"/>
+  </include>
+  <!-- Arm Mounted Camera -->
+  <include file="$(find realsense2_camera)/launch/rs_camera.launch" ns="arm_cam">
+    <arg name="serial_no"                      value="151322067775"/>
   </include>
 
   <!-- Launch JSON -->
@@ -39,9 +45,9 @@
   <node pkg="vision" type="aruco_rotation_transform.py" name="aruco_rotation_transform" output="screen"/>
 
   <!-- Launch real robots -->
-  <!-- <include file="$(find wire_manipulation_moveit_config)/launch/wire_manipulation_moveit.launch"> </include> -->
+  <include file="$(find wire_manipulation_moveit_config)/launch/wire_manipulation_moveit.launch"> </include>
   <!-- Launch demo robots -->
-  <include file="$(find wire_manipulation_moveit_config)/launch/demo.launch"> </include>
+  <!-- <include file="$(find wire_manipulation_moveit_config)/launch/demo.launch"> </include> -->
 
   <!--Dual Robot control service-->
   <node pkg="dual_robot_control" type="robot_services.py" name="robot_services" output="screen" />
