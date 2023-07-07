@@ -17,7 +17,7 @@ def transform_arm_camera_frame(parent_arm: str, pos_adj, ori_adj) -> None:
     t = TransformStamped()
 
     t.header.stamp = rospy.Time.now()
-    t.header.frame_id = "{}_bot_link".format(parent_arm) # parent string
+    t.header.frame_id = "d415_link".format(parent_arm) # parent string
     t.child_frame_id = "arm_camera_link"
 
     t.transform.translation.x = ori_adj[0]
@@ -43,7 +43,7 @@ def main():
     while not rospy.is_shutdown():
         # OFFSETS: [+forward/-backward, +left/-right, +up/-down]
         # transform_arm_camera_frame(mounted_arm, [math.pi/2, math.pi/2, 0], [0, (0.1778 if mounted_arm == "b" else -0.1778), 0.05])
-        transform_arm_camera_frame(mounted_arm, [0, pi/2, -pi/2], [0, 0, 0.1])
+        transform_arm_camera_frame(mounted_arm, [0, pi/2, -pi/2], [0, 0, 0])
                       
         rate.sleep()
 

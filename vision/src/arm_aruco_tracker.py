@@ -99,7 +99,7 @@ class MountedArucoTracker:
 
 
         # Display the resulting frame
-        # cv2.imshow('frame', frame) 
+        cv2.imshow('frame', frame) 
         cv2.waitKey(1)
 
     def get_depth_data(self,data):

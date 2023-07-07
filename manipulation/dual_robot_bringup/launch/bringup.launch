@@ -20,9 +20,12 @@
   </group> -->
 
   <!--Nodes involved with ArUco marker and coordinate monitoring-->
-  <!-- <node pkg="vision" type="arm_camera_link.py" name="arm_camera_link" output="screen" />  -->
-  <!-- <node pkg="vision" type="arm_aruco_tracker.py" name="arm_aruco_tracker" output="screen" />  -->
+  <node pkg="vision" type="arm_camera_link.py" name="arm_camera_link" output="screen" /> 
+  <node pkg="vision" type="arm_aruco_tracker.py" name="arm_aruco_tracker" output="screen" /> 
   <node pkg="vision" type="mounted_aruco_tracker.py" name="mounted_aruco_tracker" output="screen" />
+  <!--Aruco Marker Rotation Transforms-->
+  <!-- <node pkg="vision" type="aruco_rotation_transform.py" name="aruco_rotation_transform" output="screen"/> -->
+
   
   <!-- <node pkg="vision" type="slip_detect.py" name="left_slip_detect" output="screen" clear_params="true"/> -->
   <!-- <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/> -->
@@ -41,8 +44,6 @@
 
   <!--Camera Transform-->
   <node pkg="tf2_ros" type="static_transform_publisher" name="camera_broadcaster" args="-0.3556 0.0 0.4064 0 0 0 1 world camera_link" />
-  <!--Aruco Marker Rotation Transform-->
-  <!-- <node pkg="vision" type="aruco_rotation_transform.py" name="aruco_rotation_transform" output="screen"/> -->
 
   <!-- Launch real robots -->
   <!-- <include file="$(find wire_manipulation_moveit_config)/launch/wire_manipulation_moveit.launch"> </include> -->
