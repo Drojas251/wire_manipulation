@@ -563,13 +563,7 @@ Visualization Manager:
           Value: true
         arm_aruco_1:
           Value: true
-        aruco_init_arm_aruco_0:
-          Value: true
-        aruco_init_mounted_aruco_0:
-          Value: true
-        aruco_retrieval_arm_aruco_0:
-          Value: true
-        aruco_retrieval_mounted_aruco_0:
+        arm_camera_link:
           Value: true
         b_bot_base_link:
           Value: false
@@ -592,7 +586,7 @@ Visualization Manager:
         b_bot_gripper_bar_link:
           Value: false
         b_bot_gripper_link:
-          Value: true
+          Value: false
         b_bot_infra1_frame:
           Value: false
         b_bot_infra1_optical_frame:
@@ -604,7 +598,7 @@ Visualization Manager:
         b_bot_left_finger_link:
           Value: false
         b_bot_link:
-          Value: true
+          Value: false
         b_bot_lower_forearm_link:
           Value: false
         b_bot_right_finger_link:
@@ -626,21 +620,13 @@ Visualization Manager:
         camera_depth_optical_frame:
           Value: false
         camera_link:
-          Value: true
+          Value: false
         ground:
           Value: false
-        mounted_aruco_0:
-          Value: true
-        mounted_aruco_1:
-          Value: true
         panel_1:
           Value: false
         panel_2:
           Value: false
-        slip_enroute_arm_aruco_1:
-          Value: true
-        slip_enroute_mounted_aruco_1:
-          Value: true
         world:
           Value: false
       Marker Alpha: 1
@@ -674,21 +660,26 @@ Visualization Manager:
                   b_bot_lower_forearm_link:
                     b_bot_wrist_link:
                       b_bot_gripper_link:
+                        b_bot_bottom_screw_frame:
+                          b_bot_link:
+                            arm_camera_link:
+                              arm_aruco_0:
+                                {}
+                              arm_aruco_1:
+                                {}
+                            b_bot_color_frame:
+                              b_bot_color_optical_frame:
+                                {}
+                            b_bot_depth_frame:
+                              b_bot_depth_optical_frame:
+                                {}
+                            b_bot_infra1_frame:
+                              b_bot_infra1_optical_frame:
+                                {}
+                            b_bot_infra2_frame:
+                              b_bot_infra2_optical_frame:
+                                {}
                         b_bot_ee_arm_link:
-                          b_bot_bottom_screw_frame:
-                            b_bot_link:
-                              b_bot_color_frame:
-                                b_bot_color_optical_frame:
-                                  {}
-                              b_bot_depth_frame:
-                                b_bot_depth_optical_frame:
-                                  {}
-                              b_bot_infra1_frame:
-                                b_bot_infra1_optical_frame:
-                                  {}
-                              b_bot_infra2_frame:
-                                b_bot_infra2_optical_frame:
-                                  {}
                           b_bot_gripper_bar_link:
                             b_bot_fingers_link:
                               b_bot_ee_gripper_link:
@@ -727,7 +718,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.224700689315796
+      Distance: 1.9270902872085571
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -735,17 +726,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.75
       Focal Point:
-        X: -0.030148494988679886
-        Y: -0.130473330616951
-        Z: -0.02181500941514969
+        X: 0.3065485656261444
+        Y: 0.20207737386226654
+        Z: 0.012707412242889404
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3100000023841858
+      Pitch: 0.7149996757507324
       Target Frame: world
-      Yaw: 1.4217514991760254
+      Yaw: 2.7967703342437744
     Saved: ~
 Window Geometry:
   Displays:

@@ -2,6 +2,7 @@
 import rospy
 
 # tf2 and Transformations
+import math
 import tf2_ros
 import tf_conversions
 from geometry_msgs.msg import TransformStamped
@@ -12,18 +13,13 @@ from cv_bridge import CvBridge,CvBridgeError
 from collections import defaultdict
 
 import cv2
-import math
 import numpy as np 
 import cam_calibration
 
-# CAMERA_SRC = cv2.VideoCapture(4) # Depth cam device index 4; use when running without ROS
-
-class MountedArucoTracker:
+class ArmArucoTracker:
     def __init__(self, matrix_coefficients, distortion_coefficients):
         # Subscribers to Camera
-        self.aligned_depth_rgb_sub = rospy.Subscriber("/arm_cam/camera/aligned_depth_to_color/image_raw", Image, self.get_depth_data,queue_size=1)
-        self.rgb_img_sub = rospy.Subscriber("/arm_cam/camera/color/image_raw", Image, self.track_callback,queue_size=1)
-        self.depth_img_camera_info = rospy.Subscriber("/arm_cam/camera/aligned_depth_to_color/camera_info", CameraInfo, self.depth_cam_info_callback,queue_size=1)
+        self.rgb_img_sub = rospy.Subscriber("/arm_camera_images", Image, self.track_callback,queue_size=1)
         
         # Image member variables
         self.bridge_object = CvBridge()
@@ -50,8 +46,6 @@ class MountedArucoTracker:
             print(e)
         rospy.sleep(0.01)
 
-        # ret, frame = CAMERA_SRC.read() # If not using ROS
-
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Change grayscale
 
         aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
@@ -72,9 +66,9 @@ class MountedArucoTracker:
                 t.header.stamp = rospy.Time.now()
                 t.header.frame_id = "arm_camera_link"
                 t.child_frame_id = "arm_aruco_{}".format(i)
-                t.transform.translation.x = tvec.reshape(3)[1]
-                t.transform.translation.y = tvec.reshape(3)[2]
-                t.transform.translation.z = tvec.reshape(3)[0]
+                t.transform.translation.x = tvec.reshape(3)[1]-0.1
+                t.transform.translation.y = tvec.reshape(3)[2]-0.275
+                t.transform.translation.z = tvec.reshape(3)[0]+0.1275
                 
                 rot_mat = np.array([[0, 0, 0, 0],
                             [0, 0, 0, 0],
@@ -82,10 +76,9 @@ class MountedArucoTracker:
                             [0, 0, 0, 1]],
                             dtype=float)
                 rot_mat[:3, :3], _ = cv2.Rodrigues(rvec)
+                # q = tf_conversions.transformations.quaternion_from_matrix(rot_mat)
                 e = tf_conversions.transformations.euler_from_matrix(rot_mat)
                 q = tf_conversions.transformations.quaternion_from_euler(e[0]-math.pi/2, e[1]-math.pi/2, e[2])
-
-                # q = tf_conversions.transformations.quaternion_from_matrix(rot_mat)
 
                 t.transform.rotation.x = q[0]
                 t.transform.rotation.y = q[1]
@@ -101,7 +94,7 @@ class MountedArucoTracker:
 
 
         # Display the resulting frame
-        # cv2.imshow('frame', frame) 
+        cv2.imshow('frame', frame) 
         cv2.waitKey(1)
 
     def get_depth_data(self,data):
@@ -114,7 +107,7 @@ class MountedArucoTracker:
 def main():
     rospy.init_node("arm_aruco_tracker",anonymous=True)
     rospy.sleep(3)
-
+    
     # Define calibration object to hold and store points
     calibration = cam_calibration.CameraCalibration()
 
@@ -127,7 +120,7 @@ def main():
     width = 20-1 # squares across
 
     calibration_matrices = calibration.calibrate(directory_path, img_file_prefix, img_format, square_size, height, width)
-    tracker = MountedArucoTracker(calibration_matrices[1], calibration_matrices[2])
+    tracker = ArmArucoTracker(calibration_matrices[1], calibration_matrices[2])
 
     rospy.spin()
 
