@@ -20,8 +20,8 @@
   </group> -->
 
   <!--Nodes involved with ArUco marker and coordinate monitoring-->
-  <node pkg="vision" type="arm_camera_link.py" name="arm_camera_link" output="screen" /> 
-  <node pkg="vision" type="arm_aruco_tracker.py" name="arm_aruco_tracker" output="screen" /> 
+  <!-- <node pkg="vision" type="arm_camera_link.py" name="arm_camera_link" output="screen" /> 
+  <node pkg="vision" type="arm_aruco_tracker.py" name="arm_aruco_tracker" output="screen" />  -->
 
   <node pkg="vision" type="mounted_aruco_tracker.py" name="mounted_aruco_tracker" output="screen" />
   <!-- <node pkg="vision" type="slip_detect.py" name="left_slip_detect" output="screen" clear_params="true"/> -->
@@ -45,9 +45,9 @@
   <node pkg="vision" type="aruco_rotation_transform.py" name="aruco_rotation_transform" output="screen"/>
 
   <!-- Launch real robots -->
-  <include file="$(find wire_manipulation_moveit_config)/launch/wire_manipulation_moveit.launch"> </include>
+  <!-- <include file="$(find wire_manipulation_moveit_config)/launch/wire_manipulation_moveit.launch"> </include> -->
   <!-- Launch demo robots -->
-  <!-- <include file="$(find wire_manipulation_moveit_config)/launch/demo.launch"> </include> -->
+  <include file="$(find wire_manipulation_moveit_config)/launch/demo.launch"> </include>
 
   <!--Dual Robot control service-->
   <node pkg="dual_robot_control" type="robot_services.py" name="robot_services" output="screen" />

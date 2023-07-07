@@ -15,9 +15,10 @@
   <xacro:include filename="$(find realsense2_description)/urdf/_d415.urdf.xacro" />
 
   <!-- realsense d415 -->
-  <xacro:sensor_d415 name="b_bot" parent="b_bot_ee_arm_link" use_nominal_extrinsics="true">
-    <origin xyz="-0.05 0 0.05" />
+  <xacro:sensor_d415 name="b_bot" parent="b_bot_gripper_link" use_nominal_extrinsics="true">
+    <origin xyz="-0.0254 0 0.0635" />
   </xacro:sensor_d415>
+  <!-- b_bot_link, b_bot_gripper_link 3" -->
 
 
   <!-- dual vx300s, a_bot and b_bot -->
