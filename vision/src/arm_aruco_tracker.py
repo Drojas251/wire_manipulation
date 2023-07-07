@@ -85,8 +85,6 @@ class MountedArucoTracker:
                 e = tf_conversions.transformations.euler_from_matrix(rot_mat)
                 q = tf_conversions.transformations.quaternion_from_euler(e[0]-math.pi/2, e[1]-math.pi/2, e[2])
 
-                # q = tf_conversions.transformations.quaternion_from_matrix(rot_mat)
-
                 t.transform.rotation.x = q[0]
                 t.transform.rotation.y = q[1]
                 t.transform.rotation.z = q[2]
