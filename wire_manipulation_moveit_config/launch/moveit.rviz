@@ -238,6 +238,63 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
+          d435i_accel_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_accel_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_bottom_screw_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_color_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_color_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_depth_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_depth_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_gyro_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_gyro_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_infra1_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_infra1_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_infra2_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_infra2_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
           ground:
             Alpha: 1
             Show Axes: false
@@ -468,6 +525,63 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
+          d435i_accel_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_accel_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_bottom_screw_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_color_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_color_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_depth_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_depth_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_gyro_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_gyro_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_infra1_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_infra1_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_infra2_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_infra2_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          d435i_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
           ground:
             Alpha: 1
             Show Axes: false
@@ -561,6 +675,8 @@ Visualization Manager:
           Value: false
         arm_aruco_0:
           Value: true
+        arm_aruco_1:
+          Value: false
         arm_camera_link:
           Value: true
         b_bot_base_link:
@@ -598,7 +714,7 @@ Visualization Manager:
         camera_depth_optical_frame:
           Value: false
         camera_link:
-          Value: false
+          Value: true
         d415_bottom_screw_frame:
           Value: false
         d415_color_frame:
@@ -619,6 +735,34 @@ Visualization Manager:
           Value: false
         d415_link:
           Value: true
+        d435i_accel_frame:
+          Value: false
+        d435i_accel_optical_frame:
+          Value: false
+        d435i_bottom_screw_frame:
+          Value: false
+        d435i_color_frame:
+          Value: false
+        d435i_color_optical_frame:
+          Value: true
+        d435i_depth_frame:
+          Value: false
+        d435i_depth_optical_frame:
+          Value: false
+        d435i_gyro_frame:
+          Value: false
+        d435i_gyro_optical_frame:
+          Value: false
+        d435i_infra1_frame:
+          Value: false
+        d435i_infra1_optical_frame:
+          Value: false
+        d435i_infra2_frame:
+          Value: false
+        d435i_infra2_optical_frame:
+          Value: false
+        d435i_link:
+          Value: false
         ground:
           Value: false
         panel_1:
@@ -672,6 +816,8 @@ Visualization Manager:
                             arm_camera_link:
                               arm_aruco_0:
                                 {}
+                              arm_aruco_1:
+                                {}
                             d415_color_frame:
                               d415_color_optical_frame:
                                 {}
@@ -691,6 +837,26 @@ Visualization Manager:
             camera_depth_frame:
               camera_depth_optical_frame:
                 {}
+          d435i_bottom_screw_frame:
+            d435i_link:
+              d435i_accel_frame:
+                d435i_accel_optical_frame:
+                  {}
+              d435i_color_frame:
+                d435i_color_optical_frame:
+                  {}
+              d435i_depth_frame:
+                d435i_depth_optical_frame:
+                  {}
+              d435i_gyro_frame:
+                d435i_gyro_optical_frame:
+                  {}
+              d435i_infra1_frame:
+                d435i_infra1_optical_frame:
+                  {}
+              d435i_infra2_frame:
+                d435i_infra2_optical_frame:
+                  {}
           ground:
             {}
           panel_1:
@@ -714,7 +880,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.9270902872085571
+      Distance: 2.376681089401245
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -722,17 +888,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.75
       Focal Point:
-        X: 0.3065485656261444
-        Y: 0.20207737386226654
-        Z: 0.012707412242889404
+        X: 0.340432345867157
+        Y: -0.09723220020532608
+        Z: 0.02571922540664673
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4649999439716339
+      Pitch: 0.5650002956390381
       Target Frame: world
-      Yaw: 3.076770782470703
+      Yaw: 2.7167739868164062
     Saved: ~
 Window Geometry:
   Displays:
