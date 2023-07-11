@@ -16,9 +16,11 @@
   <xacro:include filename="$(find realsense2_description)/urdf/_d435i.urdf.xacro" />
 
   <!-- realsense d415 -->
-  <xacro:sensor_d415 name="d415" parent="b_bot_gripper_link" use_nominal_extrinsics="true">
-    <origin xyz="-0.0254 0 0.0635" />
+  <xacro:sensor_d415 name="d415" parent="b_bot_wrist_link" use_nominal_extrinsics="true">
+    <origin xyz="0.0762 0 0.0635" />
+    <!-- <origin xyz="-1 0 1" /> -->
   </xacro:sensor_d415>
+  <!-- want position offset from b_bot_gripper_link and rotation of b_bot_wrist_link -->
 
   <xacro:sensor_d435i name="d435i" parent="world" use_nominal_extrinsics="true">
     <origin xyz="${-0.3556 - 0.0106} ${0.0 - 0.0325} ${0.4064 - 0.0125}" />

@@ -48,17 +48,18 @@ def main():
     # print("Aruco Pose Server is now running")
     rate = rospy.Rate(60)
     while not rospy.is_shutdown():
-        transform_aruco_rotation("aruco_init", "mounted_aruco_0", [0, math.pi/2, 0], [WIRE_OFFSET, +0.05, 0.05]) # initial grasp parallel to marker, transform moved slightly up   
-        transform_aruco_rotation("aruco_retrieval", "mounted_aruco_0", [0, math.pi/2, 0], [WIRE_OFFSET, 0, 0.05])
-        transform_aruco_rotation("slip_enroute", "mounted_aruco_1", [math.pi/2, math.pi/2 + math.pi/4, math.pi/2], [-.05, -0.125, 0.15]) # hold at downward angle
+        # transform_aruco_rotation("aruco_init", "mounted_aruco_0", [0, math.pi/2, 0], [WIRE_OFFSET, +0.05, 0.05]) # initial grasp parallel to marker, transform moved slightly up   
+        # transform_aruco_rotation("aruco_retrieval", "mounted_aruco_0", [0, math.pi/2, 0], [WIRE_OFFSET, 0, 0.05])
+        # transform_aruco_rotation("slip_enroute", "mounted_aruco_1", [math.pi/2, math.pi/2 + math.pi/4, math.pi/2], [-.05, -0.125, 0.15]) # hold at downward angle
 
         # transform_aruco_rotation("unplug_end", 0, [0, math.pi/2, 0], [WIRE_OFFSET+0.1, +0.05, 0.075])
         # transform_aruco_rotation("slip_enroute", 1, [math.pi/2, math.pi/2 + math.pi/6, math.pi/2], 
                                     # [-0.05, -0.075, 0.15]) # hold at downward angle
         # transform_aruco_rotation(1, [0, math.pi/2, 0], [-.05, 0.1, 0.1]) # no downward angle
-        transform_aruco_rotation("aruco_init", "arm_aruco_0", [0, math.pi/2, 0], [WIRE_OFFSET, +0.05, 0.05]) # initial grasp parallel to marker, transform moved slightly up   
+        
+        # transform_aruco_rotation("aruco_init", "arm_aruco_0", [0, math.pi/2, 0], [WIRE_OFFSET, +0.05, 0.05]) # initial grasp parallel to marker, transform moved slightly up   
         transform_aruco_rotation("aruco_retrieval", "arm_aruco_0", [0, math.pi/2, 0], [WIRE_OFFSET, 0, 0.05])
-        transform_aruco_rotation("slip_enroute", "arm_aruco_1", [math.pi/2, math.pi/2 + math.pi/4, math.pi/2], [-.05, -0.125, 0.15]) # hold at downward angle
+        # transform_aruco_rotation("slip_enroute", "arm_aruco_1", [math.pi/2, math.pi/2 + math.pi/4, math.pi/2], [-.05, -0.125, 0.15]) # hold at downward angle
 
         
         # OFFSETS: [-left/+right, -down/+up, -forward/+backward]
