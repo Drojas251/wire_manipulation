@@ -46,9 +46,9 @@
   <node pkg="tf2_ros" type="static_transform_publisher" name="camera_broadcaster" args="-0.3556 0.0 0.4064 0 0 0 1 world camera_link" />
 
   <!-- Launch real robots -->
-  <include file="$(find wire_manipulation_moveit_config)/launch/wire_manipulation_moveit.launch"> </include>
+  <!-- <include file="$(find wire_manipulation_moveit_config)/launch/wire_manipulation_moveit.launch"> </include> -->
   <!-- Launch demo robots -->
-  <!-- <include file="$(find wire_manipulation_moveit_config)/launch/demo.launch"> </include> -->
+  <include file="$(find wire_manipulation_moveit_config)/launch/demo.launch"> </include>
 
   <!--Dual Robot control service-->
   <node pkg="dual_robot_control" type="robot_services.py" name="robot_services" output="screen" />

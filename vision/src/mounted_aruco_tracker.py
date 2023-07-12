@@ -20,9 +20,9 @@ import cam_calibration
 class MountedArucoTracker:
     def __init__(self, matrix_coefficients, distortion_coefficients):
         # Subscribers to Camera
-        self.aligned_depth_rgb_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_depth_data,queue_size=1)
-        self.rgb_img_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.track_callback,queue_size=1)
-        self.depth_img_camera_info = rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.depth_cam_info_callback,queue_size=1)
+        self.aligned_depth_rgb_sub = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/image_raw", Image, self.get_depth_data,queue_size=1)
+        self.rgb_img_sub = rospy.Subscriber("/mounted_cam/camera/color/image_raw", Image, self.track_callback,queue_size=1)
+        self.depth_img_camera_info = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/camera_info", CameraInfo, self.depth_cam_info_callback,queue_size=1)
         
         # Image member variables
         self.bridge_object = CvBridge()
@@ -97,7 +97,7 @@ class MountedArucoTracker:
 
 
         # Display the resulting frame
-        # cv2.imshow('frame', frame) 
+        cv2.imshow('frame', frame) 
         cv2.waitKey(1)
 
     def get_depth_data(self,data):
