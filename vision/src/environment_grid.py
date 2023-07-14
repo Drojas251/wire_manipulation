@@ -31,7 +31,7 @@ class EnvironmentGrid:
             print(e)
         rospy.sleep(0.01)
 
-        frame = self.draw_grid(frame, (10, 8))
+        frame = self.draw_grid(frame, (12, 20))
         # Display the resulting frame
         cv2.imshow('frame', frame) 
         cv2.waitKey(1)
