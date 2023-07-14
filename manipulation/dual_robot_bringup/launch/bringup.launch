@@ -26,6 +26,8 @@
   <!--Aruco Marker Rotation Transforms-->
   <!-- <node pkg="vision" type="aruco_rotation_transform.py" name="aruco_rotation_transform" output="screen"/> -->
 
+  <!-- Nodes involved in producing a grid and marker search -->
+  <node pkg="vision" type="environment_grid.py" name="environment_grid" output="screen" /> 
   
   <!-- <node pkg="vision" type="slip_detect.py" name="left_slip_detect" output="screen" clear_params="true"/> -->
   <!-- <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/> -->

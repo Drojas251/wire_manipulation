@@ -36,7 +36,7 @@ class EnvironmentGrid:
         cv2.imshow('frame', frame) 
         cv2.waitKey(1)
 
-    def draw_grid(self, img, grid_shape, color=(0, 255, 0), thickness=1):
+    def draw_grid(self, img, grid_shape, color=(0, 0, 255), thickness=1):
         h, w, _ = img.shape
         rows, cols = grid_shape
         dy, dx = h / rows, w / cols
