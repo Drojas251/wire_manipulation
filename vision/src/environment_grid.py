@@ -2,9 +2,9 @@
 import rospy
 
 # tf2 and Transformations
-# import tf2_ros
-# import tf_conversions
-# from geometry_msgs.msg import TransformStamped
+import tf2_ros
+from tf.transformations import quaternion_from_euler
+from geometry_msgs.msg import TransformStamped
 from sensor_msgs.msg import Image, CameraInfo
 
 # Camera capture
@@ -29,6 +29,11 @@ class EnvironmentGrid:
         self.grid_x = None
         self.grid_y = None
         self.midpoints = None
+
+        """
+        https://automaticaddison.com/how-to-convert-camera-pixels-to-robot-base-frame-coordinates/
+        https://stackoverflow.com/questions/23606600/how-to-determinate-object-position-with-opencv-in-the-world-coordinate
+        """
 
     def grid_callback(self, data):
         try:
@@ -96,7 +101,27 @@ class EnvironmentGrid:
 
         return img
 
+def environment_origin(source: str, pos_adj, ori_adj) -> None:
+    br = tf2_ros.TransformBroadcaster()
+    t = TransformStamped()
 
+    t.header.stamp = rospy.Time.now()
+    t.header.frame_id = source
+    t.child_frame_id = "environment_origin".format()
+
+    t.transform.translation.x = ori_adj[0]
+    t.transform.translation.y = ori_adj[1]
+    t.transform.translation.z = ori_adj[2]
+    
+    q = quaternion_from_euler(pos_adj[0], pos_adj[1], pos_adj[2]) # pos_adj
+    # q = quaternion_from_euler(-math.pi/2,math.pi/2,0) # match rotation of bot grippers
+
+    t.transform.rotation.x = q[0]
+    t.transform.rotation.y = q[1]
+    t.transform.rotation.z = q[2]
+    t.transform.rotation.w = q[3]
+
+    br.sendTransform(t)
 
 def main():
     rospy.init_node("environment_grid",anonymous=True)
@@ -104,6 +129,10 @@ def main():
 
     # Define object to hold grid of environment
     grid = EnvironmentGrid()
+    rate = rospy.Rate(60)
+    while not rospy.is_shutdown():
+        environment_origin("camera_link", [0, 0, 0], [.75, 0, 0])
+        # USE THIS FRAME AS GRID CORNER, ITERATE FROM THERE??
 
     rospy.spin()
 
