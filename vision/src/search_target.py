@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from time import sleep
 import rospy
 
 # tf2 and Transformations
@@ -7,6 +8,7 @@ import tf2_ros
 import tf_conversions
 from geometry_msgs.msg import TransformStamped
 from sensor_msgs.msg import Image, CameraInfo
+from std_msgs.msg import Bool
 
 # Camera capture
 from cv_bridge import CvBridge,CvBridgeError
@@ -48,16 +50,62 @@ def main():
     # +distance to panels, horizontal 0.325:-0.4, vertical -0.4:0.2
     MIN_X, MAX_X = -0.4, 0.3
     MIN_Y, MAX_Y = -0.4, 0.2
+    dx, dy = 0.1, 0.1
 
-    # curr_x
+    x_dir, vertical_dir = 1, 1
+    x_min_reached, x_max_reached = 0,0
+
+    total_width, curr_width = 0,0
+    total_height, curr_height = 0,0
+    width_pushed = False
+    width_seen = {0}
 
     z, x, y, = 0.75, 0, -0.1 # initalize search target at middle origin position
     while not rospy.is_shutdown():
         # if message received to move:
-        transform_search_target("search_target", "camera_link", [0, 0, 0], [z, x, y])
-        
-        # Adjust target for next search
+        move_flag = rospy.wait_for_message("move_flag", Bool)
+        if move_flag.data:
+            x_delta = x_dir * dx
+            x_adj = x + x_delta
+            if (x <= MAX_X and x >= MIN_X):
+                x = x_adj
+                
+            if (x_dir > 0 and x > x_max_reached):
+                x_max_reached += dx
+                x_dir *= -1
+            elif (x_dir < 0 and x < x_min_reached):
+                x_min_reached -= dx
+                x_dir *= -1
+            
 
+
+
+            # print(move_flag.data)
+            # # Adjust target for next search
+            # if curr_width == 0 and curr_height == 0:
+            #     print("A")
+            #     x += horizontal_dir * dx
+            #     width_seen.add(x)        print("FRAME LOADED")
+
+            #     width_pushed = True
+            #     curr_width += 1
+            # elif width_pushed:
+            #     print("B")
+            #     horizontal_dir *= -1
+            #     x += horizontal_dir * dx
+                
+            #     if x not in width_seen:
+            #         width_pushed = True
+            #         width_seen.add(x)
+            #     else:
+            #         width_pushed = False
+            # elif x not in [MIN_X, MAX_X]:
+            #     print("C")
+            #     x += horizontal_dir * dx
+
+            sleep(1)
+
+        transform_search_target("search_target", "camera_link", [0, 0, 0], [z, x, y])
         # furthest left right up down flags?
 
         rate.sleep()
