@@ -52,61 +52,53 @@ def main():
     MIN_Y, MAX_Y = -0.4, 0.2
     dx, dy = 0.1, 0.1
 
-    x_dir, vertical_dir = 1, 1
-    x_min_reached, x_max_reached = 0,0
+    z, x, y, = 0.75, 0.2, -0.1 # initalize search target at middle origin position
 
-    total_width, curr_width = 0,0
-    total_height, curr_height = 0,0
-    width_pushed = False
-    width_seen = {0}
-
-    z, x, y, = 0.75, 0, -0.1 # initalize search target at middle origin position
+    x_dir, y_dir = -1, 1 # direction to start the search
+    x_min_reached, x_max_reached = x,x # both positions must be adjusted to change coordinate (e.g. .2, .2)
+    y_min_reached, y_max_reached = y,y
+    
+    next_dir = 'x'
     while not rospy.is_shutdown():
         # if message received to move:
         move_flag = rospy.wait_for_message("move_flag", Bool)
         if move_flag.data:
-            x_delta = x_dir * dx
-            x_adj = x + x_delta
-            if (x <= MAX_X and x >= MIN_X):
-                x = x_adj
-                
-            if (x_dir > 0 and x > x_max_reached):
-                x_max_reached += dx
-                x_dir *= -1
-            elif (x_dir < 0 and x < x_min_reached):
-                x_min_reached -= dx
-                x_dir *= -1
-            
+            # decide if moving x or y
+            # delta = global() RESUME HERE
 
+            if next_dir == 'x':
+                x_delta = x_dir * dx
+                x_adj = x + x_delta
+                if (x <= MAX_X and x >= MIN_X):
+                    x = x_adj
+                    
+                if (x_dir > 0 and x > x_max_reached):
+                    x_max_reached += dx
+                    x_dir *= -1
+                    next_dir = 'y'
+                elif (x_dir < 0 and x < x_min_reached):
+                    x_min_reached -= dx
+                    x_dir *= -1
+                    next_dir = 'y'
 
-
-            # print(move_flag.data)
-            # # Adjust target for next search
-            # if curr_width == 0 and curr_height == 0:
-            #     print("A")
-            #     x += horizontal_dir * dx
-            #     width_seen.add(x)        print("FRAME LOADED")
-
-            #     width_pushed = True
-            #     curr_width += 1
-            # elif width_pushed:
-            #     print("B")
-            #     horizontal_dir *= -1
-            #     x += horizontal_dir * dx
-                
-            #     if x not in width_seen:
-            #         width_pushed = True
-            #         width_seen.add(x)
-            #     else:
-            #         width_pushed = False
-            # elif x not in [MIN_X, MAX_X]:
-            #     print("C")
-            #     x += horizontal_dir * dx
+            elif next_dir == 'y':
+                y_delta = y_dir * dy
+                y_adj = y + y_delta
+                if (y <= MAX_Y and y >= MIN_Y):
+                    y = y_adj
+                    
+                if (y_dir > 0 and y > y_max_reached):
+                    y_max_reached += dy
+                    y_dir *= -1
+                    next_dir = 'x'
+                elif (y_dir < 0 and y < y_min_reached):
+                    y_min_reached -= dy
+                    y_dir *= -1
+                    next_dir = 'x'
 
             sleep(1)
 
         transform_search_target("search_target", "camera_link", [0, 0, 0], [z, x, y])
-        # furthest left right up down flags?
 
         rate.sleep()
 
