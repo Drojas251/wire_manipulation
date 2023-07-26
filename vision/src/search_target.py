@@ -60,45 +60,44 @@ def main():
     
     next_dir = 'x'
     while not rospy.is_shutdown():
-        # if message received to move:
-        move_flag = rospy.wait_for_message("move_flag", Bool)
-        if move_flag.data:
-            # decide if moving x or y
-            # delta = global() RESUME HERE
+        try:
+            # if message received to move, adjust search target
+            move_flag = rospy.wait_for_message("move_flag", Bool, 2.5)
+            if move_flag.data:
+                if next_dir == 'x':
+                    x_delta = x_dir * dx
+                    x_adj = x + x_delta
+                    if (x <= MAX_X and x >= MIN_X):
+                        x = x_adj
+                        
+                    if (x_dir > 0 and x > x_max_reached):
+                        x_max_reached += dx
+                        x_dir *= -1
+                        next_dir = 'y'
+                    elif (x_dir < 0 and x < x_min_reached):
+                        x_min_reached -= dx
+                        x_dir *= -1
+                        next_dir = 'y'
 
-            if next_dir == 'x':
-                x_delta = x_dir * dx
-                x_adj = x + x_delta
-                if (x <= MAX_X and x >= MIN_X):
-                    x = x_adj
-                    
-                if (x_dir > 0 and x > x_max_reached):
-                    x_max_reached += dx
-                    x_dir *= -1
-                    next_dir = 'y'
-                elif (x_dir < 0 and x < x_min_reached):
-                    x_min_reached -= dx
-                    x_dir *= -1
-                    next_dir = 'y'
-
-            elif next_dir == 'y':
-                y_delta = y_dir * dy
-                y_adj = y + y_delta
-                if (y <= MAX_Y and y >= MIN_Y):
-                    y = y_adj
-                    
-                if (y_dir > 0 and y > y_max_reached):
-                    y_max_reached += dy
-                    y_dir *= -1
-                    next_dir = 'x'
-                elif (y_dir < 0 and y < y_min_reached):
-                    y_min_reached -= dy
-                    y_dir *= -1
-                    next_dir = 'x'
-
+                elif next_dir == 'y':
+                    y_delta = y_dir * dy
+                    y_adj = y + y_delta
+                    if (y <= MAX_Y and y >= MIN_Y):
+                        y = y_adj
+                        
+                    if (y_dir > 0 and y > y_max_reached):
+                        y_max_reached += dy
+                        y_dir *= -1
+                        next_dir = 'x'
+                    elif (y_dir < 0 and y < y_min_reached):
+                        y_min_reached -= dy
+                        y_dir *= -1
+                        next_dir = 'x'
             sleep(1)
-
-        transform_search_target("search_target", "camera_link", [0, 0, 0], [z, x, y])
+        except rospy.exceptions.ROSException:
+            pass
+        finally:
+            transform_search_target("search_target", "camera_link", [0, 0, 0], [z, x, y])
 
         rate.sleep()
 

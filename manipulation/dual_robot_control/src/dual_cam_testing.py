@@ -52,16 +52,23 @@ if __name__ == "__main__":
     GRASPING_ARM    = "right"
     GRASPING_ARM_ID = "a_bot_arm" if GRASPING_ARM == "right" else "b_bot_arm"
 
-    sleep(2)
-    ##  Move grasping arm to wire end found via a_bot mounted cam
-    print("STATUS: Move to arm camera aruco pose")
-    status = robot_control.move_to_aruco(GRASPING_ARM, "search_target")
+    SEARCHING_ARM   = "left"
+    SEARCHING_ARM_ID = "a_bot_arm" if SEARCHING_ARM == "right" else "b_bot_arm"
+
+    # SEARCH TESTING
+    # Search algorithm loop would look like:
+    # 1. Identify no ArUco tags with rear cam
+    # 2. Move searching arm to first search target
+    # 3. Conduct search on search target
+    # 4. If nothing found, move search target and arm and loop
+
+    status = robot_control.move_to_frame(SEARCHING_ARM, "search_target")
     # print(status)
     # sleep(5)
     # print("STATUS: Sleep reset")
     # status = robot_control.move_to_target(GRASPING_ARM, 'sleep')
     # print("STATUS: Move to mounted camera aruco pose")
-    # status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_retrieval_mounted_aruco_0")
+    # status = robot_control.move_to_frame(GRASPING_ARM, "aruco_retrieval_mounted_aruco_0")
     # print(status)
     # sleep(5)
     # status = robot_control.move_to_target(GRASPING_ARM, 'sleep')

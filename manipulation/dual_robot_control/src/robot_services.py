@@ -107,13 +107,13 @@ class RobotControl:
         elif robot_id == "right":
             self.right_arm.execute(plan)
 
-    def move_to_aruco(self, robot_id: str, aruco_target: str):
+    def move_to_frame(self, robot_id: str, frame: str):
         tfBuffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tfBuffer)
         end_pose = None
         while not end_pose:
             try:
-                end_pose = tfBuffer.lookup_transform("world", aruco_target, rospy.Time()).transform
+                end_pose = tfBuffer.lookup_transform("world", frame, rospy.Time()).transform
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 continue
 

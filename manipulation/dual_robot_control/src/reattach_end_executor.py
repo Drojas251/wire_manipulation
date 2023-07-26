@@ -66,7 +66,7 @@ if __name__ == "__main__":
         status = robot_control.set_gripper(arm, "open")
 
     ##  Move grasping arm to wire end and unplug
-    status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_init_0") # initial grab at wire
+    status = robot_control.move_to_frame(GRASPING_ARM, "aruco_init_0") # initial grab at wire
     # status = robot_control.move_to_joint_goal(GRASPING_ARM, [x * np.pi / 180 for x in joint_goal0])
     status = robot_control.set_gripper(GRASPING_ARM, "close")
     status = robot_control.move_to_joint_goal(GRASPING_ARM, [x * np.pi / 180 for x in joint_goal1])
@@ -89,7 +89,7 @@ if __name__ == "__main__":
             status = robot_control.move_to_target(GRASPING_ARM, 'sleep')
             status = robot_control.set_gripper(GRASPING_ARM, "open")
 
-            status = robot_control.move_to_aruco(GRASPING_ARM, "aruco_retrieval_0")
+            status = robot_control.move_to_frame(GRASPING_ARM, "aruco_retrieval_0")
             status = robot_control.move_to_joint_goal(GRASPING_ARM, [x * np.pi / 180 for x in joint_goal3])
     ## END SCENARIO C4
 
