@@ -22,12 +22,13 @@
   <!--Nodes involved with ArUco marker and coordinate monitoring-->
   <node pkg="vision" type="arm_camera_link.py" name="arm_camera_link" output="screen" /> 
   <node pkg="vision" type="arm_aruco_tracker.py" name="arm_aruco_tracker" output="screen" /> 
-  <!-- <node pkg="vision" type="mounted_aruco_tracker.py" name="mounted_aruco_tracker" output="screen" /> -->
+  <node pkg="vision" type="mounted_aruco_tracker.py" name="mounted_aruco_tracker" output="screen" />
   <!--Aruco Marker Rotation Transforms-->
   <!-- <node pkg="vision" type="aruco_rotation_transform.py" name="aruco_rotation_transform" output="screen"/> -->
 
-  <!-- Nodes involved in producing a grid and marker search -->
+  <!-- Nodes involved in ArUco marker search -->
   <!-- <node pkg="vision" type="environment_grid.py" name="environment_grid" output="screen" />  -->
+  <node pkg="vision" type="search_target.py" name="search_target" output="screen" /> 
   
   <!-- <node pkg="vision" type="slip_detect.py" name="left_slip_detect" output="screen" clear_params="true"/> -->
   <!-- <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/> -->
