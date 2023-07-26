@@ -15,6 +15,7 @@ from cv_bridge import CvBridge,CvBridgeError
 from collections import defaultdict
 
 import cv2
+import math
 import numpy as np 
 import cam_calibration
 
@@ -52,7 +53,8 @@ def main():
     MIN_Y, MAX_Y = -0.4, 0.2
     dx, dy = 0.1, 0.1
 
-    z, x, y, = 0.75, 0.2, -0.1 # initalize search target at middle origin position
+    z_pos, x_pos, y_pos, = 0.75, 0.2, -0.1 # initalize search target at middle origin position; updated through search routine
+    z_ori, x_ori, y_ori, = 0,0,0 # initialize search target orientation; updated through search at a given target frame pose
 
     x_dir, y_dir = -1, 1 # direction to start the search
     x_min_reached, x_max_reached = x,x # both positions must be adjusted to change coordinate (e.g. .2, .2)
@@ -97,7 +99,7 @@ def main():
         except rospy.exceptions.ROSException:
             pass
         finally:
-            transform_search_target("search_target", "camera_link", [0, 0, 0], [z, x, y])
+            transform_search_target("search_target", "camera_link", [z_ori, x_ori, y_ori], [z_pos, x_pos, y_pos])
 
         rate.sleep()
 

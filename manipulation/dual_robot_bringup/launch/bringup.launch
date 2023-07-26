@@ -28,7 +28,7 @@
 
   <!-- Nodes involved in ArUco marker search -->
   <!-- <node pkg="vision" type="environment_grid.py" name="environment_grid" output="screen" />  -->
-  <node pkg="vision" type="search_target.py" name="search_target" output="screen" /> 
+  <!-- <node pkg="vision" type="search_target.py" name="search_target" output="screen" />  -->
   
   <!-- <node pkg="vision" type="slip_detect.py" name="left_slip_detect" output="screen" clear_params="true"/> -->
   <!-- <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/> -->
