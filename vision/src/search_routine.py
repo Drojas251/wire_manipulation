@@ -54,7 +54,7 @@ class SearchRoutine():
             
             try:
                 # Check if target ArUco has been found
-                self.tfBuffer.lookup_transform('camera_color_optical_frame', 'mounted_aruco_0', rospy.Time(0), rospy.Duration(5))
+                self.tfBuffer.lookup_transform('camera_color_optical_frame', 'arm_aruco_0', rospy.Time(0), rospy.Duration(5))
                 SEARCHING = False # end search when aruco found
             except tf2_ros.LookupException:
                 self.publish(True)

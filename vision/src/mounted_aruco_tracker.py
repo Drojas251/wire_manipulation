@@ -52,8 +52,7 @@ class MountedArucoTracker:
         # ret, frame = CAMERA_SRC.read() # If not using ROS
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Change grayscale
-        # FIND A WAY TO CUT OFF THIS
-        gray = gray[200:720, :] # configure this
+        gray = gray[150:, 300:] # Crop image to only consider environment, avoid false tag ID's
 
 
 
@@ -101,7 +100,7 @@ class MountedArucoTracker:
 
 
         # Display the resulting frame
-        cv2.imshow('frame', gray)  # change back to frame to get full view, gray is only aruco detection view
+        cv2.imshow('frame', frame)  # change back to frame to get full view, gray is only aruco detection view
         cv2.waitKey(1)
 
     def get_depth_data(self,data):
