@@ -31,7 +31,8 @@ spec.loader.exec_module(RC)
 class SearchRoutine():
     def __init__(self, search_arm, grasp_arm) -> None:
         # Publisher for move flag
-        self.move_flag_pub = rospy.Publisher("/move_flag", Bool, queue_size=1)
+        self.move_flag_pos_pub = rospy.Publisher("/move_flag_pos", Bool, queue_size=1)
+        self.move_flag_ori_pub = rospy.Publisher("/move_flag_ori", Bool, queue_size=1)
         # Robot Control
         self.robot_control = RC.RobotControl()
         # Arm assignments
@@ -41,23 +42,27 @@ class SearchRoutine():
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer)
 
-
-    def publish(self, value: Bool):
-        self.move_flag_pub.publish(value)
-
     def search(self):
         # print(self.tfBuffer.lookup_transform('camera_color_optical_frame', 'mounted_aruco_0', rospy.Time(0), rospy.Duration(5)))
         SEARCHING = True
+        TAG_FOUND = False
         while SEARCHING:
+            # Move to search target position
             self.robot_control.move_to_frame(self.SEARCHING_ARM, "search_target")
+            # check flat parallel orientation
+
+
             # do a search with orientation rotation
-            
-            try:
-                # Check if target ArUco has been found
-                self.tfBuffer.lookup_transform('camera_color_optical_frame', 'arm_aruco_0', rospy.Time(0), rospy.Duration(5))
-                SEARCHING = False # end search when aruco found
-            except tf2_ros.LookupException:
-                self.publish(True)
+            for i in range(9): # 8 positions of plane + 1 parallel to marker
+
+                try:
+                    # Check if target ArUco has been found
+                    self.tfBuffer.lookup_transform('camera_color_optical_frame', 'arm_aruco_0', rospy.Time(0), rospy.Duration(5))
+                    SEARCHING = False # end search when aruco found
+                    TAG_FOUND = True
+                except tf2_ros.LookupException:
+                    self.move_flag_ori_pub(True) # move orientation along 9 points
+            self.move_flag_pos_pub.publish(True)
                 
 def main():
     rospy.init_node('search_routine')

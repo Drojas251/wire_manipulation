@@ -21,6 +21,18 @@ import cam_calibration
 
 import math
 
+NODE_OFFSETS = {
+    0 : [],
+    1 : [],
+    2 : [],
+    3 : [],
+    4 : [],
+    5 : [],
+    6 : [],
+    7 : [],
+    8 : [],
+}
+
 def transform_search_target(child_name: str, source: str, pos_adj, ori_adj) -> None:
     br = tf2_ros.TransformBroadcaster()
     t = TransformStamped()
@@ -47,6 +59,7 @@ def main():
     
     rate = rospy.Rate(60)
 
+    ### Variables for spiral positioning
     # Define max and min for horizontal and vertical coordinates
     # +distance to panels, horizontal 0.325:-0.4, vertical -0.4:0.2
     MIN_X, MAX_X = -0.4, 0.3
@@ -57,15 +70,19 @@ def main():
     z_ori, x_ori, y_ori, = 0,0,0 # initialize search target orientation; updated through search at a given target frame pose
 
     x_dir, y_dir = -1, 1 # direction to start the search
-    x_min_reached, x_max_reached = x,x # both positions must be adjusted to change coordinate (e.g. .2, .2)
-    y_min_reached, y_max_reached = y,y
+    x_min_reached, x_max_reached = x_pos,x_pos # both positions must be adjusted to change coordinate (e.g. .2, .2)
+    y_min_reached, y_max_reached = y_pos,y_pos
     
+    ### Variables for searching each spiral node
+    z2_pos, x2_pos, y2_pos = 0,0,0
+    z2_ori, x2_ori, y2_ori = 0,0,0
+
     next_dir = 'x'
-    while not rospy.is_shutdown():
+    while not rospy.is_shutdown(): # Outer loop controls moving to each spiral node
         try:
-            # if message received to move, adjust search target
-            move_flag = rospy.wait_for_message("move_flag", Bool, 2.5)
-            if move_flag.data:
+            # if message received to move position, adjust search target's x,y positions
+            move_flag_pos = rospy.wait_for_message("move_flag_pos", Bool, 2.5)
+            if move_flag_pos.data:
                 if next_dir == 'x':
                     x_delta = x_dir * dx
                     x_adj = x + x_delta
@@ -97,7 +114,26 @@ def main():
                         next_dir = 'x'
             sleep(1)
         except rospy.exceptions.ROSException:
-            pass
+            # This needs to be in a separate try block
+            try:
+                move_flag_ori = rospy.wait_for_message("move_flag_ori", Bool, 2.5) # wait for signal to start the search at node
+                if move_flag_ori.data:
+                # RESUME HERE MOVING ORIENTATION ALONG PERIMETER, CONSIDER OFFSET
+                    node_variation_counter = 0
+                    while node_variation_counter < len(NODE_OFFSETS):
+                        try:
+                            move_flag_ori2 = rospy.wait_for_message("move_flag_ori2", Bool, 2.5) # move the search target to each search position
+                            if move_flag_ori2.data:
+                                # adjust pos and ori for sub
+                                node_variation_counter += 1
+                        except rospy.exceptions.ROSException:
+                            pass
+                        finally:
+                            transform_search_target("search_target", "camera_link", [z2_ori, x2_ori, y2_ori], [z_pos, x_pos+0.2, y_pos+0.2])
+
+                sleep(1)
+            except rospy.exceptions.ROSException:
+                pass
         finally:
             transform_search_target("search_target", "camera_link", [z_ori, x_ori, y_ori], [z_pos, x_pos, y_pos])
 
