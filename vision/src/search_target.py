@@ -21,16 +21,15 @@ import cam_calibration
 
 import math
 
-NODE_OFFSETS = {
-    0 : [],
-    1 : [],
-    2 : [],
-    3 : [],
-    4 : [],
-    5 : [],
-    6 : [],
-    7 : [],
-    8 : [],
+NODE_OFFSETS = { # Specified z, x, y
+    0 : [0, 0, 1],
+    1 : [0, 1, 1],
+    2 : [0, 1, 0],
+    3 : [0, 1, -1],
+    4 : [0, 0, -1],
+    5 : [0, -1, -1],
+    6 : [0, -1, 0],
+    7 : [0, -1, 1],
 }
 
 def transform_search_target(child_name: str, source: str, pos_adj, ori_adj) -> None:
@@ -74,8 +73,8 @@ def main():
     y_min_reached, y_max_reached = y_pos,y_pos
     
     ### Variables for searching each spiral node
-    z2_pos, x2_pos, y2_pos = 0,0,0
-    z2_ori, x2_ori, y2_ori = 0,0,0
+    z2_pos, x2_pos, y2_pos = z_pos, x_pos, y_pos
+    z2_ori, x2_ori, y2_ori = z_ori, x_ori, y_ori
 
     next_dir = 'x'
     while not rospy.is_shutdown(): # Outer loop controls moving to each spiral node
@@ -118,18 +117,22 @@ def main():
             try:
                 move_flag_ori = rospy.wait_for_message("move_flag_ori", Bool, 2.5) # wait for signal to start the search at node
                 if move_flag_ori.data:
-                # RESUME HERE MOVING ORIENTATION ALONG PERIMETER, CONSIDER OFFSET
                     node_variation_counter = 0
                     while node_variation_counter < len(NODE_OFFSETS):
                         try:
                             move_flag_ori2 = rospy.wait_for_message("move_flag_ori2", Bool, 2.5) # move the search target to each search position
                             if move_flag_ori2.data:
                                 # adjust pos and ori for sub
+                                print("FIRST:", z2_pos, x2_pos, y2_pos)
+                                z2_pos, x2_pos, y2_pos = z_pos, x_pos, y_pos
+                                x2_pos += (NODE_OFFSETS[node_variation_counter][1]*dx/2)
+                                y2_pos += (NODE_OFFSETS[node_variation_counter][2]*dy/2)
                                 node_variation_counter += 1
                         except rospy.exceptions.ROSException:
                             pass
                         finally:
-                            transform_search_target("search_target", "camera_link", [z2_ori, x2_ori, y2_ori], [z_pos, x_pos+0.2, y_pos+0.2])
+                            print("SEC:", z2_pos, x2_pos, y2_pos)
+                            transform_search_target("search_target", "camera_link", [z2_ori, x2_ori, y2_ori], [z2_pos, x2_pos, y2_pos])
 
                 sleep(1)
             except rospy.exceptions.ROSException:
