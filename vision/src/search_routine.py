@@ -31,8 +31,9 @@ spec.loader.exec_module(RC)
 class SearchRoutine():
     def __init__(self, search_arm, grasp_arm) -> None:
         # Publisher for move flag
-        self.move_flag_pos_pub = rospy.Publisher("/move_flag_pos", Bool, queue_size=1)
-        self.move_flag_ori_pub = rospy.Publisher("/move_flag_ori", Bool, queue_size=1)
+        self.move_flag_pos_pub  = rospy.Publisher("/move_flag_pos",  Bool, queue_size=1)
+        self.move_flag_ori_pub  = rospy.Publisher("/move_flag_ori",  Bool, queue_size=1)
+        self.move_flag_ori_pub2 = rospy.Publisher("/move_flag_ori2", Bool, queue_size=1)
         # Robot Control
         self.robot_control = RC.RobotControl()
         # Arm assignments
@@ -50,19 +51,37 @@ class SearchRoutine():
             # Move to search target position
             self.robot_control.move_to_frame(self.SEARCHING_ARM, "search_target")
             # check flat parallel orientation
+            try:
+                # Check if target ArUco has been found
+                print("TRY 1: Scan parallel for subpoint")
+                self.tfBuffer.lookup_transform('camera_color_optical_frame', 'arm_aruco_0', rospy.Time(0), rospy.Duration(5))
+            except tf2_ros.LookupException: # Begin checking each subpoints in a spiral node position
+                print("EXCEPT 1: No parallel found, move to start searching subpoints")
+                self.move_flag_ori_pub.publish(True)
+                # Scan points at the current node
+                for i in range(8): # 8 positions of plane
+                    try:
+                        print("TRY 2: Move to subpoint attempt", i)
+                        # Move search target to subpoint
+                        self.move_flag_ori_pub2.publish(True) # move orientation along 9 points
+                        # Move arm to subpoint 
+                        self.robot_control.move_to_frame(self.SEARCHING_ARM, "search_target")
 
-
-            # do a search with orientation rotation
-            for i in range(9): # 8 positions of plane + 1 parallel to marker
-
-                try:
-                    # Check if target ArUco has been found
-                    self.tfBuffer.lookup_transform('camera_color_optical_frame', 'arm_aruco_0', rospy.Time(0), rospy.Duration(5))
-                    SEARCHING = False # end search when aruco found
-                    TAG_FOUND = True
-                except tf2_ros.LookupException:
-                    self.move_flag_ori_pub(True) # move orientation along 9 points
+                        print("TRY 2: Scan subpoint")
+                        # Check if target ArUco has been found
+                        self.tfBuffer.lookup_transform('camera_color_optical_frame', 'arm_aruco_0', rospy.Time(0), rospy.Duration(5))
+                        # Throws error if no lookup found
+                        SEARCHING = False # end search when aruco found
+                        TAG_FOUND = True
+                        break
+                    except tf2_ros.LookupException:
+                        pass
+                        # print("EXCEPT 2: Move to next subpoint at node")
+                        # self.move_flag_ori_pub.publish(True) # move orientation along 9 points
+            print("STATUS: Move to next node")
+            # This publish moves to next node in spiral
             self.move_flag_pos_pub.publish(True)
+        return TAG_FOUND
                 
 def main():
     rospy.init_node('search_routine')
