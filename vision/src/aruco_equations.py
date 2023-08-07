@@ -70,8 +70,8 @@ class ArucoEquations():
         B = [self.x_pos + dx, self.y_pos + dy/2, self.z_pos]
         C = [self.x_pos + dx/2, self.y_pos + dy, self.z_pos]
 
-        # Get normal by finding cross product of BA and BC
-        
+        # Get normal by finding cross product of AB and AC
+
 
 
 
