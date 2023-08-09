@@ -66,12 +66,14 @@ class ArucoEquations():
 
     def calculate_normal(self, dx = 0.1, dy = 0.1):
         # Use dx,dy of search algorithm; create dummy points to define planar at point
+        # i,j, k
         A = [self.x_pos, self.y_pos, self.z_pos]
         B = [self.x_pos + dx, self.y_pos + dy/2, self.z_pos]
         C = [self.x_pos + dx/2, self.y_pos + dy, self.z_pos]
 
-        # Get normal by finding cross product of AB and AC
-
+        # Get normal by finding cross product of BA and BC
+        BA = (A[0] - B[0], A[1] - B[1])
+        BC = (C[0] - B[0], C[1] - B[1])
 
 
 

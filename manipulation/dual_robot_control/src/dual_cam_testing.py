@@ -62,7 +62,9 @@ if __name__ == "__main__":
     # 3. Conduct search on search target
     # 4. If nothing found, move search target and arm and loop
 
-    status = robot_control.move_to_frame(SEARCHING_ARM, "search_target")
+    # status = robot_control.move_to_frame(SEARCHING_ARM, "search_target")
+    status = robot_control.move_to_frame("left", "search_target")
+    
     # print(status)
     # sleep(5)
     # print("STATUS: Sleep reset")

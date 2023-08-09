@@ -27,6 +27,9 @@ class RobotControl:
         self.right_gripper = moveit_commander.MoveGroupCommander("a_bot_gripper")
         self.left_gripper = moveit_commander.MoveGroupCommander("b_bot_gripper")
 
+        self.left_arm.set_planner_id("chomp")
+        self.right_arm.set_planner_id("chomp")
+
         # self.grasp_wire_service_ = rospy.Service("grasp_wire_service", GraspWire, self.grasp_wire_callback)
         # self.grasp_object_service_ = rospy.Service("grasp_object_service", GraspObject, self.grasp_object_callback)
         # self.sleep_arm_service = rospy.Service("sleep_arm_service", GraspObject, self.sleep_arm_callback)
@@ -43,6 +46,50 @@ class RobotControl:
         # DEMO
         self.DEMO_ARM_CALIBRATION = {"right": {"x":-0.075, "y":-0.085, "z":0.00}, 
                                 "left": {"x":-0.025, "y":0.075, "z":0.05}}
+        
+    def move_circ(self):
+
+
+        self.right_arm.set_planner_id("CIRC")
+        self.right_arm.set_max_velocity_scaling_factor(1.0)
+        self.right_arm.set_max_acceleration_scaling_factor(1.0)
+        self.right_arm.set_start_state_to_current_state()
+
+        # position_constraint = moveit_msgs.msg.PositionConstraint()
+        # position_constraint.header.frame_id = "world"  # Replace with frame ID
+        # position_constraint.link_name = "a_bot_ee_gripper_link"  # Replace with target link name
+        # goal_constraints.position_constraints.append(position_constraint)
+
+        path_constraints = moveit_msgs.msg.Constraints()
+        path_constraints.name = 'interim'
+        position_constraint = moveit_msgs.msg.PositionConstraint()
+        pose = geometry_msgs.msg.Pose()
+        pose.position.x = 0.3
+        pose.position.y = -0.15
+        pose.position.z = 0.3
+        position_constraint.constraint_region.primitive_poses.append(pose)
+        path_constraints.position_constraints.append(position_constraint)
+
+        pose = geometry_msgs.msg.Pose()
+        pose.position.x = 0.3
+        pose.position.y = -0.3
+        pose.position.z = 0.3
+        pose.orientation.x = 0
+        pose.orientation.y = 0
+        pose.orientation.z = 0
+        pose.orientation.w = 1
+        self.right_arm.set_pose_target(pose)
+
+
+        self.right_arm.set_path_constraints(path_constraints)
+
+        error_code_val, plan, planning_time, error_code = self.right_arm.plan()
+
+        print("****************")
+        if (error_code_val == moveit_msgs.msg.MoveItErrorCodes.SUCCESS):
+            result_plan = plan
+            self.right_arm.execute(plan)
+
 
     def set_gripper(self, robot_id, pos):
         if robot_id == "left":

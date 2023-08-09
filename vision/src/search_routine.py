@@ -31,9 +31,8 @@ spec.loader.exec_module(RC)
 class SearchRoutine():
     def __init__(self, search_arm, grasp_arm) -> None:
         # Publisher for move flag
-        self.move_flag_pos_pub  = rospy.Publisher("/move_flag_pos",  Bool, queue_size=1)
-        self.move_flag_ori_pub  = rospy.Publisher("/move_flag_ori",  Bool, queue_size=1)
-        self.move_flag_ori_pub2 = rospy.Publisher("/move_flag_ori2", Bool, queue_size=1)
+        self.move_flag_pos_pub  = rospy.Publisher("/move_flag_pos",  Bool, queue_size=10)
+        self.move_flag_ori_pub  = rospy.Publisher("/move_flag_ori",  Bool, queue_size=10)
         # Robot Control
         self.robot_control = RC.RobotControl()
         # Arm assignments
@@ -57,13 +56,15 @@ class SearchRoutine():
                 self.tfBuffer.lookup_transform('camera_color_optical_frame', 'arm_aruco_0', rospy.Time(0), rospy.Duration(5))
             except tf2_ros.LookupException: # Begin checking each subpoints in a spiral node position
                 print("EXCEPT 1: No parallel found, move to start searching subpoints")
-                self.move_flag_ori_pub.publish(True)
+                
                 # Scan points at the current node
                 for i in range(8): # 8 positions of plane
                     try:
                         print("TRY 2: Move to subpoint attempt", i)
                         # Move search target to subpoint
-                        self.move_flag_ori_pub2.publish(True) # move orientation along 9 points
+                        self.move_flag_ori_pub.publish(True) # move orientation along 9 points
+
+                        # Wait for publish from search target before moving?
                         # Move arm to subpoint 
                         self.robot_control.move_to_frame(self.SEARCHING_ARM, "search_target")
 

@@ -120,26 +120,23 @@ def main():
             sleep(1)
         except rospy.exceptions.ROSException:
             try:
-                move_flag_ori = rospy.wait_for_message("move_flag_ori", Bool, 2.5) # wait for signal to start the search at node
-                print(move_flag_ori)
-                if move_flag_ori.data:
-                    print("hit move_flag_ori")
-                    node_variation_counter = 0
-                    while node_variation_counter < len(NODE_OFFSETS):
-                        try:
-                            # async issue? messages arent hitting in time or something
-                            move_flag_ori2 = rospy.wait_for_message("move_flag_ori2", Bool, 2.5) # move the search target to each search position
-                            if move_flag_ori2.data:
-                                print("hit move_flag_ori2")
-                                # adjust pos and ori for sub 
-                                x_pos = POS_SAVE['x'] + (NODE_OFFSETS[node_variation_counter][1]*dx/2)
-                                y_pos = POS_SAVE['y'] + (NODE_OFFSETS[node_variation_counter][2]*dy/2)
-                                node_variation_counter += 1
-                        except rospy.exceptions.ROSException:
-                            pass
-                        finally:
-                            print("move sub")
-                            transform_search_target("search_target", "camera_link", [z_ori, x_ori, y_ori], [z_pos, x_pos, y_pos])
+                node_variation_counter = 0
+                while node_variation_counter < len(NODE_OFFSETS):
+                    try:
+                        # async issue? messages arent hitting in time or something
+                        move_flag_ori2 = rospy.wait_for_message("move_flag_ori", Bool, 2.5) # move the search target to each search position
+                        if move_flag_ori2.data:
+                            print("hit move_flag_ori2")
+                            # adjust pos and ori for sub 
+                            x_pos = POS_SAVE['x'] + (NODE_OFFSETS[node_variation_counter][1]*dx/2)
+                            y_pos = POS_SAVE['y'] + (NODE_OFFSETS[node_variation_counter][2]*dy/2)
+                            node_variation_counter += 1
+                    except rospy.exceptions.ROSException:
+                        pass
+                    finally:
+                        print("move sub")
+                        transform_search_target("search_target", "camera_link", [z_ori, x_ori, y_ori], [z_pos, x_pos, y_pos])
+                        # PUBLISH WHEN FINISH MOVING??
                 sleep(1)
             except rospy.exceptions.ROSException:
                 pass
