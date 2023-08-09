@@ -63,6 +63,7 @@ class SearchRoutine():
                         print("TRY 2: Move to subpoint attempt", i)
                         # Move search target to subpoint
                         self.move_flag_ori_pub.publish(True) # move orientation along 9 points
+                        sleep(2.5) # Wait, give time for message to reach and move search target
 
                         # Wait for publish from search target before moving?
                         # Move arm to subpoint 

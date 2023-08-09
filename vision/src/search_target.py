@@ -65,7 +65,7 @@ def main():
     MIN_Y, MAX_Y = -0.4, 0.2
     dx, dy = 0.1, 0.1
 
-    z_pos, x_pos, y_pos, = 0.75, 0.2, -0.1 # initalize search target at middle origin position; updated through search routine
+    z_pos, x_pos, y_pos, = 0.7, 0.2, -0.1 # initalize search target at middle origin position; updated through search routine
     z_ori, x_ori, y_ori, = 0,0,0 # initialize search target orientation; updated through search at a given target frame pose
 
     x_dir, y_dir = -1, 1 # direction to start the search
@@ -126,7 +126,7 @@ def main():
                         # async issue? messages arent hitting in time or something
                         move_flag_ori2 = rospy.wait_for_message("move_flag_ori", Bool, 2.5) # move the search target to each search position
                         if move_flag_ori2.data:
-                            print("hit move_flag_ori2")
+                            print("hit move_flag_ori")
                             # adjust pos and ori for sub 
                             x_pos = POS_SAVE['x'] + (NODE_OFFSETS[node_variation_counter][1]*dx/2)
                             y_pos = POS_SAVE['y'] + (NODE_OFFSETS[node_variation_counter][2]*dy/2)
