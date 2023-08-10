@@ -154,6 +154,21 @@ class RobotControl:
         elif robot_id == "right":
             self.right_arm.execute(plan)
 
+    def move_to_arg(self, robot_id: str, pos, ori):
+        target_pose = geometry_msgs.msg.Pose()
+        # Set position
+        target_pose.position.x = pos[0]
+        target_pose.position.y = pos[1]
+        target_pose.position.z = pos[2]
+        
+        # Set orientation
+        target_pose.orientation.x = ori[0]
+        target_pose.orientation.y = ori[1]
+        target_pose.orientation.z = ori[2]
+        target_pose.orientation.w = ori[3]
+
+        return self.move_to_pose(robot_id, target_pose)
+
     def move_to_frame(self, robot_id: str, frame: str):
         tfBuffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tfBuffer)
