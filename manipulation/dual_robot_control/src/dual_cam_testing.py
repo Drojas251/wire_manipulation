@@ -11,13 +11,13 @@ from std_msgs.msg import Bool
 from time import sleep
 from robot_services import RobotControl
 
-# # Temp solution - Fix this import to something like `from dual_robot_control.robot_services import RobotControl`
-# import importlib.util
-# import sys
-# spec = importlib.util.spec_from_file_location("SearchRoutine", "/home/drojas/dlo_ws/src/wire_manipulation/vision/src/search_.py")
-# SearchRoutine = importlib.util.module_from_spec(spec)
-# sys.modules["RobotControl"] = SearchRoutine
-# spec.loader.exec_module(SearchRoutine)
+# Temp solution - Fix this import to something like `from dual_robot_control.robot_services import RobotControl`
+import importlib.util
+import sys
+spec = importlib.util.spec_from_file_location("SearchRoutine", "/home/drojas/dlo_ws/src/wire_manipulation/vision/src/search_routine.py")
+SearchRoutine = importlib.util.module_from_spec(spec)
+sys.modules["RobotControl"] = SearchRoutine
+spec.loader.exec_module(SearchRoutine)
 
 # Client call to grasp and move wire 
 def grasp_wire(robot_,wire_grasp_pose,pull_vec):
@@ -72,15 +72,4 @@ if __name__ == "__main__":
 
     # status = robot_control.move_to_frame(SEARCHING_ARM, "search_target")
     status = robot_control.move_to_frame("left", "search_target")
-    
-    # print(status)
-    # sleep(5)
-    # print("STATUS: Sleep reset")
-    # status = robot_control.move_to_target(GRASPING_ARM, 'sleep')
-    # print("STATUS: Move to mounted camera aruco pose")
-    # status = robot_control.move_to_frame(GRASPING_ARM, "aruco_retrieval_mounted_aruco_0")
-    # print(status)
-    # sleep(5)
-    # status = robot_control.move_to_target(GRASPING_ARM, 'sleep')
-    # rospy.spin()
     
