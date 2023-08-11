@@ -7,7 +7,6 @@ from math import pi
 from copy import deepcopy
 from tf.transformations import quaternion_from_euler
 from geometry_msgs.msg import TransformStamped
-from std_msgs.msg import Bool
 
 # Temp solution - Fix this import to something like `from dual_robot_control.robot_services import RobotControl`
 import importlib.util

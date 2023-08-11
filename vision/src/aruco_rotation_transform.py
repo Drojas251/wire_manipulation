@@ -48,6 +48,8 @@ def main():
     # print("Aruco Pose Server is now running")
     rate = rospy.Rate(60)
     while not rospy.is_shutdown():
+        ### THIS NODE IS FOR CONVERTING ARUCO POSITIONS TO WORLD THE ARMS CAN UNDERSTAND AND MOVE TO
+
         # transform_aruco_rotation("aruco_init", "mounted_aruco_0", [0, math.pi/2, 0], [WIRE_OFFSET, +0.05, 0.05]) # initial grasp parallel to marker, transform moved slightly up   
         # transform_aruco_rotation("aruco_retrieval", "mounted_aruco_0", [0, math.pi/2, 0], [WIRE_OFFSET, 0, 0.05])
         # transform_aruco_rotation("slip_enroute", "mounted_aruco_1", [math.pi/2, math.pi/2 + math.pi/4, math.pi/2], [-.05, -0.125, 0.15]) # hold at downward angle
