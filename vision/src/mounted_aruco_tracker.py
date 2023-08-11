@@ -52,7 +52,7 @@ class MountedArucoTracker:
         # ret, frame = CAMERA_SRC.read() # If not using ROS
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Change grayscale
-        gray = gray[150:, 300:] # Crop image to only consider environment, avoid false tag ID's
+        # gray = gray[150:, 300:] # Crop image to only consider environment, avoid false tag ID's
 
 
 

@@ -71,5 +71,10 @@ if __name__ == "__main__":
     # 4. If nothing found, move search target and arm and loop
 
     # status = robot_control.move_to_frame(SEARCHING_ARM, "search_target")
-    status = robot_control.move_to_frame("left", "search_target")
-    
+    status = robot_control.move_to_frame("left", "mounted_aruco_0", rospy.Duration(10.0))
+
+    # Initiate search algorithm
+    searchRoutine = SearchRoutine("left", "right")
+    searchRoutine.search(True)
+
+    # send right arm to aruco left arm found

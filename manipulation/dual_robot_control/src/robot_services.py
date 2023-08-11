@@ -169,13 +169,13 @@ class RobotControl:
 
         return self.move_to_pose(robot_id, target_pose)
 
-    def move_to_frame(self, robot_id: str, frame: str):
+    def move_to_frame(self, robot_id: str, frame: str, timeout=None):
         tfBuffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tfBuffer)
         end_pose = None
         while not end_pose:
             try:
-                end_pose = tfBuffer.lookup_transform("world", frame, rospy.Time()).transform
+                end_pose = tfBuffer.lookup_transform("world", frame, rospy.Time(), timeout).transform
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 continue
 
