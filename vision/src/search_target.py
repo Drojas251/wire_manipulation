@@ -4,7 +4,6 @@ import rospy
 # tf2 and Transformations
 import tf2_ros
 from math import pi
-from time import sleep
 from copy import deepcopy
 from tf.transformations import quaternion_from_euler
 from geometry_msgs.msg import TransformStamped
@@ -58,7 +57,6 @@ class SearchRoutine():
     def check_aruco_found(self, target : str, pos, ori):
         # Moves to search target and checks if frame is there
         self.robot_control.move_to_arg(self.SEARCHING_ARM, pos, ori)
-        # sleep(2,5) # maybe need a sleep here when testing real?
         try:
             self.tfBuffer.lookup_transform('camera_color_optical_frame', target, rospy.Time(0), rospy.Duration(5))
             return True
@@ -66,7 +64,6 @@ class SearchRoutine():
             return False
 
     def transform_search_target(self, child_name: str, source: str, pos_adj, ori_adj) -> None:
-        br = tf2_ros.TransformBroadcaster()
         t = TransformStamped()
 
         t.header.stamp = rospy.Time.now()
@@ -84,11 +81,12 @@ class SearchRoutine():
         t.transform.rotation.z = q[2]
         t.transform.rotation.w = q[3]
 
-        br.sendTransform(t)
-
         return [t.transform.translation.x,t.transform.translation.y,t.transform.translation.z],[t.transform.rotation.x,t.transform.rotation.y,t.transform.rotation.z,t.transform.rotation.w]
     
     def search(self, check_subnodes : bool):
+        """
+        Full search algorithm with option to check subnodes
+        """
         ### Variables for spiral positioning
         # Define max and min for horizontal and vertical coordinates
         # +distance to panels, horizontal 0.325:-0.4, vertical -0.4:0.2
