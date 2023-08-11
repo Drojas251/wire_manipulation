@@ -11,6 +11,14 @@ from std_msgs.msg import Bool
 from time import sleep
 from robot_services import RobotControl
 
+# # Temp solution - Fix this import to something like `from dual_robot_control.robot_services import RobotControl`
+# import importlib.util
+# import sys
+# spec = importlib.util.spec_from_file_location("SearchRoutine", "/home/drojas/dlo_ws/src/wire_manipulation/vision/src/search_.py")
+# SearchRoutine = importlib.util.module_from_spec(spec)
+# sys.modules["RobotControl"] = SearchRoutine
+# spec.loader.exec_module(SearchRoutine)
+
 # Client call to grasp and move wire 
 def grasp_wire(robot_,wire_grasp_pose,pull_vec):
      rospy.wait_for_service('grasp_wire_service')
