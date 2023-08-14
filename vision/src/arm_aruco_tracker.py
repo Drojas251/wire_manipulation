@@ -99,7 +99,8 @@ class MountedArucoTracker:
 
 
         # Display the resulting frame
-        cv2.imshow('frame', frame) 
+        resized_frame = cv2.resize(frame, (0,0), fx=0.80, fy=0.80)
+        cv2.imshow('Arm Camera', resized_frame) 
         cv2.waitKey(1)
 
     def get_depth_data(self,data):
