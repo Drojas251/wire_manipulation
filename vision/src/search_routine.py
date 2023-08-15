@@ -65,6 +65,8 @@ class SearchRoutine():
             return False
         except tf2_ros.ExtrapolationException:
             return False
+        except tf2_ros.ConnectivityException:
+            return False
 
 
     def transform_search_target(self, child_name: str, source: str, pos_adj, ori_adj) -> None:
@@ -100,7 +102,7 @@ class SearchRoutine():
 
         # initalize search target at given position; updated through search routine
         # z_pos, x_pos, y_pos, = 0.2, 0.0, 0.3 # middle of workspace
-        z_pos, x_pos, y_pos, = 0.2, 0.2, 0.3 # example of where loose cable might be
+        z_pos, x_pos, y_pos, = 0.2, 0.1, 0.2 # example of where loose cable might be
 
 
         x_dir, y_dir = -1, 1 # direction to start the search

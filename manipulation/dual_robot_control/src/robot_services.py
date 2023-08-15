@@ -169,7 +169,7 @@ class RobotControl:
 
         return self.move_to_pose(robot_id, target_pose)
 
-    def move_to_frame(self, robot_id: str, frame: str, timeout=None):
+    def move_to_frame(self, robot_id: str, frame: str, timeout=rospy.Duration(1.0)):
         tfBuffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tfBuffer)
         end_pose = None
@@ -177,7 +177,7 @@ class RobotControl:
             try:
                 end_pose = tfBuffer.lookup_transform("world", frame, rospy.Time(), timeout).transform
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-                continue
+                return end_pose
 
         demo = True
         ARM_ADJUSTMENTS = self.DEMO_ARM_CALIBRATION if demo else self.LIVE_ARM_CALIBRATION

@@ -6,6 +6,7 @@ import rospy
 import tf2_ros
 import geometry_msgs.msg
 from std_msgs.msg import Bool
+from colorama import Fore
 
 # from dual_robot_msgs.srv import *
 from time import sleep
@@ -15,9 +16,9 @@ from robot_services import RobotControl
 import importlib.util
 import sys
 spec = importlib.util.spec_from_file_location("SearchRoutine", "/home/drojas/dlo_ws/src/wire_manipulation/vision/src/search_routine.py")
-SearchRoutine = importlib.util.module_from_spec(spec)
-sys.modules["RobotControl"] = SearchRoutine
-spec.loader.exec_module(SearchRoutine)
+SC = importlib.util.module_from_spec(spec)
+sys.modules["RobotControl"] = SC
+spec.loader.exec_module(SC)
 
 # Client call to grasp and move wire 
 def grasp_wire(robot_,wire_grasp_pose,pull_vec):
@@ -55,6 +56,8 @@ def sleep_arm(robot_):
 #*** Node Starts Here ***#
 if __name__ == "__main__":
     rospy.init_node('listener', anonymous=True)
+
+    print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Initiating Robots ")
     robot_control = RobotControl()
 
     GRASPING_ARM    = "right"
@@ -70,11 +73,23 @@ if __name__ == "__main__":
     # 3. Conduct search on search target
     # 4. If nothing found, move search target and arm and loop
 
+    # status = robot_control.move_to_frame(GRASPING_ARM, "adj_arm_aruco_0")
+
+    print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Initiating Robots ")
     # status = robot_control.move_to_frame(SEARCHING_ARM, "search_target")
-    status = robot_control.move_to_frame("left", "mounted_aruco_0", rospy.Duration(10.0))
+    print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Attempt grabbing ArUco from rear camera view")
+    status = robot_control.move_to_frame(GRASPING_ARM, "adj_mounted_aruco_0")
+    if status == None:
+        print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Rear camera view attempt failed, initiate search routine")
+        # Initiate search algorithm
+        print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Initiate search routine")
+        searchRoutine = SC.SearchRoutine("left", "right")
+        search_result = searchRoutine.search(True)
 
-    # Initiate search algorithm
-    searchRoutine = SearchRoutine("left", "right")
-    searchRoutine.search(True)
-
-    # send right arm to aruco left arm found
+        if search_result:
+            print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Search successful, send grasping arm for retrieval")
+            # send right arm to aruco left arm found
+            status = robot_control.move_to_frame(GRASPING_ARM, "adj_arm_aruco_0")
+    else:
+        print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Rear camera view attempt successful")
+    

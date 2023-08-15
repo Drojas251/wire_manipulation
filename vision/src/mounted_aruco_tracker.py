@@ -100,7 +100,8 @@ class MountedArucoTracker:
 
 
         # Display the resulting frame
-        cv2.imshow('frame', frame)  # change back to frame to get full view, gray is only aruco detection view
+        resized_frame = cv2.resize(frame, (0,0), fx=0.80, fy=0.80)
+        cv2.imshow('Rear Mounted Camera', resized_frame) 
         cv2.waitKey(1)
 
     def get_depth_data(self,data):
