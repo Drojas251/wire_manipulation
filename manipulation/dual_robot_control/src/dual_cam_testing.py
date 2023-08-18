@@ -89,6 +89,7 @@ if __name__ == "__main__":
         if search_result:
             print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Search successful, send grasping arm for retrieval")
             # send right arm to aruco left arm found
+            sleep(2.5)
             status = robot_control.move_to_frame(GRASPING_ARM, "adj_arm_aruco_0")
     else:
         print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Rear camera view attempt successful")

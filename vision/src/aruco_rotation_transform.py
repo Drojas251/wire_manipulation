@@ -61,7 +61,7 @@ def main():
         
         # transform_aruco_rotation("aruco_init", "arm_aruco_0", [0, math.pi/2, 0], [WIRE_OFFSET, +0.05, 0.05]) # initial grasp parallel to marker, transform moved slightly up   
         transform_aruco_rotation("adj", "mounted_aruco_0", [0, math.pi/2, 0], [WIRE_OFFSET, 0, 0.05])
-        transform_aruco_rotation("adj", "arm_aruco_0", [0, math.pi/2, math.pi/4], [WIRE_OFFSET-0.05, 0.15, 0.1])
+        transform_aruco_rotation("adj", "arm_aruco_0", [0, math.pi/2, math.pi/4], [WIRE_OFFSET-0.05, 0.1, 0])
         
         # transform_aruco_rotation("slip_enroute", "arm_aruco_1", [math.pi/2, math.pi/2 + math.pi/4, math.pi/2], [-.05, -0.125, 0.15]) # hold at downward angle
 
