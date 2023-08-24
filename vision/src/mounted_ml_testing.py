@@ -15,7 +15,10 @@ import cv2
 import numpy as np 
 import cam_calibration
 
+### RUN THIS FOR FULLY TRAINED YOLOv4 for basic items
+
 # CAMERA_SRC = cv2.VideoCapture(4) # Depth cam device index 4; use when running without ROS
+# Load classes for identification in output frame
 classes = []
 with open("/home/drojas/dlo_ws/src/wire_manipulation/dnn_model/classes.txt", "r") as file_obj:
     for class_name in file_obj.readlines():

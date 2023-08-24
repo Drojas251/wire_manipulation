@@ -1,0 +1,4 @@
+# label:color_rgb:parts:actions
+background:0,0,0::
+usb-c:128,0,0::
+rail:0,128,0::
