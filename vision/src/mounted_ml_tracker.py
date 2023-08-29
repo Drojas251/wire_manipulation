@@ -117,7 +117,8 @@ def main():
     rate = rospy.Rate(60)
     tracker = MountedMLTracker()
     while not rospy.is_shutdown():
-        tracker.transform_ml_end("world", [0, 0, 0], [0, 0, 0, 1])
+        ml_src = "camera_link" # camera_aligned_depth_to_color_frame
+        tracker.transform_ml_end(ml_src, [0, 0, 0], [0, 0, 0, 1])
 
         rate.sleep()
     rospy.spin()
