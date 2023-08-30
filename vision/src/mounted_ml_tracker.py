@@ -7,7 +7,7 @@ import tf_conversions
 from tf.transformations import quaternion_from_euler
 from geometry_msgs.msg import TransformStamped
 from sensor_msgs.msg import Image, CameraInfo
-import pyrealsense2
+import pyrealsense2 as rs2
 
 # Camera capture
 from cv_bridge import CvBridge,CvBridgeError
@@ -20,45 +20,36 @@ rf = Roboflow(api_key="JZTKTAQvOFKLZTZdUNhR")
 project = rf.workspace().project("deformable-linear-objects-connector-detection")
 model = project.version(1).model
 
+SCALING_FACTOR = 0.00075
+
 class MountedMLTracker:
     def __init__(self):
         # Subscribers to Camera
         self.rgb_img_sub = rospy.Subscriber("/mounted_cam/camera/color/image_raw", Image, self.track_callback,queue_size=1)
-        
+        self.depth_img_sub = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/image_raw", Image, self.depth_callback)
+        self.depth_cam_info = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback)
+
         # Image member variables
-        self.bridge_object = CvBridge()
-        self.seg_depth_img = Image()
-        self.depth_data = []
+        self.bridge = CvBridge()
+        self.depth_image = []
         self.depth_cam_info = CameraInfo()
+        self.intrinsics = None
 
         self.x = 0
         self.y = 0
         self.end_class = None
+        self.converted_depth = 1.0
         self.converted_pt = [0.0, 0.0, 0.0]
 
-    def convert_depth_to_phys_coord_using_realsense(self, depth : float, cam : str = "rear"):
-        if cam == "rear":
-            cameraInfo = rospy.wait_for_message("/mounted_cam/camera/color/camera_info", CameraInfo)
-        else:
-            cameraInfo = rospy.wait_for_message("/arm_cam/camera/color/camera_info", CameraInfo)
-
-        _intrinsics = pyrealsense2.intrinsics()
-        _intrinsics.width = cameraInfo.width
-        _intrinsics.height = cameraInfo.height
-        _intrinsics.ppx = cameraInfo.K[2]
-        _intrinsics.ppy = cameraInfo.K[5]
-        _intrinsics.fx = cameraInfo.K[0]
-        _intrinsics.fy = cameraInfo.K[4]
-        # _intrinsics.model = cameraInfo.distortion_model
-        _intrinsics.model  = pyrealsense2.distortion.none
-        _intrinsics.coeffs = [i for i in cameraInfo.D]
-
-        result = pyrealsense2.rs2_deproject_pixel_to_point(_intrinsics, [self.x, self.y], depth)  #result[0]: right, result[1]: down, result[2]: forward
-        return [result[2], -result[0], -result[1]]
+    def convert_image_3d_point(self, depth : float, cam : str = "rear"):
+        if self.intrinsics:
+            result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [self.x, self.y], depth)  #result[0]: right, result[1]: down, result[2]: forward
+            return [result[2], -result[0], -result[1]]
     
+
     def track_callback(self, data):
         try:
-            frame = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
+            frame = self.bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
         except CvBridgeError as e:
             print(e)
         rospy.sleep(0.01)
@@ -68,7 +59,7 @@ class MountedMLTracker:
         self.x = predictions["predictions"][0]['x']
         self.y = predictions["predictions"][0]['y']
         self.end_class = predictions["predictions"][0]["class"]
-        self.converted_pt = self.convert_depth_to_phys_coord_using_realsense(0.6858)
+        self.converted_pt = self.convert_image_3d_point(self.converted_depth) # THIS SHOULD BE OUR CALCULATED DEPTH
 
         # Add bounding boxes to the model prediction of connector
         for bounding_box in predictions["predictions"]:
@@ -86,6 +77,38 @@ class MountedMLTracker:
         cv2.imshow('Rear Mounted Camera ML', resized_frame) 
         cv2.waitKey(1)
 
+    def depth_cam_info_callback( self, cameraInfo):
+        try:
+            if self.intrinsics:
+                return
+            self.intrinsics = rs2.intrinsics()
+            self.intrinsics.width = cameraInfo.width
+            self.intrinsics.height = cameraInfo.height
+            self.intrinsics.ppx = cameraInfo.K[2]
+            self.intrinsics.ppy = cameraInfo.K[5]
+            self.intrinsics.fx = cameraInfo.K[0]
+            self.intrinsics.fy = cameraInfo.K[4]
+            if cameraInfo.distortion_model == 'plumb_bob':
+                self.intrinsics.model = rs2.distortion.brown_conrady
+            elif cameraInfo.distortion_model == 'equidistant':
+                self.intrinsics.model = rs2.distortion.kannala_brandt4
+            self.intrinsics.coeffs = [i for i in cameraInfo.D]
+
+        except CvBridgeError as e:
+            print(e)
+            return
+    
+    def depth_callback(self,data):
+        try:
+            cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
+            
+            self.converted_depth = cv_image[int(self.x), int(self.y)] * SCALING_FACTOR
+        except CvBridgeError as e:
+            print(e)
+            return
+        except ValueError as e:
+            return
+    
     def transform_ml_end(self, source: str, pos_adj, ori_adj) -> None:
         br = tf2_ros.TransformBroadcaster()
         t = TransformStamped()
