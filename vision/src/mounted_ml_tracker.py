@@ -20,8 +20,6 @@ rf = Roboflow(api_key="JZTKTAQvOFKLZTZdUNhR")
 project = rf.workspace().project("deformable-linear-objects-connector-detection")
 model = project.version(1).model
 
-SCALING_FACTOR = 0.00075
-
 class MountedMLTracker:
     def __init__(self):
         # Subscribers to Camera
@@ -100,9 +98,10 @@ class MountedMLTracker:
     
     def depth_callback(self,data):
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
+            cv_image = self.bridge.imgmsg_to_cv2(data, desired_encoding="passthrough")
+            depth_image_meters = cv_image.astype(np.float32) / 1000.0 # Convert to meters
             
-            self.converted_depth = cv_image[int(self.x), int(self.y)] * SCALING_FACTOR
+            self.converted_depth = depth_image_meters[int(self.y), int(self.x)]
         except CvBridgeError as e:
             print(e)
             return
