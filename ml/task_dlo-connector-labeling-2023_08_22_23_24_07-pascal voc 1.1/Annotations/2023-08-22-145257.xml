@@ -1,0 +1,33 @@
+<annotation>
+  <folder></folder>
+  <filename>2023-08-22-145257.jpg</filename>
+  <source>
+    <database>Unknown</database>
+    <annotation>Unknown</annotation>
+    <image>Unknown</image>
+  </source>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth></depth>
+  </size>
+  <segmented>0</segmented>
+  <object>
+    <name>usb-c</name>
+    <truncated>0</truncated>
+    <occluded>0</occluded>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>807.03</xmin>
+      <ymin>268.24</ymin>
+      <xmax>895.02</xmax>
+      <ymax>316.64</ymax>
+    </bndbox>
+    <attributes>
+      <attribute>
+        <name>rotation</name>
+        <value>0.0</value>
+      </attribute>
+    </attributes>
+  </object>
+</annotation>
