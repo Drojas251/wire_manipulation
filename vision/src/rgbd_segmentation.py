@@ -6,12 +6,12 @@ import cv2
 import numpy as np 
 from geometry_msgs.msg import Pose
 
-class RGBSegmentation(object):
+class RGBDSegmentation(object):
     def __init__(self):
         # Subscribers to Camera
-        self.aligned_depth_rgb_sub = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.get_depth_data,queue_size=1)
-        self.rgb_img_sub = rospy.Subscriber("/camera/color/image_raw",Image, self.rgb_callback,queue_size=1)
-        self.depth_img_camera_info = rospy.Subscriber("/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback,queue_size=1)
+        self.aligned_depth_rgb_sub = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/image_raw", Image, self.get_depth_data,queue_size=1)
+        self.rgb_img_sub = rospy.Subscriber("/mounted_cam/camera/color/image_raw",Image, self.rgb_callback,queue_size=1)
+        self.depth_img_camera_info = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback,queue_size=1)
         
         # Publishers with segmented image info
         self.image_pub = rospy.Publisher("/rs_segmented_image", Image, queue_size=1)
@@ -32,8 +32,8 @@ class RGBSegmentation(object):
         rospy.sleep(0.01)
 
         # Segment RGB by Coloe
-        lower_color = np.array([ 124, 72, 47]) # hsv values
-        upper_color = np.array([179, 255, 255])
+        lower_color = np.array([170, 100,  50]) # rgb values to hsv
+        upper_color = np.array([180, 255, 255])
         hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, lower_color, upper_color)
         new_img = cv2.bitwise_and(cv_image, cv_image, mask = mask )
@@ -43,7 +43,7 @@ class RGBSegmentation(object):
         img_dilation = cv2.dilate(new_img, kernel, iterations=1)
         img_dilation_gray = cv2.cvtColor(img_dilation,cv2.COLOR_BGR2GRAY)
         
-        # find largest contour
+        # # find largest contour
         contours, hierch = cv2.findContours(img_dilation_gray, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         largest_area = sorted(contours, key= cv2.contourArea)
         mask2 = np.zeros(img_dilation_gray.shape, np.uint8)
@@ -79,10 +79,15 @@ class RGBSegmentation(object):
         segmented_img = self.bridge_object.cv2_to_imgmsg(new_img,"passthrough")
         segmented_img.header.frame_id = "camera_color_optical_frame"
 
-        # Segmneted Depth Image
+        # Segmented Depth Image
         self.seg_depth_img = self.bridge_object.cv2_to_imgmsg(new_depth_img)
         self.seg_depth_img.header.stamp = cam_info.header.stamp
         self.seg_depth_img.header.frame_id = "camera_color_optical_frame"
+
+        # Display the resulting frame
+        # resized_frame = cv2.resize(new_img, (0,0), fx=0.80, fy=0.80)
+        # cv2.imshow('Preview', segmented_img) 
+        # cv2.waitKey(1)
     
         # Publish
         self.image_pub.publish(segmented_img)
@@ -100,7 +105,7 @@ class RGBSegmentation(object):
 def main():
     rospy.init_node("seg_node",anonymous=True)
     rospy.sleep(3)
-    seg_object = RGBSegmentation()
+    seg_object = RGBDSegmentation()
     try:
         rospy.spin()
     except KeyboardInterrupt:
