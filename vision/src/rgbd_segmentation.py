@@ -88,6 +88,8 @@ class RGBDSegmentation(object):
         # resized_frame = cv2.resize(new_img, (0,0), fx=0.80, fy=0.80)
         # cv2.imshow('Preview', segmented_img) 
         # cv2.waitKey(1)
+
+        # print("new:\n",self.seg_depth_img)
     
         # Publish
         self.image_pub.publish(segmented_img)
