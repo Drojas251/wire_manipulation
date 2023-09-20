@@ -31,6 +31,9 @@
   <!-- <node pkg="vision" type="slip_detect.py" name="left_slip_detect" output="screen" clear_params="true"/> -->
   <!-- <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/> -->
 
+  <!-- Point Cloud Classification -->
+  <node pkg="vision" type="rgbd_segmentation.py" name="rgbd_segmentation" output="screen"/> 
+
   <!-- Nodelet manager for depth PC processing -->
   <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />
   <!-- Segmenting no rgb -->

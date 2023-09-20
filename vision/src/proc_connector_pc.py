@@ -1,12 +1,21 @@
 #!/usr/bin/env python3
 import rospy
-import sensor_msgs.point_cloud2 as pc2
-from sensor_msgs.msg import PointCloud2
+
 from std_msgs.msg import Header
+import sensor_msgs.point_cloud2 as pc2
+from sensor_msgs.msg import PointCloud2, PointField
+from visualization_msgs.msg import Marker
+
 import pcl
 import numpy as np
 import open3d as o3d
-from ctypes import Structure
+
+import pyransac3d as pyrsc
+import ros_numpy
+from stl import mesh
+
+from mpl_toolkits import mplot3d
+from matplotlib import pyplot
 
 class ConnectorPC():
     def __init__(self) -> None:
@@ -16,35 +25,21 @@ class ConnectorPC():
         # Publisher of ICP pointclouds
         self.icp_pub = rospy.Publisher('/aligned_icp_pc', PointCloud2, queue_size=10)
 
-        # Store a collected PC
+        # Publisher of fitted shape to pointcloud
+        self.shape_pub = rospy.Publisher('/pc_shape', Marker, queue_size=100)
+
+        # # Fitted shape params
+        # self.shape_params = None
+
+        # # Store a collected PC
         self.source_pc = None
+        self.numpy_pc = None
 
 
     def pc_callback(self, points):
         # Source pointcloud and transformed copy
         self.source_pc = points
-
-    def calc_icp_pc(self):
-        points = self.source_pc
-        if points == None:
-            return None
-        
-        transf_pc = self.transform_pc(points, [1, 1, 1])
-
-        # Convert to Open3d format
-        o3d_source = self.ros_pointcloud_to_open3d(points)
-        o3d_transf = self.ros_pointcloud_to_open3d(transf_pc)
-
-        # Perform ICP
-        aligned_pc = self.align_point_clouds(o3d_source, o3d_transf)
-
-        # Convert back to ROS pointcloud type
-        pc2_aligned = self.open3d_pointcloud_to_ros(aligned_pc, points)
-
-        # Publish for viewing in Rviz
-        self.icp_pub.publish(pc2_aligned)
-
-        return pc2_aligned
+        self.numpy_pc  = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(points)
 
     def transform_pc(self, input_pc, translation):
         transformed_pc = []
@@ -69,15 +64,151 @@ class ConnectorPC():
 
         return source_pcd
 
-    
-    def draw_registration_result(self, source, target, transformation):
-        source_temp = source.clone()
-        target_temp = target.clone()
+    def calc_icp_pc(self):
+        ### This was just used for testing ICP between src and transformed pc
+        points = self.source_pc
+        if points == None:
+            return None
+        
+        # transf_pc = self.transform_pc(points, [1, 1, 1])
+        # Attempt ICP with CAD
+        stl_path = "vision/resources/cad/cylinder.stl"
+        stl_mesh = mesh.Mesh.from_file(stl_path)
+        vertices = stl_mesh.vectors.reshape((-1,3))
+        unique_vertices = np.unique(vertices, axis=0)
 
-        source_temp.transofrm(transformation)
-        # o3d.visualization
+        # Convert to Open3d format
+        o3d_source = self.ros_pointcloud_to_open3d(points)
+        o3d_transf = self.np_array_to_open3d(unique_vertices)
+        # o3d_transf = self.ros_pointcloud_to_open3d(transf_pc)
+
+        # Perform ICP
+        aligned_pc = self.align_point_clouds(o3d_source, o3d_transf)
+
+        # Convert back to ROS pointcloud type
+        pc2_aligned = self.open3d_pointcloud_to_ros(aligned_pc, points)
+
+        # self.visualize_stl(stl_path)
+
+        # Publish for viewing in Rviz
+        self.icp_pub.publish(pc2_aligned)
+        # self.icp_pub.publish(self.np_array_to_ros_pointcloud("camera_color_optical_frame", unique_vertices))
+
+        return pc2_aligned
+
+    def get_src_pc(self):
+        return self.source_pc
     
+    def get_numpy_pc(self):
+        return self.numpy_pc
+
+    def fit_shape(self):
+        if self.numpy_pc is None or not self.numpy_pc.any():
+            return
+        # cylinder = pyrsc.Cylinder()
+        # center, axis, radius, inliers = cylinder.fit(self.numpy_pc, thresh=0.4)
+
+        # """
+        # This is a fitting for a vertical cylinder fitting
+        # Reference:
+        # http://www.int-arch-photogramm-remote-sens-spatial-inf-sci.net/XXXIX-B5/169/2012/isprsarchives-XXXIX-B5-169-2012.pdf
+
+        # xyz is a matrix contain at least 5 rows, and each row stores x y z of a cylindrical surface
+        # p is initial values of the parameter;
+        # p[0] = Xc, x coordinate of the cylinder centre
+        # P[1] = Yc, y coordinate of the cylinder centre
+        # P[2] = alpha, rotation angle (radian) about the x-axis
+        # P[3] = beta, rotation angle (radian) about the y-axis
+        # P[4] = r, radius of the cylinder
+
+        # th, threshold for the convergence of the least squares
+
+        # """   
+        # x = self.numpy_pc[:,0]
+        # y = self.numpy_pc[:,1]
+        # z = self.numpy_pc[:,2]
+        # p = np.array([0,0,0,0,0])
+
+        # fitfunc = lambda p, x, y, z: (- np.cos(p[3])*(p[0] - x) - z*np.cos(p[2])*np.sin(p[3]) - np.sin(p[2])*np.sin(p[3])*(p[1] - y))**2 + (z*np.sin(p[2]) - np.cos(p[2])*(p[1] - y))**2 #fit function
+        # errfunc = lambda p, x, y, z: fitfunc(p, x, y, z) - p[4]**2 #error function 
+
+        # est_p , success = leastsq(errfunc, p, args=(x, y, z), maxfev=1000)
+
+        # return est_p
+
+        print(f"center: {center}\naxis: {axis}\nradius: {radius}\n")
+        self.visualize_shape("camera_color_optical_frame", center, radius*.05, axis)
+
+    def visualize_shape(self, src_frame, center, radius, axis):
+        marker = Marker()
+        marker.header.frame_id = src_frame
+        marker.type = Marker.CYLINDER
+        marker.action = Marker.ADD
+        marker.pose.position.x = center[0]  # Center of the cylinder
+        marker.pose.position.y = center[1]
+        marker.pose.position.z = center[2]
+
+        marker.pose.orientation.x = 0.0 # axis?
+        marker.pose.orientation.y = 0.0
+        marker.pose.orientation.z = 0.0
+        marker.pose.orientation.w = 1.0
+
+        marker.scale.x = 2 * radius  # Diameter of the cylinder
+        marker.scale.y = 2 * radius  # Diameter of the cylinder
+        marker.scale.z = radius * 10  # Height of the cylinder - not yet known
+        marker.color.a = 0.5  # Transparency
+        marker.color.r = 1.0  # Red color
+        marker.color.g = 0.0
+        marker.color.b = 0.0
+
+        # Publish the marker
+        self.shape_pub.publish(marker)
+
+    def ransac_fit(self):
+        pass
+    
+    def visualize_stl(self, path):
+        # Create a new plot
+        figure = pyplot.figure()
+        axes = figure.add_subplot(projection='3d')
+
+        # Load the STL files and add the vectors to the plot
+        your_mesh = mesh.Mesh.from_file(path)
+        axes.add_collection3d(mplot3d.art3d.Poly3DCollection(your_mesh.vectors))
+
+        # Auto scale to the mesh size
+        scale = your_mesh.points.flatten()
+        axes.auto_scale_xyz(scale, scale, scale)
+
+        # Show the plot to the screen
+        pyplot.show()
+
     ### Conversion helpers
+    def np_array_to_open3d(self, array):
+        # Create an Open3D PointCloud object
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(array)
+
+        return pcd
+    
+    def np_array_to_ros_pointcloud(self, frame_id, points):
+        msg = PointCloud2()
+        msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = frame_id
+
+        msg.height = 1
+        msg.width = points.shape[0]
+        msg.fields.append(PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1))
+        msg.fields.append(PointField(name="y", offset=4, datatype=PointField.FLOAT32, count=1))
+        msg.fields.append(PointField(name="z", offset=8, datatype=PointField.FLOAT32, count=1))
+        msg.is_bigendian = False
+        msg.point_step = 12
+        msg.row_step = msg.point_step * msg.width
+        msg.is_dense = True
+        msg.data = np.asarray(points, np.float32).tobytes()
+        
+        return msg
+
     def ros_pointcloud_to_open3d(self, pointcloud_msg):
         # Extract point data from the ROS PointCloud2 message
         points = pc2.read_points(pointcloud_msg, field_names=("x", "y", "z"), skip_nans=True)
@@ -105,12 +236,14 @@ def main():
     rospy.init_node("proc_connector_pc",anonymous=True)
     rospy.sleep(3)
 
-    rate = rospy.Rate(60)
+    # rate = rospy.Rate(60)
     proc_pc = ConnectorPC()
     while not rospy.is_shutdown():
         proc_pc.calc_icp_pc()
-        # USE THIS FRAME AS GRID CORNER, ITERATE FROM THERE??
-        rate.sleep()
+        # if proc_pc.get_src_pc():
+        #     print("ATTEMPT FIT")
+        #     proc_pc.fit_shape()
+    # rate.sleep()
     
 
 if __name__ == '__main__':
