@@ -36,7 +36,7 @@ class MountedMLTracker:
         self.x = 0
         self.y = 0
         self.end_class = None
-        self.converted_depth = 1.0
+        self.converted_depth = 0.5
         self.converted_pt = [0.0, 0.0, 0.0]
 
     def convert_image_3d_point(self, depth : float, cam : str = "rear"):
@@ -101,7 +101,10 @@ class MountedMLTracker:
             cv_image = self.bridge.imgmsg_to_cv2(data, desired_encoding="passthrough")
             depth_image_meters = cv_image.astype(np.float32) / 1000.0 # Convert to meters
             
-            self.converted_depth = depth_image_meters[int(self.y), int(self.x)]
+            depth_at_xy = depth_image_meters[int(self.x), int(self.y)]
+            if depth_at_xy > 0:
+                # Only assign if depth > 0, otherwise depth breaks point so leave at 0.5 starting val
+                self.converted_depth = depth_at_xy
         except CvBridgeError as e:
             print(e)
             return
@@ -117,10 +120,10 @@ class MountedMLTracker:
         t.child_frame_id = str(self.end_class)
 
         print(self.converted_pt)
-        t.transform.translation.x = self.converted_pt[0] #ori_adj[0] # Offset arm to right by value meters
-        t.transform.translation.y = self.converted_pt[1] #ori_adj[1]
-        t.transform.translation.z = self.converted_pt[2] #ori_adj[2] # Too close to wall, move back .05m
-
+        t.transform.translation.x = self.converted_pt[0] + pos_adj[0]
+        t.transform.translation.y = self.converted_pt[1] + pos_adj[1]
+        t.transform.translation.z = self.converted_pt[2] + pos_adj[2]
+        
         ### For now ignore rotation
         q = quaternion_from_euler(pos_adj[0], pos_adj[1], pos_adj[2]) # pos_adj
         # q = quaternion_from_euler(-math.pi/2,math.pi/2,0) # match rotation of bot grippers
@@ -140,7 +143,8 @@ def main():
     tracker = MountedMLTracker()
     while not rospy.is_shutdown():
         ml_src = "camera_link" # camera_aligned_depth_to_color_frame
-        tracker.transform_ml_end(ml_src, [0, 0, 0], [0, 0, 0, 1])
+        tracker.transform_ml_end(ml_src, [-0.05, 0, 0.025], [0, 0, 0, 1])
+                                        # z x y
 
         rate.sleep()
     rospy.spin()
