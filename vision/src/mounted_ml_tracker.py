@@ -18,7 +18,7 @@ import numpy as np
 from roboflow import Roboflow
 rf = Roboflow(api_key="JZTKTAQvOFKLZTZdUNhR")
 project = rf.workspace().project("deformable-linear-objects-connector-detection")
-model = project.version(1).model
+model = project.version(5).model
 
 class MountedMLTracker:
     def __init__(self):

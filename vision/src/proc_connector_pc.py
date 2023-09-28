@@ -35,25 +35,26 @@ class ConnectorPC():
         self.source_pc = None
         self.numpy_pc = None
 
-
+    ### Callbacks
     def pc_callback(self, points):
-        # Source pointcloud and transformed copy
+        # Source pointcloud and translated copy
         self.source_pc = points
         self.numpy_pc  = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(points)
 
-    def transform_pc(self, input_pc, translation):
-        transformed_pc = []
+    def translate_pc(self, input_pc, translation):
+        # Only used to translate a pc x,y,z units; originally for ICP testing between source and its translation
+        translated_pc = []
 
         for p in pc2.read_points(input_pc, field_names=("x","y","z"), skip_nans=True):
             p = [p[0] + translation[0], p[1] + translation[1], p[2] + translation[2]]
             
-            transformed_pc.append(p)
-            # pc2.write_points(transformed_pc, [p])
+            translated_pc.append(p)
+            # pc2.write_points(translated_pc, [p])
 
-        return pc2.create_cloud_xyz32(input_pc.header, transformed_pc)
+        return pc2.create_cloud_xyz32(input_pc.header, translated_pc)
     
-    def align_point_clouds(self, source_pcd, target_pcd):
-        # Perform ICP registration
+    def calc_icp(self, source_pcd, target_pcd):
+        # Performs ICP registration
         icp = o3d.pipelines.registration.registration_icp(
             source_pcd, target_pcd, max_correspondence_distance=0.1,
             estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint()
@@ -63,81 +64,6 @@ class ConnectorPC():
         source_pcd.transform(icp.transformation)
 
         return source_pcd
-
-    def calc_icp_pc(self):
-        ### This was just used for testing ICP between src and transformed pc
-        points = self.source_pc
-        if points == None:
-            return None
-        
-        # transf_pc = self.transform_pc(points, [1, 1, 1])
-        # Attempt ICP with CAD
-        stl_path = "vision/resources/cad/cylinder.stl"
-        stl_mesh = mesh.Mesh.from_file(stl_path)
-        vertices = stl_mesh.vectors.reshape((-1,3))
-        unique_vertices = np.unique(vertices, axis=0)
-
-        # Convert to Open3d format
-        o3d_source = self.ros_pointcloud_to_open3d(points)
-        o3d_transf = self.np_array_to_open3d(unique_vertices)
-        # o3d_transf = self.ros_pointcloud_to_open3d(transf_pc)
-
-        # Perform ICP
-        aligned_pc = self.align_point_clouds(o3d_source, o3d_transf)
-
-        # Convert back to ROS pointcloud type
-        pc2_aligned = self.open3d_pointcloud_to_ros(aligned_pc, points)
-
-        # self.visualize_stl(stl_path)
-
-        # Publish for viewing in Rviz
-        self.icp_pub.publish(pc2_aligned)
-        # self.icp_pub.publish(self.np_array_to_ros_pointcloud("camera_color_optical_frame", unique_vertices))
-
-        return pc2_aligned
-
-    def get_src_pc(self):
-        return self.source_pc
-    
-    def get_numpy_pc(self):
-        return self.numpy_pc
-
-    def fit_shape(self):
-        if self.numpy_pc is None or not self.numpy_pc.any():
-            return
-        # cylinder = pyrsc.Cylinder()
-        # center, axis, radius, inliers = cylinder.fit(self.numpy_pc, thresh=0.4)
-
-        # """
-        # This is a fitting for a vertical cylinder fitting
-        # Reference:
-        # http://www.int-arch-photogramm-remote-sens-spatial-inf-sci.net/XXXIX-B5/169/2012/isprsarchives-XXXIX-B5-169-2012.pdf
-
-        # xyz is a matrix contain at least 5 rows, and each row stores x y z of a cylindrical surface
-        # p is initial values of the parameter;
-        # p[0] = Xc, x coordinate of the cylinder centre
-        # P[1] = Yc, y coordinate of the cylinder centre
-        # P[2] = alpha, rotation angle (radian) about the x-axis
-        # P[3] = beta, rotation angle (radian) about the y-axis
-        # P[4] = r, radius of the cylinder
-
-        # th, threshold for the convergence of the least squares
-
-        # """   
-        # x = self.numpy_pc[:,0]
-        # y = self.numpy_pc[:,1]
-        # z = self.numpy_pc[:,2]
-        # p = np.array([0,0,0,0,0])
-
-        # fitfunc = lambda p, x, y, z: (- np.cos(p[3])*(p[0] - x) - z*np.cos(p[2])*np.sin(p[3]) - np.sin(p[2])*np.sin(p[3])*(p[1] - y))**2 + (z*np.sin(p[2]) - np.cos(p[2])*(p[1] - y))**2 #fit function
-        # errfunc = lambda p, x, y, z: fitfunc(p, x, y, z) - p[4]**2 #error function 
-
-        # est_p , success = leastsq(errfunc, p, args=(x, y, z), maxfev=1000)
-
-        # return est_p
-
-        print(f"center: {center}\naxis: {axis}\nradius: {radius}\n")
-        self.visualize_shape("camera_color_optical_frame", center, radius*.05, axis)
 
     def visualize_shape(self, src_frame, center, radius, axis):
         marker = Marker()
@@ -167,7 +93,8 @@ class ConnectorPC():
     def ransac_fit(self):
         pass
     
-    def visualize_stl(self, path):
+    def visualize_cad_stl(self, path):
+        ### Visualizer using pyplot for a CAD model specified by path
         # Create a new plot
         figure = pyplot.figure()
         axes = figure.add_subplot(projection='3d')
@@ -182,6 +109,13 @@ class ConnectorPC():
 
         # Show the plot to the screen
         pyplot.show()
+
+    ### Getters/setters
+    def get_src_pc(self):
+        return self.source_pc
+    
+    def get_numpy_pc(self):
+        return self.numpy_pc
 
     ### Conversion helpers
     def np_array_to_open3d(self, array):
@@ -220,6 +154,10 @@ class ConnectorPC():
 
         return pcd
 
+    def ros_pointcloud_to_np_array(self, pointcloud_msg):
+        points = pc2.read_points(pointcloud_msg, field_names=("x", "y", "z"), skip_nans=True)
+        return np.array(list(points), dtype=np.float32)
+
     def open3d_pointcloud_to_ros(self, pcd, original_msg):
         # Get the header information from the original PointCloud2 message
         header = original_msg.header
@@ -231,7 +169,145 @@ class ConnectorPC():
         new_msg = pc2.create_cloud_xyz32(header, points)
 
         return new_msg
+
+    ### Fitting
+    def fit_line_least_squares_regression(self):
+        pointcloud = self.numpy_pc
+
+        # Calc mean for each dimension of pc
+        x_mean = np.mean(pointcloud[:, 0])
+        y_mean = np.mean(pointcloud[:, 1])
+        z_mean = np.mean(pointcloud[:, 2])
+
+        # Calc covariance matrix of pc
+        covariance_matrix = np.cov(pointcloud.T)
+
+        # Calc eigenvectors and eigenvalues of the covariance matrix
+        eigenvalues, eigenvectors = np.linalg.eig(covariance_matrix)
+
+        # Eigenvector with the smallest eigenvalue corresponds to the direction of the line
+        smallest_eigenvalue_idx = np.argmin(eigenvalues)
+        line_direction = eigenvectors[:, smallest_eigenvalue_idx]
+
+        # Calculate the coefficients of the line
+        a, b, c = line_direction
+        d = -(a*x_mean + b*y_mean + c*z_mean)
+
+        return a, b, c, d
+
+    def fit_line_ransac(self, n_iterations=100, threshold=0.1):
+        pointcloud = self.numpy_pc
+
+        best_line = None
+        best_inliers_count = 0
         
+        for i in range(n_iterations):
+            # Step 1: Randomly select two points from the pointcloud
+            indices = np.random.choice(len(pointcloud), 2)
+            p1, p2 = pointcloud[indices]
+
+            # Step 2: Fit a line through the two points
+            line_direction = p2 - p1
+
+            # Calculate the coefficients of the line
+            a, b, c = line_direction
+            d = -(a*p1[0] + b*p1[1] + c*p1[2])
+
+            # Step 3: Compute the residual errors for all the points in the pointcloud
+            distances = np.abs(pointcloud.dot(np.array([a,b,c])) + d) / np.sqrt(a**2 + b**2 + c**2)
+
+            # Step 4: Count the number of inliers and update the best-fitting line if necessary
+            inliers_count = np.sum(distances < threshold)
+            if inliers_count > best_inliers_count:
+                best_inliers_count = inliers_count
+                best_line = a, b, c, d
+
+        return best_line
+
+
+    def fit_cylinder(self):
+        
+        if self.numpy_pc is None or not self.numpy_pc.any():
+            return
+        # cylinder = pyrsc.Cylinder()
+        # center, axis, radius, inliers = cylinder.fit(self.numpy_pc, thresh=0.4)
+
+        # """
+        # This is a fitting for a vertical cylinder fitting
+        # Reference:
+        # http://www.int-arch-photogramm-remote-sens-spatial-inf-sci.net/XXXIX-B5/169/2012/isprsarchives-XXXIX-B5-169-2012.pdf
+
+        # xyz is a matrix contain at least 5 rows, and each row stores x y z of a cylindrical surface
+        # p is initial values of the parameter;
+        # p[0] = Xc, x coordinate of the cylinder centre
+        # P[1] = Yc, y coordinate of the cylinder centre
+        # P[2] = alpha, rotation angle (radian) about the x-axis
+        # P[3] = beta, rotation angle (radian) about the y-axis
+        # P[4] = r, radius of the cylinder
+
+        # th, threshold for the convergence of the least squares
+
+        # """   
+        # x = self.numpy_pc[:,0]
+        # y = self.numpy_pc[:,1]
+        # z = self.numpy_pc[:,2]
+        # p = np.array([0,0,0,0,0])
+
+        # fitfunc = lambda p, x, y, z: (- np.cos(p[3])*(p[0] - x) - z*np.cos(p[2])*np.sin(p[3]) - np.sin(p[2])*np.sin(p[3])*(p[1] - y))**2 + (z*np.sin(p[2]) - np.cos(p[2])*(p[1] - y))**2 #fit function
+        # errfunc = lambda p, x, y, z: fitfunc(p, x, y, z) - p[4]**2 #error function 
+
+        # est_p , success = leastsq(errfunc, p, args=(x, y, z), maxfev=1000)
+
+        # return est_p
+
+        # print(f"center: {center}\naxis: {axis}\nradius: {radius}\n")
+        # self.visualize_shape("camera_color_optical_frame", center, radius*.05, axis)
+
+    ### Testing functions
+    def test_icp_pc_translation(self):
+        ### This was just used for testing ICP between src and translated pc
+        points = self.source_pc
+        if points == None:
+            return None
+        
+        # transf_pc = self.translate_pc(points, [1, 1, 1])
+        # Attempt ICP with CAD
+        stl_path = "vision/resources/cad/cylinder.stl"
+        stl_mesh = mesh.Mesh.from_file(stl_path)
+        vertices = stl_mesh.vectors.reshape((-1,3))
+        unique_vertices = np.unique(vertices, axis=0)
+
+        # Convert to Open3d format
+        o3d_source = self.ros_pointcloud_to_open3d(points)
+        o3d_transf = self.np_array_to_open3d(unique_vertices)
+        # o3d_transf = self.ros_pointcloud_to_open3d(transf_pc)
+
+        # Perform ICP
+        aligned_pc = self.calc_icp(o3d_source, o3d_transf)
+
+        # Convert back to ROS pointcloud type
+        pc2_aligned = self.open3d_pointcloud_to_ros(aligned_pc, points)
+
+        # self.visualize_cad_stl(stl_path)
+
+        # Publish for viewing in Rviz
+        self.icp_pub.publish(pc2_aligned)
+        # self.icp_pub.publish(self.np_array_to_ros_pointcloud("camera_color_optical_frame", unique_vertices))
+
+        return pc2_aligned
+
+    def test_line_fitting(self):
+        if self.numpy_pc is None or not self.numpy_pc.any():
+            return
+        
+        lsr_line = self.fit_line_least_squares_regression()
+        ransac_line = self.fit_line_ransac()
+
+        print(f"Least Squares Regression:\n{lsr_line}")
+        print(f"RANSAC:\n{ransac_line}")
+        print()
+
+
 def main():
     rospy.init_node("proc_connector_pc",anonymous=True)
     rospy.sleep(3)
@@ -239,7 +315,9 @@ def main():
     # rate = rospy.Rate(60)
     proc_pc = ConnectorPC()
     while not rospy.is_shutdown():
-        proc_pc.calc_icp_pc()
+        # proc_pc.test_icp_pc_translation()
+        proc_pc.test_line_fitting()
+
         # if proc_pc.get_src_pc():
         #     print("ATTEMPT FIT")
         #     proc_pc.fit_shape()
