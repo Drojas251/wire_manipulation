@@ -20,7 +20,7 @@ from matplotlib import pyplot
 class ConnectorPC():
     def __init__(self) -> None:
         # Subscriber to pointcloud from camera
-        self.points_sub = rospy.Subscriber("/rscamera/depth/points", PointCloud2, self.pc_callback, queue_size=1)
+        self.points_sub = rospy.Subscriber("/rscamera/depth_image/points", PointCloud2, self.pc_callback, queue_size=1)
 
         # Publisher of ICP pointclouds
         self.icp_pub = rospy.Publisher('/aligned_icp_pc', PointCloud2, queue_size=10)
@@ -178,6 +178,7 @@ class ConnectorPC():
         x_mean = np.mean(pointcloud[:, 0])
         y_mean = np.mean(pointcloud[:, 1])
         z_mean = np.mean(pointcloud[:, 2])
+        print(x_mean, y_mean, z_mean)
 
         # Calc covariance matrix of pc
         covariance_matrix = np.cov(pointcloud.T)
@@ -303,9 +304,9 @@ class ConnectorPC():
         lsr_line = self.fit_line_least_squares_regression()
         ransac_line = self.fit_line_ransac()
 
-        print(f"Least Squares Regression:\n{lsr_line}")
-        print(f"RANSAC:\n{ransac_line}")
-        print()
+        # print(f"Least Squares Regression:\n{lsr_line}")
+        # print(f"RANSAC:\n{ransac_line}")
+        # print()
 
 
 def main():

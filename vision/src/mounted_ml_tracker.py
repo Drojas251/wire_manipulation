@@ -6,8 +6,10 @@ import tf2_ros
 import tf_conversions
 from tf.transformations import quaternion_from_euler
 from geometry_msgs.msg import TransformStamped
-from sensor_msgs.msg import Image, CameraInfo
+from sensor_msgs.msg import Image, CameraInfo, PointCloud2
+import sensor_msgs.point_cloud2 as pc2
 import pyrealsense2 as rs2
+
 
 # Camera capture
 from cv_bridge import CvBridge,CvBridgeError
@@ -27,6 +29,8 @@ class MountedMLTracker:
         self.depth_img_sub = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/image_raw", Image, self.depth_callback)
         self.depth_cam_info = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback)
 
+        self.segmented_depth_sub = rospy.Subscriber("/seg_depth/image_raw", PointCloud2, self.segmented_depth_callback, queue_size=1)
+
         # Image member variables
         self.bridge = CvBridge()
         self.depth_image = []
@@ -36,7 +40,7 @@ class MountedMLTracker:
         self.x = 0
         self.y = 0
         self.end_class = None
-        self.converted_depth = 0.5
+        self.converted_depth = 0.5 # do a waitformessage?
         self.converted_pt = [0.0, 0.0, 0.0]
 
     def convert_image_3d_point(self, depth : float, cam : str = "rear"):
@@ -44,6 +48,20 @@ class MountedMLTracker:
             result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [self.x, self.y], depth)  #result[0]: right, result[1]: down, result[2]: forward
             return [result[2], -result[0], -result[1]]
     
+    def segmented_depth_callback(self, msg):
+        sum_pt = 0.0
+        num_pt = 0
+
+        # Iterate through the points in the PointCloud2 message
+        for pt in pc2.read_points(msg, field_names=("x", "y", "z"), skip_nans=True):
+            depth = pt[2]  # Depth is the Z coordinate
+            sum_pt += depth
+            num_pt += 1
+
+        if num_pt > 0:
+            print(sum_pt / num_pt)
+            self.converted_depth = sum_pt / num_pt
+            
 
     def track_callback(self, data):
         try:
@@ -101,10 +119,10 @@ class MountedMLTracker:
             cv_image = self.bridge.imgmsg_to_cv2(data, desired_encoding="passthrough")
             depth_image_meters = cv_image.astype(np.float32) / 1000.0 # Convert to meters
             
-            depth_at_xy = depth_image_meters[int(self.x), int(self.y)]
-            if depth_at_xy > 0:
+            # depth_at_xy = depth_image_meters[int(self.x), int(self.y)]
+            # if depth_at_xy > 0:
                 # Only assign if depth > 0, otherwise depth breaks point so leave at 0.5 starting val
-                self.converted_depth = depth_at_xy
+                # self.converted_depth = depth_at_xy
         except CvBridgeError as e:
             print(e)
             return
@@ -119,7 +137,7 @@ class MountedMLTracker:
         t.header.frame_id = source
         t.child_frame_id = str(self.end_class)
 
-        print(self.converted_pt)
+        # print(self.converted_pt)
         t.transform.translation.x = self.converted_pt[0] + pos_adj[0]
         t.transform.translation.y = self.converted_pt[1] + pos_adj[1]
         t.transform.translation.z = self.converted_pt[2] + pos_adj[2]
