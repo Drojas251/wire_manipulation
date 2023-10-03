@@ -27,6 +27,7 @@ class ConnectorPC():
 
         # Publisher of fitted shape to pointcloud
         self.shape_pub = rospy.Publisher('/pc_shape', Marker, queue_size=100)
+        self.line_pub = rospy.Publisher('/pc_shape', Marker, queue_size=10)
 
         # # Fitted shape params
         # self.shape_params = None
@@ -65,6 +66,10 @@ class ConnectorPC():
 
         return source_pcd
 
+    def ransac_fit(self):
+        pass
+    
+    ### Visualization helper functions
     def visualize_shape(self, src_frame, center, radius, axis):
         marker = Marker()
         marker.header.frame_id = src_frame
@@ -90,9 +95,6 @@ class ConnectorPC():
         # Publish the marker
         self.shape_pub.publish(marker)
 
-    def ransac_fit(self):
-        pass
-    
     def visualize_cad_stl(self, path):
         ### Visualizer using pyplot for a CAD model specified by path
         # Create a new plot
@@ -109,6 +111,31 @@ class ConnectorPC():
 
         # Show the plot to the screen
         pyplot.show()
+
+    def visualize_line(self, src_frame, center, radius, axis):
+        marker = Marker()
+        marker.header.frame_id = src_frame
+        marker.type = Marker.CYLINDER
+        marker.action = Marker.ADD
+        marker.pose.position.x = center[0]  # Center of the cylinder
+        marker.pose.position.y = center[1]
+        marker.pose.position.z = center[2]
+
+        marker.pose.orientation.x = 0.0 # axis?
+        marker.pose.orientation.y = 0.0
+        marker.pose.orientation.z = 0.0
+        marker.pose.orientation.w = 1.0
+
+        marker.scale.x = 2 * radius  # Diameter of the cylinder
+        marker.scale.y = 2 * radius  # Diameter of the cylinder
+        marker.scale.z = radius * 10  # Height of the cylinder - not yet known
+        marker.color.a = 0.5  # Transparency
+        marker.color.r = 1.0  # Red color
+        marker.color.g = 0.0
+        marker.color.b = 0.0
+
+        # Publish the marker
+        self.line_pub.publish(marker)
 
     ### Getters/setters
     def get_src_pc(self):
@@ -178,7 +205,6 @@ class ConnectorPC():
         x_mean = np.mean(pointcloud[:, 0])
         y_mean = np.mean(pointcloud[:, 1])
         z_mean = np.mean(pointcloud[:, 2])
-        print(x_mean, y_mean, z_mean)
 
         # Calc covariance matrix of pc
         covariance_matrix = np.cov(pointcloud.T)
@@ -304,9 +330,9 @@ class ConnectorPC():
         lsr_line = self.fit_line_least_squares_regression()
         ransac_line = self.fit_line_ransac()
 
-        # print(f"Least Squares Regression:\n{lsr_line}")
-        # print(f"RANSAC:\n{ransac_line}")
-        # print()
+        print(f"Least Squares Regression:\n{lsr_line}")
+        print(f"RANSAC:\n{ransac_line}")
+        print()
 
 
 def main():

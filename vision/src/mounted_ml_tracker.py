@@ -26,10 +26,10 @@ class MountedMLTracker:
     def __init__(self):
         # Subscribers to Camera
         self.rgb_img_sub = rospy.Subscriber("/mounted_cam/camera/color/image_raw", Image, self.track_callback,queue_size=1)
-        self.depth_img_sub = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/image_raw", Image, self.depth_callback)
+        self.depth_img_sub = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/image_raw", Image, self.depth_callback) # use for rgb pixel lookup
         self.depth_cam_info = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback)
 
-        self.segmented_depth_sub = rospy.Subscriber("/seg_depth/image_raw", PointCloud2, self.segmented_depth_callback, queue_size=1)
+        self.segmented_depth_sub = rospy.Subscriber("/rscamera/depth_image/points", PointCloud2, self.segmented_depth_callback, queue_size=1)
 
         # Image member variables
         self.bridge = CvBridge()
@@ -41,6 +41,8 @@ class MountedMLTracker:
         self.y = 0
         self.end_class = None
         self.converted_depth = 0.5 # do a waitformessage?
+        self.depth_adjustment = 0.05
+
         self.converted_pt = [0.0, 0.0, 0.0]
 
     def convert_image_3d_point(self, depth : float, cam : str = "rear"):
@@ -59,8 +61,7 @@ class MountedMLTracker:
             num_pt += 1
 
         if num_pt > 0:
-            print(sum_pt / num_pt)
-            self.converted_depth = sum_pt / num_pt
+            self.converted_depth = ( sum_pt / num_pt ) + self.depth_adjustment
             
 
     def track_callback(self, data):
@@ -115,6 +116,7 @@ class MountedMLTracker:
             return
     
     def depth_callback(self,data):
+        # use in rgb lookup approach
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, desired_encoding="passthrough")
             depth_image_meters = cv_image.astype(np.float32) / 1000.0 # Convert to meters
@@ -137,7 +139,6 @@ class MountedMLTracker:
         t.header.frame_id = source
         t.child_frame_id = str(self.end_class)
 
-        # print(self.converted_pt)
         t.transform.translation.x = self.converted_pt[0] + pos_adj[0]
         t.transform.translation.y = self.converted_pt[1] + pos_adj[1]
         t.transform.translation.z = self.converted_pt[2] + pos_adj[2]
