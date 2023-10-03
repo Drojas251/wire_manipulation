@@ -5,6 +5,7 @@ from std_msgs.msg import Header
 import sensor_msgs.point_cloud2 as pc2
 from sensor_msgs.msg import PointCloud2, PointField
 from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Point
 
 import pcl
 import numpy as np
@@ -27,7 +28,7 @@ class ConnectorPC():
 
         # Publisher of fitted shape to pointcloud
         self.shape_pub = rospy.Publisher('/pc_shape', Marker, queue_size=100)
-        self.line_pub = rospy.Publisher('/pc_shape', Marker, queue_size=10)
+        self.line_pub = rospy.Publisher('/pc_line', Marker, queue_size=10)
 
         # # Fitted shape params
         # self.shape_params = None
@@ -112,30 +113,52 @@ class ConnectorPC():
         # Show the plot to the screen
         pyplot.show()
 
-    def visualize_line(self, src_frame, center, radius, axis):
-        marker = Marker()
-        marker.header.frame_id = src_frame
-        marker.type = Marker.CYLINDER
-        marker.action = Marker.ADD
-        marker.pose.position.x = center[0]  # Center of the cylinder
-        marker.pose.position.y = center[1]
-        marker.pose.position.z = center[2]
+    def visualize_line(self, src_frame):
+        # Define and color the line
+        line_marker = Marker()
+        line_marker.header.frame_id = src_frame
+        line_marker.type = Marker.LINE_STRIP  # Type for line strip
+        line_marker.action = Marker.ADD  # Add a new marker
+        line_marker.scale.x = 0.01  # Line width
+        line_marker.color.r = 1.0  # Red color
+        line_marker.color.g = 0.0
+        line_marker.color.b = 0.0
+        line_marker.color.a = 1.0  # Alpha (transparency)
 
-        marker.pose.orientation.x = 0.0 # axis?
-        marker.pose.orientation.y = 0.0
-        marker.pose.orientation.z = 0.0
-        marker.pose.orientation.w = 1.0
+        # Replace these with your line coefficients and desired endpoints
+        """
+        Define the endpoints of your line by adding points to the points field of the Marker. 
+        In your case, you have the coefficients of a geometric line, so you need to calculate 
+        the two points that define the line:
+        """
+        # use self.source_pc thats equivalent to points
+        min_x_pt, max_x_pt = None, None
+        # calculate min and max points
+        for pt in pc2.read_points(self.source_pc, field_names=("x", "y", "z"), skip_nans=True):
+            pt_x = depth = pt[0]
+            if min_x_pt == None:
+                min_x_pt = pt
+            else:
+                min_x_pt = pt if pt_x < min_x_pt[0] else min_x_pt
 
-        marker.scale.x = 2 * radius  # Diameter of the cylinder
-        marker.scale.y = 2 * radius  # Diameter of the cylinder
-        marker.scale.z = radius * 10  # Height of the cylinder - not yet known
-        marker.color.a = 0.5  # Transparency
-        marker.color.r = 1.0  # Red color
-        marker.color.g = 0.0
-        marker.color.b = 0.0
+            if max_x_pt == None:
+                max_x_pt = pt
+            else:
+                max_x_pt = pt if pt_x > max_x_pt[0] else max_x_pt
+
+        x1, y1, z1 = min_x_pt[0], min_x_pt[1], min_x_pt[2]  # Start point
+        x2, y2, z2 = max_x_pt[0], max_x_pt[1], max_x_pt[2]  # End point
+
+        # Create Point messages for the start and end points
+        start_point = Point(x1, y1, z1)
+        end_point = Point(x2, y2, z2)
+
+        # Add the points to the Marker's points field
+        line_marker.points.append(start_point)
+        line_marker.points.append(end_point)
 
         # Publish the marker
-        self.line_pub.publish(marker)
+        self.line_pub.publish(line_marker)
 
     ### Getters/setters
     def get_src_pc(self):
@@ -330,9 +353,10 @@ class ConnectorPC():
         lsr_line = self.fit_line_least_squares_regression()
         ransac_line = self.fit_line_ransac()
 
-        print(f"Least Squares Regression:\n{lsr_line}")
-        print(f"RANSAC:\n{ransac_line}")
-        print()
+        # print(f"Least Squares Regression:\n{lsr_line}")
+        # print(f"RANSAC:\n{ransac_line}")
+        # print()
+        self.visualize_line("camera_color_optical_frame")
 
 
 def main():
