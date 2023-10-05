@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
     # status = robot_control.move_to_frame(GRASPING_ARM, "adj_arm_aruco_0")
 
-    status = robot_control.move_to_frame(GRASPING_ARM, "usb-crotation")
+    status = robot_control.move_to_frame(GRASPING_ARM, "cpose_usb-crotation")
     # print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Initiating Robots ")
     # # status = robot_control.move_to_frame(SEARCHING_ARM, "search_target")
     # print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Attempt grabbing ArUco from rear camera view")

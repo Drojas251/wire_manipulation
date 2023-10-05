@@ -11,12 +11,17 @@ import pcl
 import numpy as np
 import open3d as o3d
 
-import pyransac3d as pyrsc
 import ros_numpy
 from stl import mesh
 
 from mpl_toolkits import mplot3d
 from matplotlib import pyplot
+
+# Transform publishing
+from tf.transformations import quaternion_from_euler
+import tf2_ros
+from geometry_msgs.msg import TransformStamped
+import math
 
 class ConnectorPC():
     def __init__(self) -> None:
@@ -36,6 +41,10 @@ class ConnectorPC():
         # # Store a collected PC
         self.source_pc = None
         self.numpy_pc = None
+
+        # Store best fit lines
+        self.lsr_line = None
+        self.ransac_line = None
 
     ### Callbacks
     def pc_callback(self, points):
@@ -274,7 +283,6 @@ class ConnectorPC():
 
         return best_line
 
-
     def fit_cylinder(self):
         
         if self.numpy_pc is None or not self.numpy_pc.any():
@@ -313,6 +321,40 @@ class ConnectorPC():
         # print(f"center: {center}\naxis: {axis}\nradius: {radius}\n")
         # self.visualize_shape("camera_color_optical_frame", center, radius*.05, axis)
 
+    ### Orientation calculation
+    def normalize_vector(self, vector):
+        if vector:
+            magnitude = math.sqrt(vector[0]**2 + vector[1]**2 + vector[2]**2)
+            normalized_vector = [vector[0] / magnitude, vector[1] / magnitude, vector[2] / magnitude]
+            return normalized_vector
+        else:
+            return [0,0,0,1]
+
+
+    ### Publish full pose
+    def transform_connector_pose(self, child_name: str, source: str, pos_adj, ori_adj) -> None:
+        br = tf2_ros.TransformBroadcaster()
+        t = TransformStamped()
+
+        t.header.stamp = rospy.Time.now()
+        t.header.frame_id = source
+        t.child_frame_id = "{}_{}".format(child_name, source)
+
+        t.transform.translation.x = ori_adj[0] # Offset arm to right by value meters
+        t.transform.translation.y = ori_adj[1]
+        t.transform.translation.z = ori_adj[2] # Too close to wall, move back .05m
+
+        q = quaternion_from_euler(pos_adj[0], pos_adj[1], pos_adj[2]) # pos_adj
+        # q = quaternion_from_euler(-math.pi/2,math.pi/2,0) # match rotation of bot grippers
+
+        norm_vec = self.normalize_vector(self.ransac_line)
+        t.transform.rotation.x = q[0] + norm_vec[0]
+        t.transform.rotation.y = q[1] + norm_vec[1]
+        t.transform.rotation.z = q[2] + norm_vec[2]
+        t.transform.rotation.w = q[3]
+
+        br.sendTransform(t)
+
     ### Testing functions
     def test_icp_pc_translation(self):
         ### This was just used for testing ICP between src and translated pc
@@ -350,14 +392,13 @@ class ConnectorPC():
         if self.numpy_pc is None or not self.numpy_pc.any():
             return
         
-        lsr_line = self.fit_line_least_squares_regression()
-        ransac_line = self.fit_line_ransac()
+        self.lsr_line = self.fit_line_least_squares_regression()
+        self.ransac_line = self.fit_line_ransac()
 
         # print(f"Least Squares Regression:\n{lsr_line}")
         # print(f"RANSAC:\n{ransac_line}")
         # print()
         self.visualize_line("camera_color_optical_frame")
-
 
 def main():
     rospy.init_node("proc_connector_pc",anonymous=True)
@@ -368,6 +409,7 @@ def main():
     while not rospy.is_shutdown():
         # proc_pc.test_icp_pc_translation()
         proc_pc.test_line_fitting()
+        proc_pc.transform_connector_pose("cpose", "usb-crotation", [0,0,0], [0,0,0,1])
 
         # if proc_pc.get_src_pc():
         #     print("ATTEMPT FIT")
