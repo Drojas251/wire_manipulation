@@ -5,7 +5,7 @@ from std_msgs.msg import Header
 import sensor_msgs.point_cloud2 as pc2
 from sensor_msgs.msg import PointCloud2, PointField
 from visualization_msgs.msg import Marker
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point, Quaternion
 
 import pcl
 import numpy as np
@@ -18,7 +18,7 @@ from mpl_toolkits import mplot3d
 from matplotlib import pyplot
 
 # Transform publishing
-from tf.transformations import quaternion_from_euler
+from tf.transformations import quaternion_from_euler, quaternion_about_axis
 import tf2_ros
 from geometry_msgs.msg import TransformStamped
 import math
@@ -42,6 +42,9 @@ class ConnectorPC():
         self.source_pc = None
         self.numpy_pc = None
 
+        self.min_x_pt = None
+        self.max_x_pt = None
+
         # Store best fit lines
         self.lsr_line = None
         self.ransac_line = None
@@ -51,6 +54,19 @@ class ConnectorPC():
         # Source pointcloud and translated copy
         self.source_pc = points
         self.numpy_pc  = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(points)
+
+        # calculate min and max points
+        for pt in pc2.read_points(self.source_pc, field_names=("x", "y", "z"), skip_nans=True):
+            pt_x = depth = pt[0]
+            if self.min_x_pt == None:
+                self.min_x_pt = pt
+            else:
+                self.min_x_pt = pt if pt_x < self.min_x_pt[0] else self.min_x_pt
+
+            if self.max_x_pt == None:
+                self.max_x_pt = pt
+            else:
+                self.max_x_pt = pt if pt_x > self.max_x_pt[0] else self.max_x_pt
 
     def translate_pc(self, input_pc, translation):
         # Only used to translate a pc x,y,z units; originally for ICP testing between source and its translation
@@ -140,23 +156,10 @@ class ConnectorPC():
         In your case, you have the coefficients of a geometric line, so you need to calculate 
         the two points that define the line:
         """
-        # use self.source_pc thats equivalent to points
-        min_x_pt, max_x_pt = None, None
-        # calculate min and max points
-        for pt in pc2.read_points(self.source_pc, field_names=("x", "y", "z"), skip_nans=True):
-            pt_x = depth = pt[0]
-            if min_x_pt == None:
-                min_x_pt = pt
-            else:
-                min_x_pt = pt if pt_x < min_x_pt[0] else min_x_pt
+        
 
-            if max_x_pt == None:
-                max_x_pt = pt
-            else:
-                max_x_pt = pt if pt_x > max_x_pt[0] else max_x_pt
-
-        x1, y1, z1 = min_x_pt[0], min_x_pt[1], min_x_pt[2]  # Start point
-        x2, y2, z2 = max_x_pt[0], max_x_pt[1], max_x_pt[2]  # End point
+        x1, y1, z1 = self.min_x_pt[0], self.min_x_pt[1], self.min_x_pt[2]  # Start point
+        x2, y2, z2 = self.max_x_pt[0], self.max_x_pt[1], self.max_x_pt[2]  # End point
 
         # Create Point messages for the start and end points
         start_point = Point(x1, y1, z1)
@@ -328,11 +331,14 @@ class ConnectorPC():
             normalized_vector = [vector[0] / magnitude, vector[1] / magnitude, vector[2] / magnitude]
             return normalized_vector
         else:
-            return [0,0,0,1]
+            return [0,0,0]
 
 
     ### Publish full pose
     def transform_connector_pose(self, child_name: str, source: str, pos_adj, ori_adj) -> None:
+        if not self.min_x_pt and not self.max_x_pt:
+            return
+        
         br = tf2_ros.TransformBroadcaster()
         t = TransformStamped()
 
@@ -340,18 +346,84 @@ class ConnectorPC():
         t.header.frame_id = source
         t.child_frame_id = "{}_{}".format(child_name, source)
 
-        t.transform.translation.x = ori_adj[0] # Offset arm to right by value meters
-        t.transform.translation.y = ori_adj[1]
-        t.transform.translation.z = ori_adj[2] # Too close to wall, move back .05m
+        t.transform.translation.x = pos_adj[0] # Offset arm to right by value meters
+        t.transform.translation.y = pos_adj[1]
+        t.transform.translation.z = pos_adj[2] # Too close to wall, move back .05m
 
-        q = quaternion_from_euler(pos_adj[0], pos_adj[1], pos_adj[2]) # pos_adj
+        # Calculate orientation
+        x1, y1, z1 = self.min_x_pt  # Start point
+        x2, y2, z2 = self.max_x_pt  # End point
+        dx = x2 - x1
+        dy = y2 - y1
+        dz = z2 - z1
+        line_direction = (dx, dy, dz)
+        line_direction_length = (dx**2 + dy**2 + dz**2)**0.5
+        line_direction_quaternion = quaternion_from_euler(ori_adj[0], ori_adj[1], ori_adj[2])  # No rotation initially
+        line_direction_quaternion[0] = dz / line_direction_length
+        line_direction_quaternion[1] = dx / line_direction_length
+        line_direction_quaternion[2] = dy / line_direction_length #
+        line_direction_quaternion[3] = 0.0  # No rotation around the axis
+        t.transform.rotation = Quaternion(*line_direction_quaternion)
+
+        br.sendTransform(t)
+
+    def transform_connector_grasp(self, child_name: str, source: str, pos_adj, ori_adj) -> None:
+        br = tf2_ros.TransformBroadcaster()
+        t = TransformStamped()
+
+        t.header.stamp = rospy.Time.now()
+        t.header.frame_id = source
+        t.child_frame_id = "{}_{}".format(child_name, source)
+
+        t.transform.translation.x = pos_adj[0] # Offset arm to right by value meters
+        t.transform.translation.y = pos_adj[1]
+        t.transform.translation.z = pos_adj[2] # Too close to wall, move back .05m
+
+        q = quaternion_from_euler(ori_adj[0], ori_adj[1], ori_adj[2]) # pos_adj
+
+        t.transform.rotation.x = q[0]
+        t.transform.rotation.y = q[1]
+        t.transform.rotation.z = q[2]
+        t.transform.rotation.w = q[3]
+
+        br.sendTransform(t)
+
+    def callback_transform_connector_pose(self, child_name: str, source: str, pos_adj, ori_adj) -> None:
+        # This approach calculates from pointcloud2 every callback, highly unstable
+        br = tf2_ros.TransformBroadcaster()
+        t = TransformStamped()
+
+        t.header.stamp = rospy.Time.now()
+        t.header.frame_id = source
+        t.child_frame_id = "{}_{}".format(child_name, source)
+
+        t.transform.translation.x = pos_adj[0] # Offset arm to right by value meters
+        t.transform.translation.y = pos_adj[1]
+        t.transform.translation.z = pos_adj[2] # Too close to wall, move back .05m
+
+        q = quaternion_from_euler(ori_adj[0], ori_adj[1], ori_adj[2]) # pos_adj
         # q = quaternion_from_euler(-math.pi/2,math.pi/2,0) # match rotation of bot grippers
 
-        norm_vec = self.normalize_vector(self.ransac_line)
-        t.transform.rotation.x = q[0] + norm_vec[0]
-        t.transform.rotation.y = q[1] + norm_vec[1]
-        t.transform.rotation.z = q[2] + norm_vec[2]
-        t.transform.rotation.w = q[3]
+        norm_vec = self.ransac_line if self.ransac_line else [0,0,0] #self.normalize_vector(self.lsr_line)
+        line_direction = np.array([norm_vec[0],norm_vec[1],norm_vec[2]])
+        
+        ### Attempt at setting one axis
+        line_direction_magnitude = np.linalg.norm(line_direction)
+        line_direction_normalized = line_direction / line_direction_magnitude
+
+        # Assuming the axis is the green axis (0, 1, 0)
+        desired_rotation_axis = np.array([1, 1, 1])
+
+        # Calculate the dot product between the desired axis and the line direction
+        dot_product = np.dot(desired_rotation_axis, line_direction_normalized)
+
+        # Calculate the rotation angle (in radians) using the dot product
+        # Use arccos to find the angle between the two vectors
+        rotation_angle = np.arccos(dot_product)
+
+        orientation = Quaternion(*quaternion_about_axis(rotation_angle, desired_rotation_axis))
+
+        t.transform.rotation = orientation
 
         br.sendTransform(t)
 
@@ -409,8 +481,8 @@ def main():
     while not rospy.is_shutdown():
         # proc_pc.test_icp_pc_translation()
         proc_pc.test_line_fitting()
-        proc_pc.transform_connector_pose("cpose", "usb-crotation", [0,0,0], [0,0,0,1])
-
+        proc_pc.transform_connector_pose("cpose", "usb-crotation", [0,0,0], [0, 0, 0, 1])
+        proc_pc.transform_connector_grasp("grasp", "cpose_usb-crotation", [0, 0.0, 0], [math.pi, 0, math.pi/2, 1])
         # if proc_pc.get_src_pc():
         #     print("ATTEMPT FIT")
         #     proc_pc.fit_shape()

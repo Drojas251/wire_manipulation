@@ -34,6 +34,9 @@
   <!-- Point Cloud Classification -->
   <node pkg="vision" type="rgbd_segmentation.py" name="rgbd_segmentation" output="screen"/> 
 
+  <!-- ML TRACKING -->
+  <node pkg="vision" type="mounted_ml_tracker.py" name="mounted_ml_tracker" output="screen"/> 
+
   <!-- Nodelet manager for depth PC processing -->
   <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />
   <!-- Segmenting no rgb -->
