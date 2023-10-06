@@ -244,10 +244,10 @@ class ConnectorPC():
         # Calc covariance matrix of pc
         covariance_matrix = np.cov(pointcloud.T)
 
-        # Calc eigenvectors and eigenvalues of the covariance matrix
+        # Step 3: Compute the eigenvectors and eigenvalues of the covariance matrix
         eigenvalues, eigenvectors = np.linalg.eig(covariance_matrix)
 
-        # Eigenvector with the smallest eigenvalue corresponds to the direction of the line
+        # Step 4: The eigenvector with the smallest eigenvalue corresponds to the direction of the line
         smallest_eigenvalue_idx = np.argmin(eigenvalues)
         line_direction = eigenvectors[:, smallest_eigenvalue_idx]
 
@@ -356,7 +356,7 @@ class ConnectorPC():
         dx = x2 - x1
         dy = y2 - y1
         dz = z2 - z1
-        line_direction = (dx, dy, dz)
+        # line_direction = (dx, dy, dz)
         line_direction_length = (dx**2 + dy**2 + dz**2)**0.5
         line_direction_quaternion = quaternion_from_euler(ori_adj[0], ori_adj[1], ori_adj[2])  # No rotation initially
         line_direction_quaternion[0] = dz / line_direction_length
@@ -373,7 +373,7 @@ class ConnectorPC():
 
         t.header.stamp = rospy.Time.now()
         t.header.frame_id = source
-        t.child_frame_id = "{}_{}".format(child_name, source)
+        t.child_frame_id = "{}".format(child_name)
 
         t.transform.translation.x = pos_adj[0] # Offset arm to right by value meters
         t.transform.translation.y = pos_adj[1]
@@ -388,7 +388,7 @@ class ConnectorPC():
 
         br.sendTransform(t)
 
-    def callback_transform_connector_pose(self, child_name: str, source: str, pos_adj, ori_adj) -> None:
+    def transform_coefficient_pose(self, child_name: str, source: str, pos_adj, ori_adj) -> None:
         # This approach calculates from pointcloud2 every callback, highly unstable
         br = tf2_ros.TransformBroadcaster()
         t = TransformStamped()
@@ -480,9 +480,17 @@ def main():
     proc_pc = ConnectorPC()
     while not rospy.is_shutdown():
         # proc_pc.test_icp_pc_translation()
-        proc_pc.test_line_fitting()
+        
+        # proc_pc.test_line_fitting()
+        # proc_pc.transform_coefficient_pose("coeff", "usb-crotation", [0,0,0], [0, 0, 0, 1])
+
+        # proc_pc.visualize_line("usb-crotation") # fix none issue when first loading
+        # add min/max y and check for max between x to correct for orientation
+        
         proc_pc.transform_connector_pose("cpose", "usb-crotation", [0,0,0], [0, 0, 0, 1])
-        proc_pc.transform_connector_grasp("grasp", "cpose_usb-crotation", [0, 0.0, 0], [math.pi, 0, math.pi/2, 1])
+        proc_pc.transform_connector_grasp("line_grasp", "cpose_usb-crotation", [0, 0, 0], [math.pi, 0, math.pi/2, 1])
+        proc_pc.transform_connector_grasp("perp_line_grasp", "line_grasp", [0, 0, 0], [-math.pi/2, 0, 0, 1])
+        
         # if proc_pc.get_src_pc():
         #     print("ATTEMPT FIT")
         #     proc_pc.fit_shape()
