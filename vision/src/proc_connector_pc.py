@@ -24,7 +24,7 @@ from geometry_msgs.msg import TransformStamped
 import math
 
 class ConnectorPC():
-    def __init__(self) -> None:
+    def __init__(self, N_percentage:int = 0.05) -> None:
         # Subscriber to pointcloud from camera
         self.points_sub = rospy.Subscriber("/rscamera/depth_image/points", PointCloud2, self.pc_callback, queue_size=1)
 
@@ -42,8 +42,9 @@ class ConnectorPC():
         self.source_pc = None
         self.numpy_pc = None
 
-        self.min_x_pt = None
-        self.max_x_pt = None
+        self.N_percentage = N_percentage
+        self.min_pt = None
+        self.max_pt = None
 
         # Store best fit lines
         self.lsr_line = None
@@ -55,18 +56,54 @@ class ConnectorPC():
         self.source_pc = points
         self.numpy_pc  = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(points)
 
-        # calculate min and max points
-        for pt in pc2.read_points(self.source_pc, field_names=("x", "y", "z"), skip_nans=True):
-            pt_x = depth = pt[0]
-            if self.min_x_pt == None:
-                self.min_x_pt = pt
-            else:
-                self.min_x_pt = pt if pt_x < self.min_x_pt[0] else self.min_x_pt
+        # Convert numpy pc to list of tuples
+        points_list = [pt for pt in pc2.read_points(self.source_pc, field_names=("x", "y", "z"), skip_nans=True)]
+        pts_x_sorted = sorted(points_list, key=lambda x: x[0]) # sort by x
+        pts_y_sorted = sorted(points_list, key=lambda x: x[1]) # sort by y
+        
+        ### Average pts_x_sorted[:n] for first pt and pts_x_sorted[-n:]
+        x_min, x_max = (0,0,0),(0,0,0)
+        y_min, y_max = (0,0,0),(0,0,0)
+        
+        # Add N points from both ends
+        N = int(len(points_list) * self.N_percentage)
+        pts_x_front, pts_x_back, = pts_x_sorted[:N], pts_x_sorted[-N:]
+        pts_y_front, pts_y_back = pts_y_sorted[:N], pts_y_sorted[-N:]
+        for i in range(N):
+            x_min = tuple(map(lambda i,j: i+j, x_min, pts_x_front[i]))
+            x_max = tuple(map(lambda i,j: i+j, x_max, pts_x_back[-i]))
+            y_min = tuple(map(lambda i,j: i+j, y_min, pts_y_front[i]))
+            y_max = tuple(map(lambda i,j: i+j, y_max, pts_y_back[-i]))
 
-            if self.max_x_pt == None:
-                self.max_x_pt = pt
-            else:
-                self.max_x_pt = pt if pt_x > self.max_x_pt[0] else self.max_x_pt
+        # Divide to average the calculated point by N points considered
+        try:
+            x_min, x_max = tuple(i/N for i in x_min), tuple(i/N for i in x_max)
+            y_min, y_max = tuple(i/N for i in y_min), tuple(i/N for i in y_max)
+        except ZeroDivisionError:
+            pass
+
+        ### Compare distance along x and y axes to choose best line fit
+        delta_x, delta_y = self.calc_dist(x_min, x_max), self.calc_dist(y_min, y_max)
+        if delta_x > delta_y:
+            self.min_pt = x_min
+            self.max_pt = x_max
+        else:
+            self.min_pt = y_min
+            self.max_pt = y_max
+
+        # # calculate min and max points 1point approach
+        # for pt in pc2.read_points(self.source_pc, field_names=("x", "y", "z"), skip_nans=True):
+        #     # print(type(pt))
+        #     pt_x = pt[0]
+        #     if self.min_pt == None:
+        #         self.min_pt = pt
+        #     else:
+        #         self.min_pt = pt if pt_x < self.min_pt[0] else self.min_pt
+
+        #     if self.max_pt == None:
+        #         self.max_pt = pt
+        #     else:
+        #         self.max_pt = pt if pt_x > self.max_pt[0] else self.max_pt # FOLLOW THIS IN ABOVE IMP
 
     def translate_pc(self, input_pc, translation):
         # Only used to translate a pc x,y,z units; originally for ICP testing between source and its translation
@@ -158,8 +195,8 @@ class ConnectorPC():
         """
         
 
-        x1, y1, z1 = self.min_x_pt[0], self.min_x_pt[1], self.min_x_pt[2]  # Start point
-        x2, y2, z2 = self.max_x_pt[0], self.max_x_pt[1], self.max_x_pt[2]  # End point
+        x1, y1, z1 = self.min_pt[0], self.min_pt[1], self.min_pt[2]  # Start point
+        x2, y2, z2 = self.max_pt[0], self.max_pt[1], self.max_pt[2]  # End point
 
         # Create Point messages for the start and end points
         start_point = Point(x1, y1, z1)
@@ -332,11 +369,13 @@ class ConnectorPC():
             return normalized_vector
         else:
             return [0,0,0]
-
+        
+    def calc_dist(self, pt1, pt2):
+        return math.sqrt(math.pow(pt1[0] - pt2[0], 2) + math.pow(pt1[1] - pt2[1], 2) + math.pow(pt1[2] - pt2[2], 2))
 
     ### Publish full pose
     def transform_connector_pose(self, child_name: str, source: str, pos_adj, ori_adj) -> None:
-        if not self.min_x_pt and not self.max_x_pt:
+        if not self.min_pt and not self.max_pt:
             return
         
         br = tf2_ros.TransformBroadcaster()
@@ -351,8 +390,8 @@ class ConnectorPC():
         t.transform.translation.z = pos_adj[2] # Too close to wall, move back .05m
 
         # Calculate orientation
-        x1, y1, z1 = self.min_x_pt  # Start point
-        x2, y2, z2 = self.max_x_pt  # End point
+        x1, y1, z1 = self.min_pt  # Start point
+        x2, y2, z2 = self.max_pt  # End point
         dx = x2 - x1
         dy = y2 - y1
         dz = z2 - z1
@@ -477,7 +516,7 @@ def main():
     rospy.sleep(3)
 
     # rate = rospy.Rate(60)
-    proc_pc = ConnectorPC()
+    proc_pc = ConnectorPC(0.10) # default 0.05 is 5% of 600 = 30 and 30 + 30 = 10% of avg ~600pts
     while not rospy.is_shutdown():
         # proc_pc.test_icp_pc_translation()
         
@@ -489,8 +528,11 @@ def main():
         
         proc_pc.transform_connector_pose("cpose", "usb-crotation", [0,0,0], [0, 0, 0, 1])
         proc_pc.transform_connector_grasp("line_grasp", "cpose_usb-crotation", [0, 0, 0], [math.pi, 0, math.pi/2, 1])
+        # create prepose here
         proc_pc.transform_connector_grasp("perp_line_grasp", "line_grasp", [0, 0, 0], [-math.pi/2, 0, 0, 1])
-        
+        proc_pc.transform_connector_grasp("prepose_grasp", "line_grasp", [-0.15, 0, 0], [-math.pi/2, 0, 0, 1])
+
+
         # if proc_pc.get_src_pc():
         #     print("ATTEMPT FIT")
         #     proc_pc.fit_shape()
