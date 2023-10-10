@@ -91,20 +91,6 @@ class ConnectorPC():
             self.min_pt = y_min
             self.max_pt = y_max
 
-        # # calculate min and max points 1point approach
-        # for pt in pc2.read_points(self.source_pc, field_names=("x", "y", "z"), skip_nans=True):
-        #     # print(type(pt))
-        #     pt_x = pt[0]
-        #     if self.min_pt == None:
-        #         self.min_pt = pt
-        #     else:
-        #         self.min_pt = pt if pt_x < self.min_pt[0] else self.min_pt
-
-        #     if self.max_pt == None:
-        #         self.max_pt = pt
-        #     else:
-        #         self.max_pt = pt if pt_x > self.max_pt[0] else self.max_pt # FOLLOW THIS IN ABOVE IMP
-
     def translate_pc(self, input_pc, translation):
         # Only used to translate a pc x,y,z units; originally for ICP testing between source and its translation
         translated_pc = []
@@ -193,7 +179,6 @@ class ConnectorPC():
         In your case, you have the coefficients of a geometric line, so you need to calculate 
         the two points that define the line:
         """
-        
 
         x1, y1, z1 = self.min_pt[0], self.min_pt[1], self.min_pt[2]  # Start point
         x2, y2, z2 = self.max_pt[0], self.max_pt[1], self.max_pt[2]  # End point
@@ -518,26 +503,14 @@ def main():
     # rate = rospy.Rate(60)
     proc_pc = ConnectorPC(0.10) # default 0.05 is 5% of 600 = 30 and 30 + 30 = 10% of avg ~600pts
     while not rospy.is_shutdown():
-        # proc_pc.test_icp_pc_translation()
-        
-        # proc_pc.test_line_fitting()
-        # proc_pc.transform_coefficient_pose("coeff", "usb-crotation", [0,0,0], [0, 0, 0, 1])
-
-        # proc_pc.visualize_line("usb-crotation") # fix none issue when first loading
-        # add min/max y and check for max between x to correct for orientation
-        
         proc_pc.transform_connector_pose("cpose", "usb-crotation", [0,0,0], [0, 0, 0, 1])
         proc_pc.transform_connector_grasp("line_grasp", "cpose_usb-crotation", [0, 0, 0], [math.pi, 0, math.pi/2, 1])
         # create prepose here
         proc_pc.transform_connector_grasp("perp_line_grasp", "line_grasp", [0, 0, 0], [-math.pi/2, 0, 0, 1])
         proc_pc.transform_connector_grasp("prepose_grasp", "line_grasp", [-0.15, 0, 0], [-math.pi/2, 0, 0, 1])
 
-
-        # if proc_pc.get_src_pc():
-        #     print("ATTEMPT FIT")
-        #     proc_pc.fit_shape()
-    # rate.sleep()
-    
+        ### Test accuracy frame
+        # proc_pc.transform_connector_grasp("acc_test", "world", [0.3302, 0.0381, 0.1651], [0, 0, 0, 1])
 
 if __name__ == '__main__':
     main()
