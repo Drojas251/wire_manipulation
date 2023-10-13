@@ -7,7 +7,6 @@ from sensor_msgs.msg import PointCloud2, PointField
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point, Quaternion
 
-import pcl
 import numpy as np
 import open3d as o3d
 
@@ -52,10 +51,63 @@ class ConnectorPC():
 
     ### Callbacks
     def pc_callback(self, points):
-        # Source pointcloud and translated copy
-        self.source_pc = points
-        self.numpy_pc  = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(points)
+        REMOVE_OUTLIERS = True
+        REMOVE_OUTLIER_METHOD = "mean_std_dev"
+    
+        print("before:", len(ros_numpy.point_cloud2.pointcloud2_to_xyz_array(points)))
 
+        # Filter pc2 for outliers if REMOVE_OUTLIERS
+        if REMOVE_OUTLIERS:
+            if REMOVE_OUTLIER_METHOD == "mean_std_dev":
+                pc2_points = self.remove_outliers_msd(points, 2.0)
+            elif REMOVE_OUTLIER_METHOD == "others to implement":
+                pass
+        else:
+            pc2_points = points
+        # Save filtered pointcloud2 in instance
+        self.source_pc = pc2_points
+        self.numpy_pc  = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(self.source_pc)
+        print("after:", len(self.numpy_pc))
+
+        # Calculate min/max along x and y axes
+        x_min, x_max, y_min, y_max = self._calc_avg_line_pts()
+
+        # Compare distance along x and y axes to choose best line fit
+        delta_x, delta_y = self.calc_dist(x_min, x_max), self.calc_dist(y_min, y_max)
+        if delta_x > delta_y:
+            self.min_pt = x_min
+            self.max_pt = x_max
+        else:
+            self.min_pt = y_min
+            self.max_pt = y_max
+
+    def remove_outliers_msd(self, points, std_dev_mul):
+        """
+        Remove outliers using mean and standard deviation
+        """
+        # Convert PointCloud2 message to a numpy array
+        pc2_pts = pc2.read_points(points, field_names=("x", "y", "z"), skip_nans=True)
+        cloud_data = np.array(list(pc2_pts))
+
+        # Calculate the mean and standard deviation of the point cloud
+        mean = np.mean(cloud_data, axis=0)
+        std_dev = np.std(cloud_data, axis=0)
+
+        # Define a filter threshold for removing outliers
+        lower_bound = mean - std_dev_mul * std_dev
+        upper_bound = mean + std_dev_mul * std_dev
+
+        # Create a mask to identify inliers
+        mask = np.all((cloud_data >= lower_bound) & (cloud_data <= upper_bound), axis=1)
+
+        # Apply the mask to filter inliers
+        filtered_cloud = cloud_data[mask]
+
+        # Convert the filtered numpy array back to PointCloud2 message
+        return pc2.create_cloud_xyz32(points.header, filtered_cloud)
+
+    def _calc_avg_line_pts(self):
+        ### Calculate end averages for fitting line through segmented filtered pointcloud
         # Convert numpy pc to list of tuples
         points_list = [pt for pt in pc2.read_points(self.source_pc, field_names=("x", "y", "z"), skip_nans=True)]
         pts_x_sorted = sorted(points_list, key=lambda x: x[0]) # sort by x
@@ -79,17 +131,9 @@ class ConnectorPC():
         try:
             x_min, x_max = tuple(i/N for i in x_min), tuple(i/N for i in x_max)
             y_min, y_max = tuple(i/N for i in y_min), tuple(i/N for i in y_max)
+            return x_min, x_max, y_min, y_max
         except ZeroDivisionError:
             pass
-
-        ### Compare distance along x and y axes to choose best line fit
-        delta_x, delta_y = self.calc_dist(x_min, x_max), self.calc_dist(y_min, y_max)
-        if delta_x > delta_y:
-            self.min_pt = x_min
-            self.max_pt = x_max
-        else:
-            self.min_pt = y_min
-            self.max_pt = y_max
 
     def translate_pc(self, input_pc, translation):
         # Only used to translate a pc x,y,z units; originally for ICP testing between source and its translation
