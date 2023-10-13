@@ -54,20 +54,20 @@ class ConnectorPC():
         REMOVE_OUTLIERS = True
         REMOVE_OUTLIER_METHOD = "mean_std_dev"
     
-        print("before:", len(ros_numpy.point_cloud2.pointcloud2_to_xyz_array(points)))
+        # print("before:", len(ros_numpy.point_cloud2.pointcloud2_to_xyz_array(points)))
 
         # Filter pc2 for outliers if REMOVE_OUTLIERS
         if REMOVE_OUTLIERS:
             if REMOVE_OUTLIER_METHOD == "mean_std_dev":
                 pc2_points = self.remove_outliers_msd(points, 2.0)
-            elif REMOVE_OUTLIER_METHOD == "others to implement":
+            elif REMOVE_OUTLIER_METHOD == "others to implement?":
                 pass
         else:
             pc2_points = points
         # Save filtered pointcloud2 in instance
         self.source_pc = pc2_points
         self.numpy_pc  = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(self.source_pc)
-        print("after:", len(self.numpy_pc))
+        # print("after:", len(self.numpy_pc))
 
         # Calculate min/max along x and y axes
         x_min, x_max, y_min, y_max = self._calc_avg_line_pts()
