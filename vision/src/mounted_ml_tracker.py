@@ -29,7 +29,7 @@ class MountedMLTracker:
         self.depth_img_sub = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/image_raw", Image, self.depth_callback) # use for rgb pixel lookup
         self.depth_cam_info = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback)
 
-        self.segmented_depth_sub = rospy.Subscriber("/rscamera/depth_image/points", PointCloud2, self.segmented_depth_callback, queue_size=1)
+        self.segmented_depth_sub = rospy.Subscriber("/mounted_cam/rscamera/depth_image/points", PointCloud2, self.segmented_depth_callback, queue_size=1)
 
         # Image member variables
         self.bridge = CvBridge()

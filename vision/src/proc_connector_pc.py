@@ -25,7 +25,7 @@ import math
 class ConnectorPC():
     def __init__(self, N_percentage:int = 0.05) -> None:
         # Subscriber to pointcloud from camera
-        self.points_sub = rospy.Subscriber("/rscamera/depth_image/points", PointCloud2, self.pc_callback, queue_size=1)
+        self.points_sub = rospy.Subscriber("/mounted_cam/rscamera/depth_image/points", PointCloud2, self.pc_callback, queue_size=1)
 
         # Publisher of ICP pointclouds
         self.icp_pub = rospy.Publisher('/aligned_icp_pc', PointCloud2, queue_size=10)

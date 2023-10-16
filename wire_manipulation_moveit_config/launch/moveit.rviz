@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /MotionPlanning1/Planned Path1
+        - /DepthCloud1
         - /DepthCloud1/Auto Size1
         - /TF1
         - /TF1/Frames1
@@ -623,7 +624,7 @@ Visualization Manager:
       Color Transformer: FlatColor
       Color Transport Hint: raw
       Decay Time: 0
-      Depth Map Topic: /seg_depth/image_raw
+      Depth Map Topic: /mounted_cam/seg_depth/image_raw
       Depth Map Transport Hint: raw
       Enabled: true
       Invert Rainbow: false
@@ -644,9 +645,13 @@ Visualization Manager:
       Value: true
     - Class: rviz/TF
       Enabled: true
+      Filter (blacklist): ""
+      Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        None:
+          Value: true
         a_bot_base_link:
           Value: false
         a_bot_ee_arm_link:
@@ -701,6 +706,8 @@ Visualization Manager:
           Value: false
         b_bot_wrist_link:
           Value: false
+        camera_aligned_depth_to_color_frame:
+          Value: true
         camera_color_frame:
           Value: false
         camera_color_optical_frame:
@@ -765,6 +772,8 @@ Visualization Manager:
           Value: false
         panel_2:
           Value: false
+        usb-crotation:
+          Value: true
         world:
           Value: false
       Marker Alpha: 1
@@ -824,12 +833,18 @@ Visualization Manager:
                                 d415_infra2_optical_frame:
                                   {}
           camera_link:
-            camera_color_frame:
+            None:
+              {}
+            camera_aligned_depth_to_color_frame:
               camera_color_optical_frame:
                 {}
+            camera_color_frame:
+              {}
             camera_depth_frame:
               camera_depth_optical_frame:
                 {}
+            usb-crotation:
+              {}
           d435i_bottom_screw_frame:
             d435i_link:
               d435i_accel_frame:
@@ -889,9 +904,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5650002956390381
+      Pitch: 0.6650002598762512
       Target Frame: world
-      Yaw: 2.7167739868164062
+      Yaw: 3.376774787902832
     Saved: ~
 Window Geometry:
   Displays:
