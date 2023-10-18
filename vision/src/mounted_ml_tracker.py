@@ -71,8 +71,14 @@ class MountedMLTracker:
             print(e)
         rospy.sleep(0.01)
 
+        # Draw and display the found corners for verification
+        # resized_preview = cv2.resize(frame, (720, 480))
+        # cv2.imshow("preview", resized_preview)
+        # cv2.waitKey(0)
+        
         # infer on a local image
         predictions = model.predict(frame, confidence=40, overlap=30).json()
+        print(predictions)
         self.x = predictions["predictions"][0]['x']
         self.y = predictions["predictions"][0]['y']
         self.end_class = predictions["predictions"][0]["class"]
