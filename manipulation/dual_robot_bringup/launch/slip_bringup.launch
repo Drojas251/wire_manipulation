@@ -34,7 +34,7 @@
   <!-- <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/> -->
 
   <!-- Point Cloud Classification -->
-  <!-- <node pkg="vision" type="rgbd_segmentation.py" name="rgbd_segmentation" output="screen"/>  -->
+  <node pkg="vision" type="rgbd_segmentation.py" name="rgbd_segmentation" output="screen"/> 
   <!-- ML TRACKING -->
   <!-- <node pkg="vision" type="mounted_ml_tracker.py" name="mounted_ml_tracker" output="screen"/>  -->
 

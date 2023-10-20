@@ -23,19 +23,20 @@ project = rf.workspace().project("deformable-linear-objects-connector-detection"
 model = project.version(1).model # 5 broken?
 
 class MountedMLTracker:
-    def __init__(self):
+    def __init__(self, cam_spec : str = "mounted_cam"):
         # Subscribers to Camera
-        self.rgb_img_sub = rospy.Subscriber("/mounted_cam/camera/color/image_raw", Image, self.track_callback,queue_size=1)
-        self.depth_img_sub = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/image_raw", Image, self.depth_callback) # use for rgb pixel lookup
-        self.depth_cam_info = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback)
-
-        self.segmented_depth_sub = rospy.Subscriber("/mounted_cam/rscamera/depth_image/points", PointCloud2, self.segmented_depth_callback, queue_size=1)
+        self.rgb_img_sub = rospy.Subscriber(f"/{cam_spec}/camera/color/image_raw", Image, self.track_callback,queue_size=1)
+        self.depth_img_sub = rospy.Subscriber(f"/{cam_spec}/camera/aligned_depth_to_color/image_raw", Image, self.depth_callback) # use for rgb pixel lookup
+        self.depth_cam_info = rospy.Subscriber(f"/{cam_spec}/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback)
+        self.segmented_depth_sub = rospy.Subscriber(f"/{cam_spec}/rscamera/depth_image/points", PointCloud2, self.segmented_depth_callback, queue_size=1)
 
         # Image member variables
         self.bridge = CvBridge()
         self.depth_image = []
         self.depth_cam_info = CameraInfo()
         self.intrinsics = None
+        self.cam_spec = cam_spec
+        self.cam_name = "Arm" if cam_spec == "arm_cam" else "Rear"
 
         self.x = 0
         self.y = 0
@@ -45,7 +46,7 @@ class MountedMLTracker:
 
         self.converted_pt = [0.0, 0.0, 0.0]
 
-    def convert_image_3d_point(self, depth : float, cam : str = "rear"):
+    def convert_image_3d_point(self, depth : float):
         if self.intrinsics:
             result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [self.x, self.y], depth)  #result[0]: right, result[1]: down, result[2]: forward
             return [result[2], -result[0], -result[1]]
@@ -73,6 +74,9 @@ class MountedMLTracker:
         
         # infer on a local image
         predictions = model.predict(frame, confidence=40, overlap=30).json()
+        if not predictions['predictions']:
+            return
+        
         self.x = predictions["predictions"][0]['x']
         self.y = predictions["predictions"][0]['y']
         self.end_class = predictions["predictions"][0]["class"]
@@ -91,7 +95,7 @@ class MountedMLTracker:
         
         # Display the resulting frame
         resized_frame = cv2.resize(frame, (0,0), fx=0.80, fy=0.80)
-        cv2.imshow('Rear Mounted Camera ML', resized_frame) 
+        cv2.imshow(f'{self.cam_name} Mounted Camera ML', resized_frame) 
         cv2.waitKey(1)
 
     def depth_cam_info_callback( self, cameraInfo):
@@ -131,12 +135,12 @@ class MountedMLTracker:
         except ValueError as e:
             return
     
-    def transform_ml_end(self, source: str, pos_adj, ori_adj) -> None:
+    def transform_ml_end(self, pos_adj, ori_adj) -> None:
         br = tf2_ros.TransformBroadcaster()
         t = TransformStamped()
 
         t.header.stamp = rospy.Time.now()
-        t.header.frame_id = source
+        t.header.frame_id = "d435i_color_frame" if self.cam_spec == "arm_cam" else "d415_color_frame"
         t.child_frame_id = str(self.end_class)
 
         t.transform.translation.x = self.converted_pt[0] + pos_adj[0]
@@ -155,15 +159,16 @@ class MountedMLTracker:
         br.sendTransform(t)
 
 def main():
-    rospy.init_node("mounted_aruco_tracker",anonymous=True)
+    rospy.init_node("ml_tracker",anonymous=True)
     rospy.sleep(3)
-
     rate = rospy.Rate(60)
-    tracker = MountedMLTracker()
+
+    rear_tracker = MountedMLTracker("mounted_cam")
+    arm_tracker = MountedMLTracker("arm_cam")
     while not rospy.is_shutdown():
-        ml_src = "camera_link" # camera_aligned_depth_to_color_frame
-        tracker.transform_ml_end(ml_src, [-0.05, 0, 0.025], [0, 0, 0, 1])
-                                        # z x y
+        # z, x, y
+        rear_tracker.transform_ml_end([-0.05, 0, 0.025], [0, 0, 0, 1])
+        arm_tracker.transform_ml_end([-0.05, 0, 0.025], [0, 0, 0, 1])
 
         rate.sleep()
     rospy.spin()

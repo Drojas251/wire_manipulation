@@ -71,7 +71,6 @@ class RGBDSegmentation(object):
         new_depth_img = cv2.bitwise_and(depth_copy, depth_copy, mask = img_erosion )
 
         optical_frame_prefix = "d435i" if args == "arm_cam" else "d415"
-        print(args, optical_frame_prefix)
         # Define Camera info for publish
         cam_info = CameraInfo()
         cam_info.header.stamp = rospy.Time.now()
@@ -117,9 +116,9 @@ class RGBDSegmentation(object):
 
 
 def main():
-    rospy.init_node("seg_node",anonymous=True)
+    rospy.init_node("rgbd_seg",anonymous=True)
     rospy.sleep(3)
-    # mounted_seg_object = RGBDSegmentation("mounted_cam")
+    mounted_seg_object = RGBDSegmentation("mounted_cam")
     arm_seg_object = RGBDSegmentation("arm_cam")
     try:
         rospy.spin()

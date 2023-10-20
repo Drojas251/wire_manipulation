@@ -9,6 +9,8 @@ Panels:
         - /DepthCloud1/Auto Size1
         - /TF1
         - /TF1/Frames1
+        - /DepthCloud2
+        - /DepthCloud2/Auto Size1
       Splitter Ratio: 0.5
     Tree Height: 244
   - Class: rviz/Help
@@ -864,6 +866,42 @@ Visualization Manager:
               {}
       Update Interval: 0
       Value: true
+    - Alpha: 1
+      Auto Size:
+        Auto Size Factor: 1
+        Value: true
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/DepthCloud
+      Color: 255; 255; 255
+      Color Image Topic: ""
+      Color Transformer: RGB8
+      Color Transport Hint: raw
+      Decay Time: 0
+      Depth Map Topic: /arm_cam/seg_depth/image_raw
+      Depth Map Transport Hint: raw
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: DepthCloud
+      Occlusion Compensation:
+        Occlusion Time-Out: 30
+        Value: false
+      Position Transformer: XYZ
+      Queue Size: 5
+      Selectable: true
+      Size (Pixels): 3
+      Style: Flat Squares
+      Topic Filter: true
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -880,7 +918,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.24271297454834
+      Distance: 2.2044382095336914
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -888,17 +926,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.75
       Focal Point:
-        X: 0.3319747745990753
-        Y: -0.108999103307724
-        Z: 0.02121393010020256
+        X: 0.3106606900691986
+        Y: -0.18081651628017426
+        Z: 0.06297732889652252
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6650002002716064
+      Pitch: 0.600000262260437
       Target Frame: world
-      Yaw: 2.696775197982788
+      Yaw: 2.4617812633514404
     Saved: ~
 Window Geometry:
   Displays:
