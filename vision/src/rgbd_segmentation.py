@@ -7,27 +7,16 @@ import numpy as np
 from geometry_msgs.msg import Pose
 
 class RGBDSegmentation(object):
-    def __init__(self):
-        ### Mounted Camera Subscribers and Publishers
-        # Subscribers to Camera
-        self.aligned_depth_rgb_sub = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/image_raw", Image, self.get_depth_data,queue_size=1)
-        self.rgb_img_sub = rospy.Subscriber("/mounted_cam/camera/color/image_raw",Image, self.rgb_callback,queue_size=1)
-        self.depth_img_camera_info = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback,queue_size=1)
+    def __init__(self, cam_spec : str = "mounted_cam"):
+        ### Camera Subscribers and Publishers
+        self.aligned_depth_rgb_sub = rospy.Subscriber(f"/{cam_spec}/camera/aligned_depth_to_color/image_raw", Image, self.get_depth_data,queue_size=1)
+        self.rgb_img_sub = rospy.Subscriber(f"/{cam_spec}/camera/color/image_raw", Image, self.rgb_callback, (cam_spec), queue_size=1)
+        self.depth_img_camera_info = rospy.Subscriber(f"/{cam_spec}/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback,queue_size=1)
 
         # Publishers with segmented image info
-        self.image_pub = rospy.Publisher("/mounted_cam/rs_segmented_image", Image, queue_size=1)
-        self.depth_image_pub = rospy.Publisher("/mounted_cam/seg_depth/image_raw", Image, queue_size=1)
-        self.depth_img_cam_info_pub = rospy.Publisher("/mounted_cam/seg_depth/camera_info", CameraInfo, queue_size=1)
-        
-        ### Arm Camera Subscribers and Publishers
-        # self.aligned_depth_rgb_sub = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/image_raw", Image, self.get_depth_data,queue_size=1)
-        # self.rgb_img_sub = rospy.Subscriber("/mounted_cam/camera/color/image_raw",Image, self.rgb_callback,queue_size=1)
-        # self.depth_img_camera_info = rospy.Subscriber("/mounted_cam/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback,queue_size=1)
-
-        # # Publishers with segmented image info
-        # self.image_pub = rospy.Publisher("/mounted_cam/rs_segmented_image", Image, queue_size=1)
-        # self.depth_image_pub = rospy.Publisher("/mounted_cam/seg_depth/image_raw", Image, queue_size=1)
-        # self.depth_img_cam_info_pub = rospy.Publisher("/mounted_cam/seg_depth/camera_info", CameraInfo, queue_size=1)
+        self.image_pub = rospy.Publisher(f"/{cam_spec}/rs_segmented_image", Image, queue_size=1)
+        self.depth_image_pub = rospy.Publisher(f"/{cam_spec}/seg_depth/image_raw", Image, queue_size=1)
+        self.depth_img_cam_info_pub = rospy.Publisher(f"/{cam_spec}/seg_depth/camera_info", CameraInfo, queue_size=1)
       
         # Image member variables
         self.bridge_object = CvBridge()
@@ -35,7 +24,7 @@ class RGBDSegmentation(object):
         self.depth_cam_info = CameraInfo()
         self.seg_depth_img = Image()
 
-    def rgb_callback(self,data):
+    def rgb_callback(self, data, args):
         try:
             cv_image = self.bridge_object.imgmsg_to_cv2(data, desired_encoding="bgr8")
         except CvBridgeError as e:
@@ -47,6 +36,12 @@ class RGBDSegmentation(object):
         upper_color = np.array([180, 255, 255])
         hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, lower_color, upper_color)
+
+        # resized_frame = cv2.resize(cv_image, (0,0), fx=0.80, fy=0.80)
+        # cv2.imshow('Preview', resized_frame) 
+        # cv2.waitKey(1)
+        # cv_image = np.asarray(cv_image)
+
         new_img = cv2.bitwise_and(cv_image, cv_image, mask = mask )
 
         # dilation
@@ -59,7 +54,11 @@ class RGBDSegmentation(object):
         largest_area = sorted(contours, key= cv2.contourArea)
         mask2 = np.zeros(img_dilation_gray.shape, np.uint8)
 
-        filtered_wire = cv2.drawContours(mask2,[largest_area[-1]], 0, (255,255,255,255), -1)
+        try:
+            filtered_wire = cv2.drawContours(mask2,[largest_area[-1]], 0, (255,255,255,255), -1)
+        except IndexError:
+            # No contours/pc of segmented wire drawn because no view of red wire
+            return
 
         # erosion
         img_erosion = cv2.erode(filtered_wire, kernel, iterations=2)
@@ -71,10 +70,12 @@ class RGBDSegmentation(object):
         # use segmented RGB image as mask for depth image
         new_depth_img = cv2.bitwise_and(depth_copy, depth_copy, mask = img_erosion )
 
+        optical_frame_prefix = "d435i" if args == "arm_cam" else "d415"
+        print(args, optical_frame_prefix)
         # Define Camera info for publish
         cam_info = CameraInfo()
         cam_info.header.stamp = rospy.Time.now()
-        cam_info.header.frame_id = "camera_color_optical_frame"
+        cam_info.header.frame_id = f"{optical_frame_prefix}_color_optical_frame"
         cam_info.height = 720
         cam_info.width = 1280
         cam_info.distortion_model = "plumb_bob"
@@ -88,12 +89,12 @@ class RGBDSegmentation(object):
 
         # Segmented RGB Image
         segmented_img = self.bridge_object.cv2_to_imgmsg(new_img,"passthrough")
-        segmented_img.header.frame_id = "camera_color_optical_frame"
+        segmented_img.header.frame_id = f"{optical_frame_prefix}_color_optical_frame"
 
         # Segmented Depth Image
         self.seg_depth_img = self.bridge_object.cv2_to_imgmsg(new_depth_img)
         self.seg_depth_img.header.stamp = cam_info.header.stamp
-        self.seg_depth_img.header.frame_id = "camera_color_optical_frame"
+        self.seg_depth_img.header.frame_id = f"{optical_frame_prefix}_color_optical_frame"
 
         # Display the resulting frame
         # resized_frame = cv2.resize(new_img, (0,0), fx=0.80, fy=0.80)
@@ -118,7 +119,8 @@ class RGBDSegmentation(object):
 def main():
     rospy.init_node("seg_node",anonymous=True)
     rospy.sleep(3)
-    seg_object = RGBDSegmentation()
+    # mounted_seg_object = RGBDSegmentation("mounted_cam")
+    arm_seg_object = RGBDSegmentation("arm_cam")
     try:
         rospy.spin()
     except KeyboardInterrupt:

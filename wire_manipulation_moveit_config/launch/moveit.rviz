@@ -650,8 +650,6 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        None:
-          Value: true
         a_bot_base_link:
           Value: false
         a_bot_ee_arm_link:
@@ -679,7 +677,7 @@ Visualization Manager:
         a_bot_wrist_link:
           Value: false
         arm_camera_link:
-          Value: true
+          Value: false
         b_bot_base_link:
           Value: false
         b_bot_ee_arm_link:
@@ -707,7 +705,7 @@ Visualization Manager:
         b_bot_wrist_link:
           Value: false
         camera_aligned_depth_to_color_frame:
-          Value: true
+          Value: false
         camera_color_frame:
           Value: false
         camera_color_optical_frame:
@@ -717,13 +715,13 @@ Visualization Manager:
         camera_depth_optical_frame:
           Value: false
         camera_link:
-          Value: true
+          Value: false
         d415_bottom_screw_frame:
           Value: false
         d415_color_frame:
           Value: false
         d415_color_optical_frame:
-          Value: false
+          Value: true
         d415_depth_frame:
           Value: false
         d415_depth_optical_frame:
@@ -737,7 +735,7 @@ Visualization Manager:
         d415_infra2_optical_frame:
           Value: false
         d415_link:
-          Value: true
+          Value: false
         d435i_accel_frame:
           Value: false
         d435i_accel_optical_frame:
@@ -747,7 +745,7 @@ Visualization Manager:
         d435i_color_frame:
           Value: false
         d435i_color_optical_frame:
-          Value: false
+          Value: true
         d435i_depth_frame:
           Value: false
         d435i_depth_optical_frame:
@@ -772,8 +770,6 @@ Visualization Manager:
           Value: false
         panel_2:
           Value: false
-        usb-crotation:
-          Value: true
         world:
           Value: false
       Marker Alpha: 1
@@ -816,25 +812,27 @@ Visualization Manager:
                                 {}
                               b_bot_right_finger_link:
                                 {}
-                          d415_bottom_screw_frame:
-                            d415_link:
-                              arm_camera_link:
-                                {}
-                              d415_color_frame:
-                                d415_color_optical_frame:
+                          d435i_bottom_screw_frame:
+                            d435i_link:
+                              d435i_accel_frame:
+                                d435i_accel_optical_frame:
                                   {}
-                              d415_depth_frame:
-                                d415_depth_optical_frame:
+                              d435i_color_frame:
+                                d435i_color_optical_frame:
                                   {}
-                              d415_infra1_frame:
-                                d415_infra1_optical_frame:
+                              d435i_depth_frame:
+                                d435i_depth_optical_frame:
                                   {}
-                              d415_infra2_frame:
-                                d415_infra2_optical_frame:
+                              d435i_gyro_frame:
+                                d435i_gyro_optical_frame:
+                                  {}
+                              d435i_infra1_frame:
+                                d435i_infra1_optical_frame:
+                                  {}
+                              d435i_infra2_frame:
+                                d435i_infra2_optical_frame:
                                   {}
           camera_link:
-            None:
-              {}
             camera_aligned_depth_to_color_frame:
               camera_color_optical_frame:
                 {}
@@ -843,27 +841,21 @@ Visualization Manager:
             camera_depth_frame:
               camera_depth_optical_frame:
                 {}
-            usb-crotation:
-              {}
-          d435i_bottom_screw_frame:
-            d435i_link:
-              d435i_accel_frame:
-                d435i_accel_optical_frame:
+          d415_bottom_screw_frame:
+            d415_link:
+              arm_camera_link:
+                {}
+              d415_color_frame:
+                d415_color_optical_frame:
                   {}
-              d435i_color_frame:
-                d435i_color_optical_frame:
+              d415_depth_frame:
+                d415_depth_optical_frame:
                   {}
-              d435i_depth_frame:
-                d435i_depth_optical_frame:
+              d415_infra1_frame:
+                d415_infra1_optical_frame:
                   {}
-              d435i_gyro_frame:
-                d435i_gyro_optical_frame:
-                  {}
-              d435i_infra1_frame:
-                d435i_infra1_optical_frame:
-                  {}
-              d435i_infra2_frame:
-                d435i_infra2_optical_frame:
+              d415_infra2_frame:
+                d415_infra2_optical_frame:
                   {}
           ground:
             {}
@@ -904,9 +896,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6650002598762512
+      Pitch: 0.6650002002716064
       Target Frame: world
-      Yaw: 3.376774787902832
+      Yaw: 2.696775197982788
     Saved: ~
 Window Geometry:
   Displays:

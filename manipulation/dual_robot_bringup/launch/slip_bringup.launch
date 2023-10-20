@@ -3,14 +3,16 @@
   <arg name="use_json" default="true"/>
 
   <!-- Launch Vision-->
-  <!-- Rear Mounted Camera -->
-  <include file="$(find realsense2_camera)/launch/rs_camera.launch" ns="mounted_cam">
+  <!-- Arm Mounted Camera -->
+  <include file="$(find realsense2_camera)/launch/rs_camera.launch" ns="arm_cam">
     <arg name="filters"                        value="pointcloud"/>
     <arg name="align_depth"                    value="true"/>
     <arg name="serial_no"                      value="109122071019"/>
   </include>
-  <!-- Arm Mounted Camera -->
-  <include file="$(find realsense2_camera)/launch/rs_camera.launch" ns="arm_cam">
+  <!-- Rear Mounted Camera -->
+  <include file="$(find realsense2_camera)/launch/rs_camera.launch" ns="mounted_cam">
+    <arg name="filters"                        value="pointcloud"/>
+    <arg name="align_depth"                    value="true"/>
     <arg name="serial_no"                      value="151322067775"/>
   </include>
 
@@ -32,7 +34,7 @@
   <!-- <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/> -->
 
   <!-- Point Cloud Classification -->
-  <node pkg="vision" type="rgbd_segmentation.py" name="rgbd_segmentation" output="screen"/> 
+  <!-- <node pkg="vision" type="rgbd_segmentation.py" name="rgbd_segmentation" output="screen"/>  -->
   <!-- ML TRACKING -->
   <!-- <node pkg="vision" type="mounted_ml_tracker.py" name="mounted_ml_tracker" output="screen"/>  -->
 

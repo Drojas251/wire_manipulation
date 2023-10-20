@@ -20,7 +20,7 @@ import numpy as np
 from roboflow import Roboflow
 rf = Roboflow(api_key="JZTKTAQvOFKLZTZdUNhR")
 project = rf.workspace().project("deformable-linear-objects-connector-detection")
-model = project.version(5).model
+model = project.version(1).model # 5 broken?
 
 class MountedMLTracker:
     def __init__(self):
@@ -70,15 +70,9 @@ class MountedMLTracker:
         except CvBridgeError as e:
             print(e)
         rospy.sleep(0.01)
-
-        # Draw and display the found corners for verification
-        # resized_preview = cv2.resize(frame, (720, 480))
-        # cv2.imshow("preview", resized_preview)
-        # cv2.waitKey(0)
         
         # infer on a local image
         predictions = model.predict(frame, confidence=40, overlap=30).json()
-        print(predictions)
         self.x = predictions["predictions"][0]['x']
         self.y = predictions["predictions"][0]['y']
         self.end_class = predictions["predictions"][0]["class"]
