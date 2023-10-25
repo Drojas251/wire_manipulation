@@ -93,10 +93,10 @@ class MountedMLTracker:
             endpoint = (int(x1), int(y1))
             cv2.rectangle(frame, start_point, endpoint, color=(0,255,0), thickness=2)
         
-        # Display the resulting frame
-        resized_frame = cv2.resize(frame, (0,0), fx=0.80, fy=0.80)
-        cv2.imshow(f'{self.cam_name} Mounted Camera ML', resized_frame) 
-        cv2.waitKey(1)
+        # # Display the resulting frame
+        # resized_frame = cv2.resize(frame, (0,0), fx=0.80, fy=0.80)
+        # cv2.imshow(f'{self.cam_name} Mounted Camera ML', resized_frame) 
+        # cv2.waitKey(1)
 
     def depth_cam_info_callback( self, cameraInfo):
         try:
@@ -141,7 +141,7 @@ class MountedMLTracker:
 
         t.header.stamp = rospy.Time.now()
         t.header.frame_id = "d435i_color_frame" if self.cam_spec == "arm_cam" else "d415_color_frame"
-        t.child_frame_id = str(self.end_class)
+        t.child_frame_id = f"{str(self.end_class)}_{self.cam_spec}"
 
         t.transform.translation.x = self.converted_pt[0] + pos_adj[0]
         t.transform.translation.y = self.converted_pt[1] + pos_adj[1]
@@ -163,12 +163,12 @@ def main():
     rospy.sleep(3)
     rate = rospy.Rate(60)
 
-    rear_tracker = MountedMLTracker("mounted_cam")
+    # rear_tracker = MountedMLTracker("mounted_cam")
     arm_tracker = MountedMLTracker("arm_cam")
     while not rospy.is_shutdown():
         # z, x, y
-        rear_tracker.transform_ml_end([-0.05, 0, 0.025], [0, 0, 0, 1])
-        arm_tracker.transform_ml_end([-0.05, 0, 0.025], [0, 0, 0, 1])
+        # rear_tracker.transform_ml_end([-0.05, 0, 0.025], [0, 0, 0, 1])
+        arm_tracker.transform_ml_end([-0.05, 0, 0], [0, 0, 0, 1])
 
         rate.sleep()
     rospy.spin()

@@ -23,16 +23,16 @@ from geometry_msgs.msg import TransformStamped
 import math
 
 class ConnectorPC():
-    def __init__(self, N_percentage:int = 0.05) -> None:
+    def __init__(self, cam_spec : str = "mounted_cam", N_percentage:int = 0.05) -> None:
         # Subscriber to pointcloud from camera
-        self.points_sub = rospy.Subscriber("/mounted_cam/rscamera/depth_image/points", PointCloud2, self.pc_callback, queue_size=1)
+        self.points_sub = rospy.Subscriber(f"/{cam_spec}/rscamera/depth_image/points", PointCloud2, self.pc_callback, queue_size=1)
 
         # Publisher of ICP pointclouds
-        self.icp_pub = rospy.Publisher('/aligned_icp_pc', PointCloud2, queue_size=10)
+        self.icp_pub = rospy.Publisher(f'/{cam_spec}/aligned_icp_pc', PointCloud2, queue_size=10)
 
         # Publisher of fitted shape to pointcloud
-        self.shape_pub = rospy.Publisher('/pc_shape', Marker, queue_size=100)
-        self.line_pub = rospy.Publisher('/pc_line', Marker, queue_size=10)
+        self.shape_pub = rospy.Publisher(f'/{cam_spec}/pc_shape', Marker, queue_size=100)
+        self.line_pub = rospy.Publisher(f'/{cam_spec}/pc_line', Marker, queue_size=10)
 
         # # Fitted shape params
         # self.shape_params = None
@@ -80,6 +80,8 @@ class ConnectorPC():
         else:
             self.min_pt = y_min
             self.max_pt = y_max
+
+            # GRAB MIDPOINT HERE AND USE THIS AS POS
 
     def remove_outliers_msd(self, points, std_dev_mul):
         """
@@ -545,13 +547,28 @@ def main():
     rospy.sleep(3)
 
     # rate = rospy.Rate(60)
-    proc_pc = ConnectorPC(0.10) # default 0.05 is 5% of 600 = 30 and 30 + 30 = 10% of avg ~600pts
+    # rear_cam_spec = "mounted_cam"
+    # rear_proc_pc = ConnectorPC(rear_cam_spec, 0.10) # default 0.05 is 5% of 600 = 30 and 30 + 30 = 10% of avg ~600pts
+    
+    arm_cam_spec = "arm_cam"
+    arm_proc_pc = ConnectorPC(arm_cam_spec, 0.10) # default 0.05 is 5% of 600 = 30 and 30 + 30 = 10% of avg ~600pts
+    
     while not rospy.is_shutdown():
-        proc_pc.transform_connector_pose("cpose", "usb-crotation", [0,0,0], [0, 0, 0, 1])
-        proc_pc.transform_connector_grasp("line_grasp", "cpose_usb-crotation", [0, 0, 0], [math.pi, 0, math.pi/2, 1])
-        # create prepose here
-        proc_pc.transform_connector_grasp("perp_line_grasp", "line_grasp", [0, 0, 0], [-math.pi/2, 0, 0, 1])
-        proc_pc.transform_connector_grasp("prepose_grasp", "line_grasp", [-0.15, 0, 0], [-math.pi/2, 0, 0, 1])
+        ### Rear mounted cam transforms
+        # rear_proc_pc.transform_connector_pose("cpose", f"usb-crotation_{rear_cam_spec}", [0,0,0], [0, 0, 0, 1])
+        # rear_proc_pc.transform_connector_grasp(f"line_grasp_{rear_cam_spec}", f"cpose_usb-crotation_{rear_cam_spec}", [0, 0, 0], [math.pi, 0, math.pi/2, 1])
+        # rear_proc_pc.transform_connector_grasp(f"perp_line_grasp_{rear_cam_spec}", f"line_grasp_{rear_cam_spec}", [0, 0, 0], [-math.pi/2, 0, 0, 1])
+        # # create prepose here
+        # rear_proc_pc.transform_connector_grasp(f"prepose_grasp_{rear_cam_spec}", f"line_grasp_{rear_cam_spec}", [-0.15, 0, 0], [-math.pi/2, 0, 0, 1])
+
+        ### Arm mounted cam transforms
+        arm_proc_pc.transform_connector_pose("cpose", f"usb-crotation_{arm_cam_spec}", [0,0,0], [0, 0, 0, 1])
+        
+        arm_proc_pc.transform_connector_grasp(f"line_grasp_{arm_cam_spec}", f"cpose_usb-crotation_{arm_cam_spec}", [-0.05, 0, 0], [math.pi/2, math.pi/2, 0, 1])
+        arm_proc_pc.transform_connector_grasp(f"perp_line_grasp_{arm_cam_spec}", f"line_grasp_{arm_cam_spec}", [0, 0, 0], [-math.pi/2, 0, 0, 1])
+        # # create prepose here
+        arm_proc_pc.transform_connector_grasp(f"prepose_grasp_{arm_cam_spec}", f"line_grasp_{arm_cam_spec}", [-0.15, 0, 0], [-math.pi/2, 0, 0, 1])
+
 
         ### Test accuracy frame
         # proc_pc.transform_connector_grasp("acc_test", "world", [0.3302, 0.0381, 0.1651], [0, 0, 0, 1])
