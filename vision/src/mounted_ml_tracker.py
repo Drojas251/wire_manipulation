@@ -6,9 +6,11 @@ import tf2_ros
 import tf_conversions
 from tf.transformations import quaternion_from_euler
 from geometry_msgs.msg import TransformStamped
+from std_msgs.msg import String
 from sensor_msgs.msg import Image, CameraInfo, PointCloud2
 import sensor_msgs.point_cloud2 as pc2
 import pyrealsense2 as rs2
+from std_srvs.srv import SetBool, SetBoolResponse
 
 
 # Camera capture
@@ -158,21 +160,30 @@ class MountedMLTracker:
 
         br.sendTransform(t)
 
+CAM_SPEC = "mounted_cam"
+def set_cam_spec_srv(request):
+    global CAM_SPEC
+    # True = arm_cam, False = rear mounted_cam
+    CAM_SPEC = "mounted_cam" if request.data else "arm_cam"
+    return SetBoolResponse(request.data, f"Cam spec set to {CAM_SPEC}")
+
 def main():
     rospy.init_node("ml_tracker",anonymous=True)
     rospy.sleep(3)
     rate = rospy.Rate(60)
 
+    # CAM_SPEC = "mounted_cam"
+    set_cam_spec_service = rospy.Service("/set_cam_spec", SetBool, set_cam_spec_srv)
+
     rear_tracker = MountedMLTracker("mounted_cam")
     arm_tracker = MountedMLTracker("arm_cam")
     while not rospy.is_shutdown():
         # z, x, y
-        # rear_tracker.transform_ml_end([-0.05, 0, 0.025], [0, 0, 0, 1])
-        if (False):
+        if CAM_SPEC == "arm_cam":
             arm_tracker.transform_ml_end([-0.05, 0, 0], [0, 0, 0, 1])
-        else:
+        elif CAM_SPEC == "mounted_cam":
             rear_tracker.transform_ml_end([-0.05, 0, 0.025], [0, 0, 0, 1])
-
+        
         rate.sleep()
     rospy.spin()
 

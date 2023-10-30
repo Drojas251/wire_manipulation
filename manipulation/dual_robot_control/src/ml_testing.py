@@ -5,8 +5,9 @@ import numpy as np
 import rospy
 import tf2_ros
 import geometry_msgs.msg
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, String
 from colorama import Fore
+from std_srvs.srv import SetBool
 
 # from dual_robot_msgs.srv import *
 from time import sleep
@@ -19,6 +20,16 @@ spec = importlib.util.spec_from_file_location("SearchRoutine", "/home/drojas/dlo
 SC = importlib.util.module_from_spec(spec)
 sys.modules["RobotControl"] = SC
 spec.loader.exec_module(SC)
+
+# Client call to swap ML camera specification 
+def set_cam_spec_service(value : Bool):
+     rospy.wait_for_service("/set_cam_spec")
+     try:
+         set_cam_spec = rospy.ServiceProxy('/set_cam_spec', SetBool)
+         response = set_cam_spec(value)
+         return response.success, response.message
+     except rospy.ServiceException as e:
+         print("Service call failed: %s"%e)
 
 # Client call to grasp and move wire 
 def grasp_wire(robot_,wire_grasp_pose,pull_vec):
@@ -83,8 +94,10 @@ if __name__ == "__main__":
 
     sleep(5)
 
-    status = robot_control.move_to_frame(GRASPING_ARM, "prepose_grasp_arm_cam")
-    status = robot_control.move_to_frame(GRASPING_ARM, "perp_line_grasp_arm_cam")
+    success, message = set_cam_spec_service(True)
+
+    # status = robot_control.move_to_frame(GRASPING_ARM, "prepose_grasp_arm_cam")
+    # status = robot_control.move_to_frame(GRASPING_ARM, "perp_line_grasp_arm_cam")
     
     # print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Initiating Robots ")
     # # status = robot_control.move_to_frame(SEARCHING_ARM, "search_target")
