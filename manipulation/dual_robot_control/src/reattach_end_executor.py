@@ -11,26 +11,6 @@ from std_msgs.msg import Bool
 from time import sleep
 from robot_services import RobotControl
 
-# Client call to grasp and move wire 
-def grasp_wire(robot_,wire_grasp_pose,pull_vec):
-     rospy.wait_for_service('grasp_wire_service')
-     try:
-         grasp_wire_input = rospy.ServiceProxy('grasp_wire_service', GraspWire)
-         response = grasp_wire_input(robot_,wire_grasp_pose,pull_vec)
-         return response
-     except rospy.ServiceException as e:
-         print("Service call failed: %s"%e)
-
-# Client call to grasp target object
-def grasp_target(robot_,object_grasp_pose):
-     rospy.wait_for_service('grasp_object_service')
-     try:
-         grasp_object_input = rospy.ServiceProxy('grasp_object_service', GraspObject)
-         response = grasp_object_input(robot_,object_grasp_pose)
-         return response
-     except rospy.ServiceException as e:
-         print("Service call failed: %s"%e)
-
 # Client call to sleep specified arm
 def sleep_arm(robot_):
     rospy.wait_for_service('sleep_arm_service')
@@ -54,44 +34,44 @@ if __name__ == "__main__":
     arm_ids = ["left","right"]
     
     # Send object grasp robot to pre-grasp, encountering wire
-    joint_goal0 = [42, 0, 0, 92, -42, -5] # start
-    joint_goal1 = [28, -10, 10, 93, -28, -5] # unplug
-    joint_goal2 = [40, 10, -45, 145, -75, -55] # slip enroute angled down
-    joint_goal3 = [45, 0, -10, 100, -45, -15] # final reattach
+    joint_goal0 = [41, 1, -2, 90, -43, 3] # start
+    joint_goal1 = [21, -13, 15, 81, -19, 9] # unplug
+    joint_goal2 = [36, 13, -41, 153, -75, -53] # slip enroute angled down
+    # joint_goal3 = [45, 0, -10, 100, -45, -15] # final reattach
     
-    ### START ROUTINE for full demonstration at annual review
-    ##  Initialize arms; Sleep, open grippers, and ready pose
-    for arm in arm_ids: 
-        status = robot_control.move_to_target(arm, 'sleep')
-        status = robot_control.set_gripper(arm, "open")
+    # ### START ROUTINE for full demonstration at annual review
+    # ##  Initialize arms; Sleep, open grippers, and ready pose
+    # for arm in arm_ids: 
+    #     status = robot_control.move_to_target(arm, 'sleep')
+    #     status = robot_control.set_gripper(arm, "open")
 
-    ##  Move grasping arm to wire end and unplug
-    status = robot_control.move_to_frame(GRASPING_ARM, "aruco_init_0") # initial grab at wire
-    # status = robot_control.move_to_joint_goal(GRASPING_ARM, [x * np.pi / 180 for x in joint_goal0])
-    status = robot_control.set_gripper(GRASPING_ARM, "close")
-    status = robot_control.move_to_joint_goal(GRASPING_ARM, [x * np.pi / 180 for x in joint_goal1])
+    # ##  Move grasping arm to wire end and unplug
+    # status = robot_control.move_to_frame(GRASPING_ARM, "aruco_init_0") # initial grab at wire
     status = robot_control.move_to_joint_goal(GRASPING_ARM, [x * np.pi / 180 for x in joint_goal0])
-    status = robot_control.set_gripper(GRASPING_ARM, "open")
+    # status = robot_control.set_gripper(GRASPING_ARM, "close")
+    # status = robot_control.move_to_joint_goal(GRASPING_ARM, [x * np.pi / 180 for x in joint_goal1])
+    # status = robot_control.move_to_joint_goal(GRASPING_ARM, [x * np.pi / 180 for x in joint_goal0])
+    # status = robot_control.set_gripper(GRASPING_ARM, "open")
                        
-    ## START SCENARIO C4 as soon as wire is grasped, earliest wire could slip
-    print("STATUS: Begin Scenario C4")
-    sleep(3)
-    a1_commands = [ # Commands from A1
-        # Send to stowing point
-        "status = robot_control.move_to_joint_goal(GRASPING_ARM, [x * np.pi / 180 for x in joint_goal2])",
-    ]
-    for command in a1_commands:
-        exec(command)
-        slip_flag = rospy.wait_for_message("{}_marker_delta_flag".format(GRASPING_ARM_ID), Bool)
-        if (slip_flag): # If slip detected, move arm to retrieve wire
-            print("STATUS: Slip detected, initiate retrieval")
-            sleep(5) # wait 5 real time seconds for slipped wire to settle
-            status = robot_control.move_to_target(GRASPING_ARM, 'sleep')
-            status = robot_control.set_gripper(GRASPING_ARM, "open")
+    # ## START SCENARIO C4 as soon as wire is grasped, earliest wire could slip
+    # print("STATUS: Begin Scenario C4")
+    # sleep(3)
+    # a1_commands = [ # Commands from A1
+    #     # Send to stowing point
+    #     "status = robot_control.move_to_joint_goal(GRASPING_ARM, [x * np.pi / 180 for x in joint_goal2])",
+    # ]
+    # for command in a1_commands:
+    #     exec(command)
+    #     slip_flag = rospy.wait_for_message("{}_marker_delta_flag".format(GRASPING_ARM_ID), Bool)
+    #     if (slip_flag): # If slip detected, move arm to retrieve wire
+    #         print("STATUS: Slip detected, initiate retrieval")
+    #         sleep(5) # wait 5 real time seconds for slipped wire to settle
+    #         status = robot_control.move_to_target(GRASPING_ARM, 'sleep')
+    #         status = robot_control.set_gripper(GRASPING_ARM, "open")
 
-            status = robot_control.move_to_frame(GRASPING_ARM, "aruco_retrieval_0")
-            status = robot_control.move_to_joint_goal(GRASPING_ARM, [x * np.pi / 180 for x in joint_goal3])
-    ## END SCENARIO C4
+    #         status = robot_control.move_to_frame(GRASPING_ARM, "aruco_retrieval_0")
+    #         status = robot_control.move_to_joint_goal(GRASPING_ARM, [x * np.pi / 180 for x in joint_goal3])
+    # ## END SCENARIO C4
 
-    # rospy.spin()
+    # # rospy.spin()
     

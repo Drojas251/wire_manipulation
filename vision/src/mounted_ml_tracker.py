@@ -163,12 +163,15 @@ def main():
     rospy.sleep(3)
     rate = rospy.Rate(60)
 
-    # rear_tracker = MountedMLTracker("mounted_cam")
+    rear_tracker = MountedMLTracker("mounted_cam")
     arm_tracker = MountedMLTracker("arm_cam")
     while not rospy.is_shutdown():
         # z, x, y
         # rear_tracker.transform_ml_end([-0.05, 0, 0.025], [0, 0, 0, 1])
-        arm_tracker.transform_ml_end([-0.05, 0, 0], [0, 0, 0, 1])
+        if (False):
+            arm_tracker.transform_ml_end([-0.05, 0, 0], [0, 0, 0, 1])
+        else:
+            rear_tracker.transform_ml_end([-0.05, 0, 0.025], [0, 0, 0, 1])
 
         rate.sleep()
     rospy.spin()
