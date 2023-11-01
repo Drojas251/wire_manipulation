@@ -54,10 +54,13 @@ class SearchRoutine():
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer)
 
-    def check_aruco_found(self, source_cam : str, target : str, pos, ori):
+    def check_frame_found(self, source_cam : str, target : str, pos, ori):
+        """
+        d415_color_frame  <- usb-crotation_mounted_cam
+        d435i_color_frame <- usb-crotation_arm_cam
+        """
         # Moves to search target and checks if frame is there
         self.robot_control.move_to_arg(self.SEARCHING_ARM, pos, ori)
-        # sleep(2.5)
         try:
             self.tfBuffer.lookup_transform(source_cam, target, rospy.Time.now(), rospy.Duration(5))
             return True
@@ -102,7 +105,7 @@ class SearchRoutine():
 
         # initalize search target at given position; updated through search routine
         # z_pos, x_pos, y_pos, = 0.2, 0.0, 0.3 # middle of workspace
-        z_pos, x_pos, y_pos, = 0.2, 0.1, 0.2 # example of where loose cable might be
+        z_pos, x_pos, y_pos, = 0.1, 0.05, 0.15 # example of where loose cable might be
 
 
         x_dir, y_dir = -1, 1 # direction to start the search
@@ -129,7 +132,7 @@ class SearchRoutine():
             last_pos_save = deepcopy(POS_SAVE)
 
             pos,ori = self.transform_search_target("search_target", "world", NODE_ORI_OFFSETS[0], [z_pos, x_pos, y_pos])
-            if self.check_aruco_found("arm_camera_link", 'arm_aruco_0', pos,ori):
+            if self.check_frame_found("d435i_color_frame", 'usb-crotation_arm_cam', pos,ori):
                 SEARCHING = False # end search when aruco found
                 TAG_FOUND = True
 
@@ -141,7 +144,7 @@ class SearchRoutine():
                     y_pos = POS_SAVE['y'] + (NODE_POS_OFFSETS[node_variation_counter][2]*dy/2)
 
                     pos, ori = self.transform_search_target("search_target", "camera_link", NODE_ORI_OFFSETS[node_variation_counter+1], [z_pos, x_pos, y_pos])
-                    if self.check_aruco_found("arm_camera_link", 'arm_aruco_0', pos, ori):
+                    if self.check_frame_found("d435i_color_frame", 'usb-crotation_arm_cam', pos, ori):
                         SEARCHING = False # end search when aruco found
                         TAG_FOUND = True
                         break

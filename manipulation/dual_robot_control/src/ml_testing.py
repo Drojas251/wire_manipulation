@@ -89,12 +89,12 @@ if __name__ == "__main__":
     # status = robot_control.move_to_frame(GRASPING_ARM, "prepose_grasp_mounted_cam")
     # status = robot_control.move_to_frame(GRASPING_ARM, "perp_line_grasp_mounted_cam")
 
-    joint_goal_arm_cam = [-45, -79, 42, 10, 67, -14]
-    status = robot_control.move_to_joint_goal(SEARCHING_ARM, [x * np.pi / 180 for x in joint_goal_arm_cam])
+    # joint_goal_arm_cam = [-45, -79, 42, 10, 67, -14]
+    # status = robot_control.move_to_joint_goal(SEARCHING_ARM, [x * np.pi / 180 for x in joint_goal_arm_cam])
 
-    sleep(5)
+    # sleep(5)
 
-    success, message = set_cam_spec_service(True)
+    success, message = set_cam_spec_service(True) # swap back to arm only
 
     # status = robot_control.move_to_frame(GRASPING_ARM, "prepose_grasp_arm_cam")
     # status = robot_control.move_to_frame(GRASPING_ARM, "perp_line_grasp_arm_cam")

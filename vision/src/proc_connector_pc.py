@@ -51,6 +51,8 @@ class ConnectorPC():
 
     ### Callbacks
     def pc_callback(self, points):
+        if not points:
+            return # empty/no view
         REMOVE_OUTLIERS = True
         REMOVE_OUTLIER_METHOD = "mean_std_dev"
     
@@ -545,25 +547,23 @@ class ConnectorPC():
 def main():
     rospy.init_node("proc_connector_pc",anonymous=True)
     rospy.sleep(3)
+    rate = rospy.Rate(60)
 
-    # rate = rospy.Rate(60)
-    # rear_cam_spec = "mounted_cam"
-    # rear_proc_pc = ConnectorPC(rear_cam_spec, 0.10) # default 0.05 is 5% of 600 = 30 and 30 + 30 = 10% of avg ~600pts
-    
+    rear_cam_spec = "mounted_cam"
+    rear_proc_pc = ConnectorPC(rear_cam_spec, 0.10) # default 0.05 is 5% of 600 = 30 and 30 + 30 = 10% of avg ~600pts
     arm_cam_spec = "arm_cam"
     arm_proc_pc = ConnectorPC(arm_cam_spec, 0.10) # default 0.05 is 5% of 600 = 30 and 30 + 30 = 10% of avg ~600pts
     
     while not rospy.is_shutdown():
         ### Rear mounted cam transforms
-        # rear_proc_pc.transform_connector_pose("cpose", f"usb-crotation_{rear_cam_spec}", [0,0,0], [0, 0, 0, 1])
-        # rear_proc_pc.transform_connector_grasp(f"line_grasp_{rear_cam_spec}", f"cpose_usb-crotation_{rear_cam_spec}", [0, 0, 0], [math.pi, 0, math.pi/2, 1])
-        # rear_proc_pc.transform_connector_grasp(f"perp_line_grasp_{rear_cam_spec}", f"line_grasp_{rear_cam_spec}", [0, 0, 0], [-math.pi/2, 0, 0, 1])
-        # # create prepose here
-        # rear_proc_pc.transform_connector_grasp(f"prepose_grasp_{rear_cam_spec}", f"line_grasp_{rear_cam_spec}", [-0.15, 0, 0], [-math.pi/2, 0, 0, 1])
+        rear_proc_pc.transform_connector_pose("cpose", f"usb-crotation_{rear_cam_spec}", [0,0,0], [0, 0, 0, 1])
+        rear_proc_pc.transform_connector_grasp(f"line_grasp_{rear_cam_spec}", f"cpose_usb-crotation_{rear_cam_spec}", [0, 0, 0], [math.pi, 0, math.pi/2, 1])
+        rear_proc_pc.transform_connector_grasp(f"perp_line_grasp_{rear_cam_spec}", f"line_grasp_{rear_cam_spec}", [0, 0, 0], [-math.pi/2, 0, 0, 1])
+        # create prepose here
+        rear_proc_pc.transform_connector_grasp(f"prepose_grasp_{rear_cam_spec}", f"line_grasp_{rear_cam_spec}", [-0.15, 0, 0], [-math.pi/2, 0, 0, 1])
 
         ### Arm mounted cam transforms
         arm_proc_pc.transform_connector_pose("cpose", f"usb-crotation_{arm_cam_spec}", [0,0,0], [0, 0, 0, 1])
-        
         arm_proc_pc.transform_connector_grasp(f"line_grasp_{arm_cam_spec}", f"cpose_usb-crotation_{arm_cam_spec}", [-0.05, 0, 0], [math.pi/2, math.pi/2, 0, 1])
         arm_proc_pc.transform_connector_grasp(f"perp_line_grasp_{arm_cam_spec}", f"line_grasp_{arm_cam_spec}", [0, 0, 0], [-math.pi/2, 0, 0, 1])
         # # create prepose here

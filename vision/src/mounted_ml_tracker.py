@@ -96,9 +96,9 @@ class MountedMLTracker:
             cv2.rectangle(frame, start_point, endpoint, color=(0,255,0), thickness=2)
         
         # # Display the resulting frame
-        # resized_frame = cv2.resize(frame, (0,0), fx=0.80, fy=0.80)
-        # cv2.imshow(f'{self.cam_name} Mounted Camera ML', resized_frame) 
-        # cv2.waitKey(1)
+        resized_frame = cv2.resize(frame, (0,0), fx=0.80, fy=0.80)
+        cv2.imshow(f'{self.cam_name} Mounted Camera ML', resized_frame) 
+        cv2.waitKey(1)
 
     def depth_cam_info_callback( self, cameraInfo):
         try:
@@ -164,7 +164,7 @@ CAM_SPEC = "mounted_cam"
 def set_cam_spec_srv(request):
     global CAM_SPEC
     # True = arm_cam, False = rear mounted_cam
-    CAM_SPEC = "mounted_cam" if request.data else "arm_cam"
+    CAM_SPEC = "arm_cam" if request.data else "mounted_cam"
     return SetBoolResponse(request.data, f"Cam spec set to {CAM_SPEC}")
 
 def main():
@@ -178,6 +178,7 @@ def main():
     rear_tracker = MountedMLTracker("mounted_cam")
     arm_tracker = MountedMLTracker("arm_cam")
     while not rospy.is_shutdown():
+        # print(CAM_SPEC)
         # z, x, y
         if CAM_SPEC == "arm_cam":
             arm_tracker.transform_ml_end([-0.05, 0, 0], [0, 0, 0, 1])
