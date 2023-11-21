@@ -96,9 +96,9 @@ class MountedMLTracker:
             cv2.rectangle(frame, start_point, endpoint, color=(0,255,0), thickness=2)
         
         # # Display the resulting frame
-        resized_frame = cv2.resize(frame, (0,0), fx=0.80, fy=0.80)
-        cv2.imshow(f'{self.cam_name} Mounted Camera ML', resized_frame) 
-        cv2.waitKey(1)
+        # resized_frame = cv2.resize(frame, (0,0), fx=0.80, fy=0.80)
+        # cv2.imshow(f'{self.cam_name} Mounted Camera ML', resized_frame) 
+        # cv2.waitKey(1)
 
     def depth_cam_info_callback( self, cameraInfo):
         try:

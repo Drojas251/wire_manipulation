@@ -29,16 +29,19 @@
   <!-- <node pkg="vision" type="environment_grid.py" name="environment_grid" output="screen" />  -->
   <!-- <node pkg="vision" type="search_target.py" name="search_target" output="screen" />  -->
   
-  <!-- SLIP DETECTION WITH ARUCOS -->
-  <!-- <node pkg="vision" type="slip_detect.py" name="left_slip_detect" output="screen" clear_params="true"/> -->
-  <!-- <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/> -->
-
   <!-- Point Cloud Classification -->
   <node pkg="vision" type="rgbd_segmentation.py" name="rgbd_segmentation" output="screen"/> 
   <!-- ML TRACKING -->
   <node pkg="vision" type="mounted_ml_tracker.py" name="mounted_ml_tracker" output="screen"/> 
   <!-- Process Connector to produce Frame for Grasp -->
   <node pkg="vision" type="proc_connector_pc.py" name="proc_connector_pc" output="screen"/> 
+  <!-- Adjust connector to match orientation of camera -->
+  <!-- <node pkg="vision" type="match_connector_cam.py" name="match_connector_cam" output="screen"/> 
+  <node pkg="vision" type="final_connector_pose.py" name="final_connector_pose" output="screen"/>  -->
+
+  <!-- SLIP DETECTION -->
+  <!-- <node pkg="vision" type="slip_detect.py" name="left_slip_detect" output="screen" clear_params="true"/> -->
+  <node pkg="vision" type="slip_detect.py" name="right_slip_detect" output="screen" clear_params="true"/>
 
   <!-- Nodelet manager for depth PC processing -->
   <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />

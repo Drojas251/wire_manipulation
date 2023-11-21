@@ -27,7 +27,7 @@ class SlipDetect:
         # Publisher for delta surpassed
         self.marker_delta_flag_pub = rospy.Publisher("/{}_marker_delta_flag".format(self.tracking_arm), Bool, queue_size=1)
 
-    def monitor_dist(self, rate_input: float, slip_delta: float):
+    def monitor_dist(self, connector_name: str, rate_input: float, slip_delta: float):
         """
         Parameters:
             rate_input (float): hertz for rate to check Euclidean distance between marker and executing arm
@@ -40,7 +40,7 @@ class SlipDetect:
 
         while not rospy.is_shutdown(): # loop takes ~0.099 - 0.1 seconds; 99.5ms
             try:
-                self.end_pose = tfBuffer.lookup_transform("world", "aruco_0", rospy.Time())
+                self.end_pose = tfBuffer.lookup_transform("world", connector_name, rospy.Time())
                 arm_pose = self.get_current_pose(self.tracking_arm)
                 euclidean_dist = self.calc_dist(self.end_pose, arm_pose)
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
@@ -73,7 +73,9 @@ def main():
 
     
     slip_detector = SlipDetect()
-    slip_detector.monitor_dist(0.4, .25) # 0.4hz ~ 2.5 seconds, .20 meter slip delta
+    # slip_detector.monitor_dist("line_grasp_mounted_cam", 0.4, .25) # 0.4hz ~ 2.5 seconds, .20 meter slip delta
+    slip_detector.monitor_dist("usb-crotation_mounted_cam", 0.4, .25) # 0.4hz ~ 2.5 seconds, .20 meter slip delta
+
 
     rospy.spin()
 
