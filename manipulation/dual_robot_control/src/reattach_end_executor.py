@@ -67,7 +67,7 @@ if __name__ == "__main__":
         slip_flag = rospy.wait_for_message("{}_marker_delta_flag".format(GRASPING_ARM_ID), Bool)
         if (slip_flag): # If slip detected, move arm to retrieve wire
             print("STATUS: Slip detected, initiate retrieval")
-            sleep(10) # wait 5 real time seconds for slipped wire to settle
+            sleep(5) # wait 5 real time seconds for slipped wire to settle
             status = robot_control.move_to_target(GRASPING_ARM, 'sleep')
             status = robot_control.set_gripper(GRASPING_ARM, "open")
 

@@ -720,8 +720,6 @@ Visualization Manager:
           Value: false
         camera_link:
           Value: false
-        connector_d415_color_frame:
-          Value: true
         cpose_usb-crotation_arm_cam:
           Value: false
         cpose_usb-crotation_mounted_cam:
@@ -784,6 +782,14 @@ Visualization Manager:
           Value: false
         panel_2:
           Value: false
+        perp_line_grasp_arm_cam:
+          Value: true
+        perp_line_grasp_mounted_cam:
+          Value: false
+        prepose_grasp_arm_cam:
+          Value: true
+        prepose_grasp_mounted_cam:
+          Value: false
         usb-crotation_mounted_cam:
           Value: false
         world:
@@ -797,7 +803,10 @@ Visualization Manager:
       Tree:
         cpose_usb-crotation_arm_cam:
           line_grasp_arm_cam:
-            {}
+            perp_line_grasp_arm_cam:
+              {}
+            prepose_grasp_arm_cam:
+              {}
         world:
           a_bot_base_link:
             a_bot_shoulder_link:
@@ -872,8 +881,9 @@ Visualization Manager:
                 usb-crotation_mounted_cam:
                   cpose_usb-crotation_mounted_cam:
                     line_grasp_mounted_cam:
-                      connector_d415_color_frame:
-                        {}
+                      perp_line_grasp_mounted_cam:
+                        prepose_grasp_mounted_cam:
+                          {}
               d415_depth_frame:
                 d415_depth_optical_frame:
                   {}
@@ -958,9 +968,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6600003242492676
+      Pitch: 0.48500049114227295
       Target Frame: world
-      Yaw: 2.976775884628296
+      Yaw: 2.6067728996276855
     Saved: ~
 Window Geometry:
   Displays:

@@ -68,7 +68,10 @@ class RGBDSegmentation(object):
         depth_copy = depth.copy()
 
         # use segmented RGB image as mask for depth image
-        new_depth_img = cv2.bitwise_and(depth_copy, depth_copy, mask = img_erosion )
+        try:
+            new_depth_img = cv2.bitwise_and(depth_copy, depth_copy, mask = img_erosion )
+        except:
+            return
 
         optical_frame_prefix = "d435i" if args == "arm_cam" else "d415"
         # Define Camera info for publish

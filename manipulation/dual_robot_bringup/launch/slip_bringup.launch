@@ -4,11 +4,11 @@
 
   <!-- Launch Vision-->
   <!-- Arm Mounted Camera -->
-  <include file="$(find realsense2_camera)/launch/rs_camera.launch" ns="arm_cam">
+  <!-- <include file="$(find realsense2_camera)/launch/rs_camera.launch" ns="arm_cam">
     <arg name="filters"                        value="pointcloud"/>
     <arg name="align_depth"                    value="true"/>
     <arg name="serial_no"                      value="109122071019"/>
-  </include>
+  </include> -->
   <!-- Rear Mounted Camera -->
   <include file="$(find realsense2_camera)/launch/rs_camera.launch" ns="mounted_cam">
     <arg name="filters"                        value="pointcloud"/>
