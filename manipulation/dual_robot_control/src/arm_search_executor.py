@@ -7,6 +7,7 @@ import tf2_ros
 import geometry_msgs.msg
 from std_msgs.msg import Bool
 from colorama import Fore
+from std_srvs.srv import SetBool
 
 # from dual_robot_msgs.srv import *
 from time import sleep
@@ -52,6 +53,16 @@ def sleep_arm(robot_):
     req.robot = 'left'
     req.object_grasp_pose = pose
     response = sleep_arm_input(req)
+    
+# Client call to swap ML camera specification 
+def set_cam_spec_service(value : Bool):
+     rospy.wait_for_service("/set_cam_spec")
+     try:
+         set_cam_spec = rospy.ServiceProxy('/set_cam_spec', SetBool)
+         response = set_cam_spec(value)
+         return response.success, response.message
+     except rospy.ServiceException as e:
+         print("Service call failed: %s"%e)
 
 #*** Node Starts Here ***#
 if __name__ == "__main__":
@@ -73,24 +84,33 @@ if __name__ == "__main__":
     # 3. Conduct search on search target
     # 4. If nothing found, move search target and arm and loop
 
-    # status = robot_control.move_to_frame(GRASPING_ARM, "adj_arm_aruco_0")
-
     print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Initiating Robots ")
     # status = robot_control.move_to_frame(SEARCHING_ARM, "search_target")
-    print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Attempt grabbing ArUco from rear camera view")
-    status = robot_control.move_to_frame(GRASPING_ARM, "adj_mounted_aruco_0")
+    print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Attempt grabbing connector from rear camera view")
+    status = robot_control.move_to_frame(GRASPING_ARM, "prepose_grasp_mounted_cam")
+    status = robot_control.move_to_frame(GRASPING_ARM, "perp_line_grasp_mounted_cam")
+
     if status == None:
         print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Rear camera view attempt failed, initiate search routine")
         # Initiate search algorithm
-        print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Initiate search routine")
+        print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Initiate search routine with arm cam")
+
+        success, message = set_cam_spec_service(True) # Swap to arm cam
+        sleep(2.5)
+
+        # Begin search
         searchRoutine = SC.SearchRoutine("left", "right")
-        search_result = searchRoutine.search(True)
+        search_result = searchRoutine.search(check_subnodes=True)
 
         if search_result:
             print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Search successful, send grasping arm for retrieval")
             # send right arm to aruco left arm found
             sleep(2.5)
-            status = robot_control.move_to_frame(GRASPING_ARM, "adj_arm_aruco_0")
+            status = robot_control.move_to_frame(GRASPING_ARM, "prepose_grasp_arm_cam")
+            status = robot_control.move_to_frame(GRASPING_ARM, "perp_line_grasp_arm_cam")
+            # Search done, return view to rear cam
+            success, message = set_cam_spec_service(False) # Swap back to rear cam
+            sleep(2.5)
     else:
         print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Rear camera view attempt successful")
     

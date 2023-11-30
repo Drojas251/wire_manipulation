@@ -5,8 +5,9 @@ import numpy as np
 import rospy
 import tf2_ros
 import geometry_msgs.msg
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, String
 from colorama import Fore
+from std_srvs.srv import SetBool
 
 # from dual_robot_msgs.srv import *
 from time import sleep
@@ -19,6 +20,16 @@ spec = importlib.util.spec_from_file_location("SearchRoutine", "/home/drojas/dlo
 SC = importlib.util.module_from_spec(spec)
 sys.modules["RobotControl"] = SC
 spec.loader.exec_module(SC)
+
+# Client call to swap ML camera specification 
+def set_cam_spec_service(value : Bool):
+     rospy.wait_for_service("/set_cam_spec")
+     try:
+         set_cam_spec = rospy.ServiceProxy('/set_cam_spec', SetBool)
+         response = set_cam_spec(value)
+         return response.success, response.message
+     except rospy.ServiceException as e:
+         print("Service call failed: %s"%e)
 
 # Client call to grasp and move wire 
 def grasp_wire(robot_,wire_grasp_pose,pull_vec):
@@ -66,6 +77,12 @@ if __name__ == "__main__":
     SEARCHING_ARM   = "left"
     SEARCHING_ARM_ID = "a_bot_arm" if SEARCHING_ARM == "right" else "b_bot_arm"
 
+    # status = robot_control.move_to_frame(GRASPING_ARM, "prepose_grasp_mounted_cam")
+    # status = robot_control.move_to_frame(GRASPING_ARM, "perp_line_grasp_mounted_cam")
+
+    joint_goal0 = [44, -22, 19, 127, -105, -81] # start
+    status = robot_control.move_to_joint_goal(SEARCHING_ARM, [x * np.pi / 180 for x in joint_goal0])
+
     # SEARCH TESTING
     # Search algorithm loop would look like:
     # 1. Identify no ArUco tags with rear cam
@@ -75,7 +92,19 @@ if __name__ == "__main__":
 
     # status = robot_control.move_to_frame(GRASPING_ARM, "adj_arm_aruco_0")
 
-    status = robot_control.move_to_frame(GRASPING_ARM, "usb-crotation")
+    # status = robot_control.move_to_frame(GRASPING_ARM, "prepose_grasp_mounted_cam")
+    # status = robot_control.move_to_frame(GRASPING_ARM, "perp_line_grasp_mounted_cam")
+
+    # joint_goal_arm_cam = [-45, -79, 42, 10, 67, -14]
+    # status = robot_control.move_to_joint_goal(SEARCHING_ARM, [x * np.pi / 180 for x in joint_goal_arm_cam])
+
+    # sleep(5)
+
+    success, message = set_cam_spec_service(True) # swap back to arm only
+
+    # status = robot_control.move_to_frame(GRASPING_ARM, "prepose_grasp_arm_cam")
+    # status = robot_control.move_to_frame(GRASPING_ARM, "perp_line_grasp_arm_cam")
+    
     # print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Initiating Robots ")
     # # status = robot_control.move_to_frame(SEARCHING_ARM, "search_target")
     # print(Fore.GREEN + "STATUS:= " + Fore.WHITE + "Attempt grabbing ArUco from rear camera view")

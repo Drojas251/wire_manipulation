@@ -5,9 +5,12 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /MotionPlanning1/Planned Path1
+        - /DepthCloud1
         - /DepthCloud1/Auto Size1
         - /TF1
         - /TF1/Frames1
+        - /DepthCloud2
+        - /DepthCloud2/Auto Size1
       Splitter Ratio: 0.5
     Tree Height: 244
   - Class: rviz/Help
@@ -623,7 +626,7 @@ Visualization Manager:
       Color Transformer: FlatColor
       Color Transport Hint: raw
       Decay Time: 0
-      Depth Map Topic: /seg_depth/image_raw
+      Depth Map Topic: /mounted_cam/seg_depth/image_raw
       Depth Map Transport Hint: raw
       Enabled: true
       Invert Rainbow: false
@@ -644,13 +647,17 @@ Visualization Manager:
       Value: true
     - Class: rviz/TF
       Enabled: true
+      Filter (blacklist): ""
+      Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        None_mounted_cam:
+          Value: false
         a_bot_base_link:
           Value: false
         a_bot_ee_arm_link:
-          Value: false
+          Value: true
         a_bot_ee_gripper_link:
           Value: false
         a_bot_fingers_link:
@@ -674,7 +681,7 @@ Visualization Manager:
         a_bot_wrist_link:
           Value: false
         arm_camera_link:
-          Value: true
+          Value: false
         b_bot_base_link:
           Value: false
         b_bot_ee_arm_link:
@@ -701,6 +708,8 @@ Visualization Manager:
           Value: false
         b_bot_wrist_link:
           Value: false
+        camera_aligned_depth_to_color_frame:
+          Value: false
         camera_color_frame:
           Value: false
         camera_color_optical_frame:
@@ -710,11 +719,15 @@ Visualization Manager:
         camera_depth_optical_frame:
           Value: false
         camera_link:
-          Value: true
+          Value: false
+        cpose_usb-crotation_arm_cam:
+          Value: false
+        cpose_usb-crotation_mounted_cam:
+          Value: false
         d415_bottom_screw_frame:
           Value: false
         d415_color_frame:
-          Value: false
+          Value: true
         d415_color_optical_frame:
           Value: false
         d415_depth_frame:
@@ -730,7 +743,7 @@ Visualization Manager:
         d415_infra2_optical_frame:
           Value: false
         d415_link:
-          Value: true
+          Value: false
         d435i_accel_frame:
           Value: false
         d435i_accel_optical_frame:
@@ -761,9 +774,23 @@ Visualization Manager:
           Value: false
         ground:
           Value: false
+        line_grasp_arm_cam:
+          Value: false
+        line_grasp_mounted_cam:
+          Value: true
         panel_1:
           Value: false
         panel_2:
+          Value: false
+        perp_line_grasp_arm_cam:
+          Value: true
+        perp_line_grasp_mounted_cam:
+          Value: false
+        prepose_grasp_arm_cam:
+          Value: true
+        prepose_grasp_mounted_cam:
+          Value: false
+        usb-crotation_mounted_cam:
           Value: false
         world:
           Value: false
@@ -774,6 +801,12 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
+        cpose_usb-crotation_arm_cam:
+          line_grasp_arm_cam:
+            perp_line_grasp_arm_cam:
+              {}
+            prepose_grasp_arm_cam:
+              {}
         world:
           a_bot_base_link:
             a_bot_shoulder_link:
@@ -807,48 +840,58 @@ Visualization Manager:
                                 {}
                               b_bot_right_finger_link:
                                 {}
-                          d415_bottom_screw_frame:
-                            d415_link:
-                              arm_camera_link:
-                                {}
-                              d415_color_frame:
-                                d415_color_optical_frame:
+                          d435i_bottom_screw_frame:
+                            d435i_link:
+                              d435i_accel_frame:
+                                d435i_accel_optical_frame:
                                   {}
-                              d415_depth_frame:
-                                d415_depth_optical_frame:
+                              d435i_color_frame:
+                                d435i_color_optical_frame:
                                   {}
-                              d415_infra1_frame:
-                                d415_infra1_optical_frame:
+                              d435i_depth_frame:
+                                d435i_depth_optical_frame:
                                   {}
-                              d415_infra2_frame:
-                                d415_infra2_optical_frame:
+                              d435i_gyro_frame:
+                                d435i_gyro_optical_frame:
+                                  {}
+                              d435i_infra1_frame:
+                                d435i_infra1_optical_frame:
+                                  {}
+                              d435i_infra2_frame:
+                                d435i_infra2_optical_frame:
                                   {}
           camera_link:
-            camera_color_frame:
+            camera_aligned_depth_to_color_frame:
               camera_color_optical_frame:
                 {}
+            camera_color_frame:
+              {}
             camera_depth_frame:
               camera_depth_optical_frame:
                 {}
-          d435i_bottom_screw_frame:
-            d435i_link:
-              d435i_accel_frame:
-                d435i_accel_optical_frame:
+          d415_bottom_screw_frame:
+            d415_link:
+              arm_camera_link:
+                {}
+              d415_color_frame:
+                None_mounted_cam:
                   {}
-              d435i_color_frame:
-                d435i_color_optical_frame:
+                d415_color_optical_frame:
                   {}
-              d435i_depth_frame:
-                d435i_depth_optical_frame:
+                usb-crotation_mounted_cam:
+                  cpose_usb-crotation_mounted_cam:
+                    line_grasp_mounted_cam:
+                      perp_line_grasp_mounted_cam:
+                        prepose_grasp_mounted_cam:
+                          {}
+              d415_depth_frame:
+                d415_depth_optical_frame:
                   {}
-              d435i_gyro_frame:
-                d435i_gyro_optical_frame:
+              d415_infra1_frame:
+                d415_infra1_optical_frame:
                   {}
-              d435i_infra1_frame:
-                d435i_infra1_optical_frame:
-                  {}
-              d435i_infra2_frame:
-                d435i_infra2_optical_frame:
+              d415_infra2_frame:
+                d415_infra2_optical_frame:
                   {}
           ground:
             {}
@@ -856,6 +899,42 @@ Visualization Manager:
             panel_2:
               {}
       Update Interval: 0
+      Value: true
+    - Alpha: 1
+      Auto Size:
+        Auto Size Factor: 1
+        Value: true
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/DepthCloud
+      Color: 255; 255; 255
+      Color Image Topic: ""
+      Color Transformer: RGB8
+      Color Transport Hint: raw
+      Decay Time: 0
+      Depth Map Topic: /arm_cam/seg_depth/image_raw
+      Depth Map Transport Hint: raw
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: DepthCloud
+      Occlusion Compensation:
+        Occlusion Time-Out: 30
+        Value: false
+      Position Transformer: XYZ
+      Queue Size: 5
+      Selectable: true
+      Size (Pixels): 3
+      Style: Flat Squares
+      Topic Filter: true
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: true
   Enabled: true
   Global Options:
@@ -873,7 +952,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.24271297454834
+      Distance: 2.050224542617798
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -881,17 +960,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.75
       Focal Point:
-        X: 0.3319747745990753
-        Y: -0.108999103307724
-        Z: 0.02121393010020256
+        X: 0.35766705870628357
+        Y: -0.14116202294826508
+        Z: 0.09941744059324265
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5650002956390381
+      Pitch: 0.48500049114227295
       Target Frame: world
-      Yaw: 2.7167739868164062
+      Yaw: 2.6067728996276855
     Saved: ~
 Window Geometry:
   Displays:

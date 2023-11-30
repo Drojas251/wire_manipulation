@@ -19,16 +19,10 @@ from cv_bridge import CvBridge,CvBridgeError
 import cv2
 import numpy as np 
 
-from roboflow import Roboflow
-rf = Roboflow(api_key="JZTKTAQvOFKLZTZdUNhR")
-project = rf.workspace().project("deformable-linear-objects-connector-detection")
-model = project.version(1).model # 5 broken?
-
-class MountedMLTracker:
+class DepthCloudTracker:
     def __init__(self, cam_spec : str = "mounted_cam"):
         # Subscribers to Camera
         self.rgb_img_sub = rospy.Subscriber(f"/{cam_spec}/camera/color/image_raw", Image, self.track_callback,queue_size=1)
-        self.depth_img_sub = rospy.Subscriber(f"/{cam_spec}/camera/aligned_depth_to_color/image_raw", Image, self.depth_callback) # use for rgb pixel lookup
         self.depth_cam_info = rospy.Subscriber(f"/{cam_spec}/camera/aligned_depth_to_color/camera_info",CameraInfo, self.depth_cam_info_callback)
         self.segmented_depth_sub = rospy.Subscriber(f"/{cam_spec}/rscamera/depth_image/points", PointCloud2, self.segmented_depth_callback, queue_size=1)
 
@@ -57,7 +51,19 @@ class MountedMLTracker:
         sum_pt = 0.0
         num_pt = 0
 
-        # Iterate through the points in the PointCloud2 message
+        # Sort to get median x, y
+        seg_pt_list = pc2.read_points_list(msg, field_names=("x", "y", "z"), skip_nans=True)
+        sorted_x_dc = sorted(seg_pt_list, key=lambda p : p.x)
+        sorted_y_dc = sorted(seg_pt_list, key=lambda p : p.y)
+        midpt = len(sorted_x_dc) // 2
+        if len(sorted_x_dc) % 2 == 0:
+            median_x = (sorted_x_dc[midpt - 1].x + sorted_x_dc[midpt].x) / 2
+            median_y = (sorted_y_dc[midpt - 1].y + sorted_y_dc[midpt].y) / 2
+        else:
+            median_x = sorted_x_dc[midpt].x
+            median_y = sorted_y_dc[midpt].y
+
+        # Iterate through to get mean depth z
         for pt in pc2.read_points(msg, field_names=("x", "y", "z"), skip_nans=True):
             depth = pt[2]  # Depth is the Z coordinate
             sum_pt += depth
@@ -65,8 +71,9 @@ class MountedMLTracker:
 
         if num_pt > 0:
             self.converted_depth = ( sum_pt / num_pt ) + self.depth_adjustment
+        
+        self.converted_pt = [self.converted_depth, -median_x, -median_y]
             
-
     def track_callback(self, data):
         try:
             frame = self.bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
@@ -74,26 +81,11 @@ class MountedMLTracker:
             print(e)
         rospy.sleep(0.01)
         
-        # infer on a local image
-        predictions = model.predict(frame, confidence=40, overlap=30).json()
-        if not predictions['predictions']:
-            return
-        
-        self.x = predictions["predictions"][0]['x']
-        self.y = predictions["predictions"][0]['y']
-        self.end_class = predictions["predictions"][0]["class"]
-        self.converted_pt = self.convert_image_3d_point(self.converted_depth) # THIS SHOULD BE OUR CALCULATED DEPTH
-
-        # Add bounding boxes to the model prediction of connector
-        for bounding_box in predictions["predictions"]:
-            x0 = bounding_box['x'] - bounding_box['width']  / 2
-            x1 = bounding_box['x'] + bounding_box['width']  / 2
-            y0 = bounding_box['y'] - bounding_box['height'] / 2
-            y1 = bounding_box['y'] + bounding_box['height'] / 2
-            
-            start_point = (int(x0), int(y0))
-            endpoint = (int(x1), int(y1))
-            cv2.rectangle(frame, start_point, endpoint, color=(0,255,0), thickness=2)
+        ### SET THESE, might need some conversion?
+        # self.x = predictions["predictions"][0]['x']
+        # self.y = predictions["predictions"][0]['y']
+        # self.end_class = predictions["predictions"][0]["class"]
+        # self.converted_pt = self.convert_image_3d_point(self.converted_depth) # THIS SHOULD BE OUR CALCULATED DEPTH
         
         # # Display the resulting frame
         # resized_frame = cv2.resize(frame, (0,0), fx=0.80, fy=0.80)
@@ -121,29 +113,13 @@ class MountedMLTracker:
             print(e)
             return
     
-    def depth_callback(self,data):
-        # use in rgb lookup approach
-        try:
-            cv_image = self.bridge.imgmsg_to_cv2(data, desired_encoding="passthrough")
-            depth_image_meters = cv_image.astype(np.float32) / 1000.0 # Convert to meters
-            
-            # depth_at_xy = depth_image_meters[int(self.x), int(self.y)]
-            # if depth_at_xy > 0:
-                # Only assign if depth > 0, otherwise depth breaks point so leave at 0.5 starting val
-                # self.converted_depth = depth_at_xy
-        except CvBridgeError as e:
-            print(e)
-            return
-        except ValueError as e:
-            return
-    
-    def transform_ml_end(self, pos_adj, ori_adj) -> None:
+    def transform_end(self, pos_adj, ori_adj) -> None:
         br = tf2_ros.TransformBroadcaster()
         t = TransformStamped()
 
         t.header.stamp = rospy.Time.now()
         t.header.frame_id = "d435i_color_frame" if self.cam_spec == "arm_cam" else "d415_color_frame"
-        t.child_frame_id = f"{str(self.end_class)}_{self.cam_spec}"
+        t.child_frame_id = f"depth_{self.cam_spec}"
 
         t.transform.translation.x = self.converted_pt[0] + pos_adj[0]
         t.transform.translation.y = self.converted_pt[1] + pos_adj[1]
@@ -175,15 +151,15 @@ def main():
     # CAM_SPEC = "mounted_cam"
     set_cam_spec_service = rospy.Service("/set_cam_spec", SetBool, set_cam_spec_srv)
 
-    rear_tracker = MountedMLTracker("mounted_cam")
-    arm_tracker = MountedMLTracker("arm_cam")
+    rear_tracker = DepthCloudTracker("mounted_cam")
+    arm_tracker = DepthCloudTracker("arm_cam")
     while not rospy.is_shutdown():
         # print(CAM_SPEC)
         # z, x, y
         if CAM_SPEC == "arm_cam":
-            arm_tracker.transform_ml_end([-0.05, 0, 0], [0, 0, 0, 1])
+            arm_tracker.transform_end([-0.05, 0, 0], [0, 0, 0, 1])
         elif CAM_SPEC == "mounted_cam":
-            rear_tracker.transform_ml_end([-0.05, 0, 0.025], [0, 0, 0, 1])
+            rear_tracker.transform_end([-0.05, 0, 0.025], [0, 0, 0, 1])
         
         rate.sleep()
     rospy.spin()
